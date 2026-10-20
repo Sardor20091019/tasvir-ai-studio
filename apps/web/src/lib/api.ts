@@ -169,7 +169,7 @@ export const api = {
     return { success: true, message: 'SMS kod yuborildi', demoCode: '1234' };
   },
 
-  async googleLogin(payload: { credential?: string; email?: string; name?: string; googleId?: string }): Promise<{ user: User; token: string }> {
+  async googleLogin(payload: { credential?: string; email?: string; name?: string; googleId?: string; avatarUrl?: string }): Promise<{ user: User; token: string }> {
     try {
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: 'POST',

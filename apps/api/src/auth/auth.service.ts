@@ -157,6 +157,24 @@ export class AuthService {
 
     if (params.credential) {
       try {
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${params.credential}`);
+        if (verifyRes.ok) {
+          const gInfo: any = await verifyRes.json();
+          if (gInfo.email) email = gInfo.email;
+          if (gInfo.name) name = gInfo.name;
+          if (gInfo.sub) googleId = gInfo.sub;
+          this.logger.log(`Google token verified via tokeninfo: ${email} (${name})`);
+        } else {
+          const parts = params.credential.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+            if (payload.email) email = payload.email;
+            if (payload.name) name = payload.name;
+            if (payload.sub) googleId = payload.sub;
+          }
+        }
+      } catch (e: any) {
+        this.logger.warn(`Could not verify Google JWT: ${e.message}`);
         const parts = params.credential.split('.');
         if (parts.length === 3) {
           const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
@@ -164,8 +182,6 @@ export class AuthService {
           if (payload.name) name = payload.name;
           if (payload.sub) googleId = payload.sub;
         }
-      } catch (e: any) {
-        this.logger.warn(`Could not decode Google JWT: ${e.message}`);
       }
     }
 
