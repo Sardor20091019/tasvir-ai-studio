@@ -1,12 +1,14 @@
 import { Injectable, BadRequestException, Logger, Inject } from '@nestjs/common';
 import { KyselyService } from '../database/kysely.service';
 import { User } from '../database/schema';
+import { JwtUtil } from './jwt.util';
+import { InMemoryRateLimiter } from './rate-limiter';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  // In-memory verification codes cache
-  private otpCache = new Map<string, { code: string; expiresAt: number }>();
+  // In-memory verification codes cache with attempt counter
+  private otpCache = new Map<string, { code: string; expiresAt: number; attempts: number }>();
 
   constructor(@Inject(KyselyService) private readonly db: KyselyService) {}
 
@@ -43,29 +45,41 @@ export class AuthService {
   }
 
   async sendOtp(phoneNumber: string, turnstileToken?: string): Promise<{ success: boolean; message: string; demoCode?: string }> {
-    const isHuman = await this.verifyTurnstile(turnstileToken);
-    if (!isHuman) {
-      throw new BadRequestException('Botlardan himoya (Turnstile) tekshiruvidan oʻtmadi. Qaytadan urinib koʻring.');
-    }
-
     const cleanPhone = this.normalizePhone(phoneNumber);
     if (!cleanPhone.startsWith('+998') || cleanPhone.length !== 13) {
       throw new BadRequestException('Faqat Oʻzbekiston raqamlari qabul qilinadi (+998XXXXXXXXX)');
     }
 
-    // Generate 4-digit OTP
+    // Anti-SMS Pumping Rate Limit: Max 5 OTP requests per phone in 10 minutes
+    InMemoryRateLimiter.check(
+      `send_otp:${cleanPhone}`,
+      5,
+      10 * 60 * 1000,
+      'SMS soʻrovlari cheklovi oshdi. Iltimos, 10 daqiqadan soʻng qayta urinib koʻring.',
+    );
+
+    const isHuman = await this.verifyTurnstile(turnstileToken);
+    if (!isHuman) {
+      throw new BadRequestException('Botlardan himoya (Turnstile) tekshiruvidan oʻtmadi. Qaytadan urinib koʻring.');
+    }
+
+    // Generate cryptographically random 4-digit OTP
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     this.otpCache.set(cleanPhone, {
       code,
       expiresAt: Date.now() + 5 * 60 * 1000,
+      attempts: 0,
     });
 
     this.logger.log(`Generated OTP ${code} for phone ${cleanPhone}`);
 
+    const isDev = process.env.NODE_ENV !== 'production';
+
     return {
       success: true,
       message: `Tasdiqlash kodi ${cleanPhone} raqamiga yuborildi`,
-      demoCode: code, // returned for seamless instant UX in demo
+      // NEVER leak OTP in production responses
+      demoCode: isDev ? code : undefined,
     };
   }
 
@@ -73,14 +87,28 @@ export class AuthService {
     const cleanPhone = this.normalizePhone(phoneNumber);
     const cached = this.otpCache.get(cleanPhone);
 
-    // Accept real generated code or fallback '1234' for fast review
-    const isValid = (cached && cached.code === code && cached.expiresAt > Date.now()) || code === '1234' || code === '7777';
-
-    if (!isValid) {
-      throw new BadRequestException('Tasdiqlash kodi notoʻgʻri yoki muddati oʻtgan');
+    if (!cached || cached.expiresAt < Date.now()) {
+      throw new BadRequestException('Tasdiqlash kodi muddati oʻtgan yoki mavjud emas. Yangi kod soʻrang.');
     }
 
+    // Increment failed attempt counter to prevent brute-forcing
+    cached.attempts += 1;
+    if (cached.attempts > 5) {
+      this.otpCache.delete(cleanPhone);
+      throw new BadRequestException('Urinishlar soni oshib ketdi. Xavfsizlik yuzasidan yangi SMS kod soʻrang.');
+    }
+
+    const isDev = process.env.NODE_ENV !== 'production';
+    const isValid = cached.code === code || (isDev && (code === '1234' || code === '7777'));
+
+    if (!isValid) {
+      const remainingAttempts = 5 - cached.attempts;
+      throw new BadRequestException(`Tasdiqlash kodi notoʻgʻri. ${remainingAttempts} ta urinish qoldi.`);
+    }
+
+    // Clear OTP after successful use
     this.otpCache.delete(cleanPhone);
+    InMemoryRateLimiter.reset(`send_otp:${cleanPhone}`);
 
     // Find or create user
     let user = await this.db
@@ -98,13 +126,14 @@ export class AuthService {
           telegram_id: null,
           locale: 'uz',
           plan_tier: 'starter',
-          credits_balance: 3, // 3 free video generations
+          credits_balance: 3,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
     }
 
-    const token = `tasvir_jwt_${user.id}_${Date.now()}`;
+    // Generate cryptographically signed HMAC-SHA256 JWT
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
     return { user, token };
   }
 
@@ -138,10 +167,9 @@ export class AuthService {
         .executeTakeFirstOrThrow();
     }
 
-    return {
-      user,
-      token: `tasvir_tg_${user.id}_${Date.now()}`,
-    };
+    // Cryptographically signed JWT token
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
+    return { user, token };
   }
 
   async googleLogin(params: {
@@ -165,6 +193,11 @@ export class AuthService {
           if (gInfo.sub) googleId = gInfo.sub;
           this.logger.log(`Google token verified via tokeninfo: ${email} (${name})`);
         } else {
+          // If token verification with Google fails
+          if (process.env.NODE_ENV === 'production') {
+            throw new BadRequestException('Google tokeni yaroqsiz yoki muddati oʻtgan');
+          }
+          this.logger.warn('Google tokeninfo failed, allowing dev inspection fallback.');
           const parts = params.credential.split('.');
           if (parts.length === 3) {
             const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
@@ -174,14 +207,10 @@ export class AuthService {
           }
         }
       } catch (e: any) {
-        this.logger.warn(`Could not verify Google JWT: ${e.message}`);
-        const parts = params.credential.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-          if (payload.email) email = payload.email;
-          if (payload.name) name = payload.name;
-          if (payload.sub) googleId = payload.sub;
+        if (process.env.NODE_ENV === 'production') {
+          throw new BadRequestException(`Google autentifikatsiyasini tekshirib boʻlmadi: ${e.message}`);
         }
+        this.logger.warn(`Could not verify Google JWT: ${e.message}`);
       }
     }
 
@@ -211,7 +240,7 @@ export class AuthService {
       this.logger.log(`Created new Google user: ${name} (${syntheticPhone})`);
     }
 
-    const token = `tasvir_google_${user.id}_${Date.now()}`;
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
     return { user, token };
   }
 

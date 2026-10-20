@@ -134,10 +134,37 @@ export const fallbackPlans: PlanConfig[] = [
   },
 ];
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('tasvir_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const api = {
+  getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('tasvir_token');
+  },
+
+  setToken(token: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tasvir_token', token);
+    }
+  },
+
+  logout(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tasvir_token');
+    }
+  },
+
   async getMe(): Promise<User> {
     try {
-      const res = await fetch(`${API_BASE}/auth/me`);
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.warn('API getMe fallback');
@@ -176,7 +203,13 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.token) {
+          this.setToken(data.token);
+        }
+        return data;
+      }
     } catch (e) {
       console.warn('API googleLogin fallback');
     }
@@ -203,7 +236,13 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phoneNumber, code }),
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.token) {
+          this.setToken(data.token);
+        }
+        return data;
+      }
     } catch (e) {
       console.warn('API verifyOtp fallback');
     }
@@ -235,7 +274,11 @@ export const api = {
 
   async getProducts(): Promise<Product[]> {
     try {
-      const res = await fetch(`${API_BASE}/products`);
+      const res = await fetch(`${API_BASE}/products`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.warn('API getProducts fallback');
@@ -286,7 +329,7 @@ export const api = {
   },
 
   async renderVideoJob(dto: {
-    userId: string;
+    userId?: string;
     productId: string;
     avatarId: string;
     platformPreset: string;
@@ -296,7 +339,10 @@ export const api = {
     try {
       const res = await fetch(`${API_BASE}/video-jobs/render`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(dto),
       });
       if (res.ok) return await res.json();
@@ -306,7 +352,7 @@ export const api = {
 
     return {
       id: 'job-' + Date.now(),
-      user_id: dto.userId,
+      user_id: dto.userId || 'user-demo',
       product_id: dto.productId,
       avatar_id: dto.avatarId,
       platform_preset: dto.platformPreset,
@@ -325,7 +371,11 @@ export const api = {
 
   async getJobStatus(jobId: string): Promise<VideoJob> {
     try {
-      const res = await fetch(`${API_BASE}/video-jobs/${jobId}`);
+      const res = await fetch(`${API_BASE}/video-jobs/${jobId}`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.warn('API getJobStatus fallback');
@@ -360,7 +410,7 @@ export const api = {
   },
 
   async createCheckout(body: {
-    userId: string;
+    userId?: string;
     planTier: string;
     provider: 'payme' | 'click' | 'uzum';
     phoneNumber: string;
@@ -368,7 +418,10 @@ export const api = {
     try {
       const res = await fetch(`${API_BASE}/billing/checkout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(body),
       });
       if (res.ok) return await res.json();
@@ -388,7 +441,10 @@ export const api = {
     try {
       const res = await fetch(`${API_BASE}/billing/confirm-test-payment`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({ transactionId }),
       });
       if (res.ok) return await res.json();
@@ -400,7 +456,11 @@ export const api = {
 
   async getTransactions() {
     try {
-      const res = await fetch(`${API_BASE}/billing/transactions`);
+      const res = await fetch(`${API_BASE}/billing/transactions`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       if (res.ok) return await res.json();
     } catch (e) {
       console.warn('API getTransactions fallback');

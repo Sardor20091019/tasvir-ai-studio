@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Body, Headers, Inject } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtUtil } from './jwt.util';
 
 @Controller('auth')
 export class AuthController {
@@ -49,7 +50,18 @@ export class AuthController {
   }
 
   @Get('me')
-  async getMe(@Headers('x-user-id') userId?: string) {
-    return this.authService.getCurrentUser(userId);
+  async getMe(
+    @Headers('authorization') authHeader?: string,
+    @Headers('x-user-id') fallbackUserId?: string,
+  ) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const payload = JwtUtil.verify(authHeader.slice(7).trim());
+        return this.authService.getCurrentUser(payload.sub);
+      } catch (e) {}
+    }
+    // Only permit unauthenticated fallback in non-production environments
+    const allowedFallback = process.env.NODE_ENV !== 'production' ? fallbackUserId : undefined;
+    return this.authService.getCurrentUser(allowedFallback);
   }
 }

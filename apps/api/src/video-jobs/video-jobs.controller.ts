@@ -4,13 +4,17 @@ import {
   Post,
   Body,
   Param,
-  Query,
-  Headers,
   Res,
+  UseGuards,
+  BadRequestException,
   Inject,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { VideoJobsService } from './video-jobs.service';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Controller('video-jobs')
 export class VideoJobsController {
@@ -43,14 +47,19 @@ export class VideoJobsController {
       scriptText: string;
     },
   ) {
+    if (!body.avatarId || !UUID_REGEX.test(body.avatarId)) {
+      throw new BadRequestException('Yaroqsiz avatar ID');
+    }
     return this.videoJobsService.getTtsAudioPreview(body.avatarId, body.scriptText);
   }
 
   @Post('render')
+  @UseGuards(AuthGuard)
   async createRenderJob(
+    @CurrentUser('id') currentUserId: string,
     @Body()
     body: {
-      userId: string;
+      userId?: string;
       productId: string;
       avatarId: string;
       platformPreset: string;
@@ -58,25 +67,39 @@ export class VideoJobsController {
       scriptText: string;
     },
   ) {
-    return this.videoJobsService.createRenderJob(body);
+    // Prevent IDOR: force job owner to be the authenticated user
+    return this.videoJobsService.createRenderJob({
+      ...body,
+      userId: currentUserId,
+    });
   }
 
   @Get()
-  async listUserJobs(
-    @Query('userId') queryUserId?: string,
-    @Headers('x-user-id') headerUserId?: string,
-  ) {
-    return this.videoJobsService.listUserJobs(queryUserId || headerUserId);
+  @UseGuards(AuthGuard)
+  async listUserJobs(@CurrentUser('id') currentUserId: string) {
+    // Strictly isolate jobs to the calling user
+    return this.videoJobsService.listUserJobs(currentUserId);
   }
 
   @Get(':id')
-  async getJob(@Param('id') id: string) {
-    return this.videoJobsService.getJobById(id);
+  @UseGuards(AuthGuard)
+  async getJob(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    if (!UUID_REGEX.test(id)) {
+      throw new BadRequestException('Yaroqsiz vazifa ID formati');
+    }
+    return this.videoJobsService.getJobById(id, currentUserId);
   }
 
   // Audio mock wav endpoint
   @Get('audio-mock/:avatarId')
   async getAudioMock(@Param('avatarId') avatarId: string, @Res() res: Response) {
+    if (!UUID_REGEX.test(avatarId)) {
+      throw new BadRequestException('Yaroqsiz avatar ID');
+    }
+
     // Generate a minimal valid 1-second 44.1kHz mono WAV file in memory
     const sampleRate = 44100;
     const durationSec = 1.2;
@@ -114,6 +137,7 @@ export class VideoJobsController {
       'Content-Type': 'audio/wav',
       'Content-Length': buffer.length.toString(),
       'Cache-Control': 'public, max-age=3600',
+      'X-Content-Type-Options': 'nosniff',
     });
     res.end(buffer);
   }

@@ -1,7 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException, Logger, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+  Inject,
+} from '@nestjs/common';
 import { KyselyService } from '../database/kysely.service';
 import { sql } from 'kysely';
 import { VideoJob, AiAvatar } from '../database/schema';
+
+const ALLOWED_PRESETS = new Set(['uzum_9_16', 'instagram_reels', 'telegram_ad']);
+const ALLOWED_TONES = new Set(['discount_hook', 'quality_review', 'short_reels']);
 
 @Injectable()
 export class VideoJobsService {
@@ -26,8 +36,27 @@ export class VideoJobsService {
     scriptTone: string;
     scriptText: string;
   }): Promise<VideoJob> {
+    const scriptText = (dto.scriptText || '').trim().slice(0, 2000);
+    if (!scriptText) {
+      throw new BadRequestException('Ssenariy matni kiritilishi shart');
+    }
+
+    const platformPreset = ALLOWED_PRESETS.has(dto.platformPreset) ? dto.platformPreset : 'uzum_9_16';
+    const scriptTone = ALLOWED_TONES.has(dto.scriptTone) ? dto.scriptTone : 'discount_hook';
+
+    // Verify avatar exists and is active
+    const avatar = await this.db
+      .selectFrom('ai_avatars')
+      .select(['id', 'is_active'])
+      .where('id', '=', dto.avatarId)
+      .executeTakeFirst();
+
+    if (!avatar || !avatar.is_active) {
+      throw new BadRequestException('Tanlangan AI boshlovchi mavjud emas yoki faol emas');
+    }
+
     const job = await this.db.transaction().execute(async (trx) => {
-      // 1. Lock user row and verify available credits
+      // 1. Lock user row and verify available credits (prevents race conditions)
       const user = await trx
         .selectFrom('users')
         .select(['id', 'credits_balance'])
@@ -35,8 +64,12 @@ export class VideoJobsService {
         .forUpdate()
         .executeTakeFirst();
 
-      if (!user || user.credits_balance <= 0) {
-        throw new BadRequestException('Kreditlar yetarli emas. Hisobni toʻldiring.');
+      if (!user) {
+        throw new NotFoundException('Foydalanuvchi hisobi topilmadi');
+      }
+
+      if (user.credits_balance <= 0) {
+        throw new BadRequestException('Kreditlar yetarli emas. Iltimos, hisobingizni toʻldiring.');
       }
 
       // 2. Deduct 1 credit atomically
@@ -56,9 +89,9 @@ export class VideoJobsService {
           user_id: dto.userId,
           product_id: dto.productId,
           avatar_id: dto.avatarId,
-          platform_preset: dto.platformPreset || 'uzum_9_16',
-          script_tone: dto.scriptTone || 'discount_hook',
-          script_text: dto.scriptText,
+          platform_preset: platformPreset,
+          script_tone: scriptTone,
+          script_text: scriptText,
           status: 'queued',
           progress_percent: 0,
           credits_charged: 1,
@@ -107,7 +140,7 @@ export class VideoJobsService {
     }
   }
 
-  async getJobById(jobId: string): Promise<VideoJob> {
+  async getJobById(jobId: string, currentUserId?: string): Promise<VideoJob> {
     const job = await this.db
       .selectFrom('video_jobs')
       .selectAll()
@@ -118,24 +151,20 @@ export class VideoJobsService {
       throw new NotFoundException(`Video vazifasi topilmadi: ${jobId}`);
     }
 
+    // Access control: only the job owner may inspect job details
+    if (currentUserId && job.user_id !== currentUserId) {
+      throw new ForbiddenException('Ushbu video vazifasiga kirish huquqingiz yoʻq');
+    }
+
     return job;
   }
 
-  async listUserJobs(userId?: string): Promise<VideoJob[]> {
-    if (userId) {
-      return await this.db
-        .selectFrom('video_jobs')
-        .selectAll()
-        .where('user_id', '=', userId)
-        .orderBy('created_at', 'desc')
-        .execute();
-    }
-
+  async listUserJobs(userId: string): Promise<VideoJob[]> {
     return await this.db
       .selectFrom('video_jobs')
       .selectAll()
+      .where('user_id', '=', userId)
       .orderBy('created_at', 'desc')
-      .limit(20)
       .execute();
   }
 
@@ -146,22 +175,25 @@ export class VideoJobsService {
     tone: 'discount_hook' | 'quality_review' | 'short_reels';
     dialect?: string;
   }): Promise<{ scriptText: string; estimatedDurationSeconds: number; hooks: string[] }> {
-    const title = params.productTitle || 'Mahsulot';
-    const priceFormatted = params.priceUzs
-      ? `${Number(params.priceUzs).toLocaleString('uz-UZ')} so'm`
+    const title = (params.productTitle || 'Mahsulot').trim().slice(0, 160);
+    const validPrice = Math.max(0, Math.min(Number(params.priceUzs) || 0, 100_000_000_000));
+    const priceFormatted = validPrice > 0
+      ? `${validPrice.toLocaleString('uz-UZ')} so'm`
       : 'maxsus narxda';
 
     let script = '';
     let hooks: string[] = [];
 
-    if (params.tone === 'discount_hook') {
+    const tone = ALLOWED_TONES.has(params.tone) ? params.tone : 'discount_hook';
+
+    if (tone === 'discount_hook') {
       hooks = [
         `Hozirroq ko'ring! Uzum Marketda ushbu ${title} atigi ${priceFormatted}!`,
         `Qimmat sotib olishga shoshilmang! ${title} endi katta chegirmada!`,
         `Ushbu taklif faqat 24 soat amal qiladi: ${title} — ${priceFormatted}!`,
       ];
       script = `Salom! Uzum Marketda ulgurib qoling! Aynan bugun mashhur "${title}" atigi ${priceFormatted} bo'lib turibdi. Sifati a'lo darajada, yetkazib berish esa 1 kunda bepul! Buyurtma berish uchun quyidagi havolani bosing va 30% chegirmadan foydalaning!`;
-    } else if (params.tone === 'quality_review') {
+    } else if (tone === 'quality_review') {
       hooks = [
         `Haqiqatdan ham shunchalik yaxshimi? ${title} haqida xolis sharh!`,
         `Men bu ${title}ni 1 oydan beri ishlataman va natijasi hayratlanarli!`,
@@ -169,7 +201,6 @@ export class VideoJobsService {
       ];
       script = `Assalomu alaykum! Ko'pchilik so'ragan "${title}" qo'limizga yetib keldi. Materiali juda pishiq, qo'lda ushlaganda premium seziladi. Narxi ${priceFormatted}. O'zimiz sinovdan o'tkazdik — tavsiya qilamiz! Profilga o'tib, buyurtma qilishingiz mumkin.`;
     } else {
-      // short_reels
       hooks = [
         `Do'stlaringizga ham yuboring! ${title} yangi trendda! 🔥`,
         `Trenddagi ${title} — endi O'zbekistonda! ⚡`,
@@ -186,10 +217,11 @@ export class VideoJobsService {
   }
 
   async getTtsAudioPreview(avatarId: string, text?: string): Promise<{ audioUrl: string; duration: number; format: string }> {
+    const safeText = (text || '').slice(0, 2000);
     return {
       audioUrl: `/api/video-jobs/audio-mock/${avatarId}`,
-      duration: 12.4,
-      format: 'audio/mp3',
+      duration: Math.min(60, Math.max(3, Math.round(safeText.length * 0.08) || 12)),
+      format: 'audio/wav',
     };
   }
 }
