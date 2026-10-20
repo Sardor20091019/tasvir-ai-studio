@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: #FAF8F5;
+  --ink: #141413;
+  --border: #E4E2DD;
+}
+
+body {
+  background-color: #FAF8F5;
+  color: #141413;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Tactile button bounce effect */
+.tactile-btn {
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tactile-btn:active {
+  transform: scale(0.98);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E4E2DD;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C8C6C0;
+}
+
+/* Waveform animation */
+@keyframes wavePulse {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.wave-bar {
+  animation: wavePulse 1.2s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* Floating product motion keyframes for 9:16 preview */
+@keyframes slowFloat {
+  0% {
+    transform: translateY(0px) scale(1.02);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0px) scale(1.02);
+  }
+}
+
+.animate-product-float {
+  animation: slowFloat 8s ease-in-out infinite;
+}
+

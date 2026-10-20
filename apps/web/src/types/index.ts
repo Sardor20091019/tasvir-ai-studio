@@ -1,0 +1,63 @@
+export interface User {
+  id: string;
+  phone_number: string;
+  full_name: string;
+  telegram_id: number | null;
+  locale: string;
+  plan_tier: string;
+  credits_balance: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiAvatar {
+  id: string;
+  slug: string;
+  display_name: string;
+  dialect_label: string;
+  language_code: string;
+  avatar_image_url: string;
+  voice_model_id: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  user_id: string;
+  title: string;
+  category: string;
+  price_uzs: number | string;
+  discount_badge: string | null;
+  image_url: string;
+  created_at: string;
+}
+
+export interface VideoJob {
+  id: string;
+  user_id: string;
+  product_id: string;
+  avatar_id: string;
+  platform_preset: string;
+  script_tone: string;
+  script_text: string;
+  status: 'queued' | 'analyzing' | 'synthesizing_voice' | 'lip_syncing' | 'completed' | 'failed';
+  progress_percent: number;
+  audio_preview_url: string | null;
+  output_video_url: string | null;
+  credits_charged: number;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface PlanConfig {
+  id: string;
+  nameUz: string;
+  priceUzs: number;
+  credits: number;
+  description: string;
+  badge?: string;
+  features: string[];
+}
+
