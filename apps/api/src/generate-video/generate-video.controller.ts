@@ -50,3 +50,4 @@ export class GenerateVideoController {
     return this.generateVideoService.getJob(jobId);
   }
 }
+

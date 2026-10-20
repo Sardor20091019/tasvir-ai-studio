@@ -228,3 +228,4 @@ Respond with clean JSON with keys: "hook", "body", "cta".`,
     this.logger.log(`Video generation job ${jobId} completed successfully: ${finalVideoUrl}`);
   }
 }
+
