@@ -22,8 +22,8 @@ interface NavbarProps {
   onToggleLocale: () => void;
   isTelegramMode: boolean;
   onToggleTelegramMode: () => void;
-  activeTab: 'studio' | 'templates' | 'calculator' | 'pricing' | 'library';
-  setActiveTab: (tab: 'studio' | 'templates' | 'calculator' | 'pricing' | 'library') => void;
+  activeTab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library';
+  setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library') => void;
   onOpenCheckout: () => void;
   onOpenAuth: () => void;
   libraryCount: number;
@@ -45,6 +45,7 @@ export function Navbar({
     uz: {
       brandSub: 'AI Video Reklama',
       studio: 'Studiyo',
+      prompt: 'AI Prompt Video',
       templates: 'Shablonlar',
       calculator: 'Kalkulyator',
       pricing: 'Narxlar',
@@ -57,6 +58,7 @@ export function Navbar({
     ru: {
       brandSub: 'AI Видео Реклама',
       studio: 'Студия',
+      prompt: 'AI Промпт Видео',
       templates: 'Шаблоны',
       calculator: 'Калькулятор',
       pricing: 'Тарифы',
@@ -104,6 +106,17 @@ export function Navbar({
               }`}
             >
               {t.studio}
+            </button>
+            <button
+              onClick={() => setActiveTab('prompt')}
+              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                activeTab === 'prompt'
+                  ? 'bg-coral text-white font-semibold shadow-xs'
+                  : 'text-coral font-medium hover:bg-coral-light'
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{t.prompt}</span>
             </button>
             <button
               onClick={() => setActiveTab('templates')}

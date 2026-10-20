@@ -10,13 +10,14 @@ import { VideoLibraryModal } from '../components/VideoLibraryModal';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { AuthModal } from '../components/AuthModal';
 import { TelegramContainer } from '../components/TelegramContainer';
+import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
 import { User, VideoJob } from '../types';
 import { api } from '../lib/api';
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<'uz' | 'ru'>('uz');
-  const [activeTab, setActiveTab] = useState<'studio' | 'templates' | 'calculator' | 'pricing' | 'library'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library'>('studio');
   const [isTelegramMode, setIsTelegramMode] = useState(false);
 
   // Modals
@@ -109,6 +110,35 @@ export default function HomePage() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onOpenCheckout={() => setIsCheckoutOpen(true)}
+          />
+        </div>
+      )}
+
+      {/* Tab: AI Video Prompt Generator (Gemini Omni 1.1 Flash & Remotion) */}
+      {activeTab === 'prompt' && (
+        <div className="animate-in fade-in duration-200">
+          <PromptVideoGenerator
+            locale={locale}
+            onVideoCreated={(videoUrl) => {
+              const newPromptJob: VideoJob = {
+                id: `job-prompt-${Date.now()}`,
+                user_id: user?.id || 'user-demo',
+                product_id: 'p-prompt',
+                avatar_id: 'malika',
+                platform_preset: 'uzum_9_16',
+                script_tone: 'discount_hook',
+                script_text: 'Gemini Omni 1.1 Flash AI Prompt Video',
+                status: 'completed',
+                progress_percent: 100,
+                audio_preview_url: null,
+                output_video_url: videoUrl,
+                credits_charged: 1,
+                error_message: null,
+                created_at: new Date().toISOString(),
+                completed_at: new Date().toISOString(),
+              };
+              handleJobCreated(newPromptJob);
+            }}
           />
         </div>
       )}
