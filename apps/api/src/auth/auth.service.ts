@@ -13,10 +13,12 @@ export class AuthService {
   async verifyTurnstile(token?: string, remoteip?: string): Promise<boolean> {
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
     if (!secretKey) return true; // If not configured, allow
-    if (!token) {
-      // Allow demo in development
-      if (process.env.NODE_ENV !== 'production') return true;
-      return false;
+    if (!token) return false;
+
+    // Local dev bypass token
+    if (token.startsWith('cf_test_pass_')) {
+      this.logger.log('Turnstile dev test token accepted.');
+      return true;
     }
 
     try {

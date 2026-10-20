@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import { api } from '../lib/api';
+import { Turnstile } from './Turnstile';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function AuthModal({
   const [otpCode, setOtpCode] = useState('1234');
   const [isLoading, setIsLoading] = useState(false);
   const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -66,18 +68,21 @@ export function AuthModal({
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!turnstileToken) {
+      alert(locale === 'uz' ? "Iltimos, avval Turnstile captcha tekshiruvini tasdiqlang." : "Пожалуйста, сначала пройдите капчу Turnstile.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Pass turnstile token (using site key or simulated token)
-      const turnstileToken = 'cf_turnstile_verified_' + Date.now();
       const res = await api.sendOtp(phone, turnstileToken);
       if (res.demoCode) {
         setDemoCodeHint(res.demoCode);
         setOtpCode(res.demoCode);
       }
       setStep('otp');
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      alert(err.message || 'Xatolik yuz berdi');
     } finally {
       setIsLoading(false);
     }
@@ -166,10 +171,24 @@ export function AuthModal({
               />
             </div>
 
+            {/* Real Interactive Cloudflare Turnstile Captcha Widget */}
+            <div className="py-1">
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                locale={locale}
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl bg-coral hover:bg-coral-hover text-white text-xs sm:text-sm font-bold shadow-tactile flex items-center justify-center gap-2 tactile-btn"
+              disabled={isLoading || !turnstileToken}
+              className={`w-full py-3 px-4 rounded-xl text-white text-xs sm:text-sm font-bold shadow-tactile flex items-center justify-center gap-2 transition-all tactile-btn ${
+                !turnstileToken
+                  ? 'bg-ink-muted/50 cursor-not-allowed opacity-80'
+                  : 'bg-coral hover:bg-coral-hover'
+              }`}
             >
               {isLoading ? (
                 <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -180,16 +199,11 @@ export function AuthModal({
                 </>
               )}
             </button>
-
-            {/* Cloudflare Turnstile Badge */}
-            <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg bg-canvas border border-border text-[11px] text-ink-muted">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="#F38020"/>
-                <path d="M10 14l2 2 4-4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="font-medium">{t.turnstileActive}</span>
-              <span className="text-[9px] font-mono text-emerald-600 bg-emerald-50 px-1 rounded">✓ Verified</span>
-            </div>
+            {!turnstileToken && (
+              <p className="text-[10px] text-center text-ink-muted -mt-2">
+                {locale === 'uz' ? 'Tugma captcha tasdiqlangandan soʻng faollashadi' : 'Кнопка станет активной после прохождения капчи'}
+              </p>
+            )}
 
             <div className="relative flex py-1 items-center">
               <div className="flex-grow border-t border-border"></div>
