@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,7 +20,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .font-mono {
@@ -29,10 +29,22 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Tactile button bounce effect */
 .tactile-btn {
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tactile-btn:hover {
+  transform: translateY(-1px);
 }
 .tactile-btn:active {
-  transform: scale(0.98);
+  transform: translateY(0px) scale(0.98);
+}
+
+/* Interactive Card hover */
+.interactive-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(20, 20, 19, 0.08), 0 4px 10px -2px rgba(20, 20, 19, 0.04);
 }
 
 /* Custom subtle scrollbar */
@@ -72,7 +84,7 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(0px) scale(1.02);
   }
   50% {
-    transform: translateY(-8px) scale(1.05);
+    transform: translateY(-6px) scale(1.04);
   }
   100% {
     transform: translateY(0px) scale(1.02);
@@ -80,6 +92,24 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .animate-product-float {
-  animation: slowFloat 8s ease-in-out infinite;
+  animation: slowFloat 7s ease-in-out infinite;
 }
 
+/* Glow shimmer effect */
+@keyframes shimmerGlow {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #EA580C 0%, #F59E0B 50%, #EA580C 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmerGlow 6s linear infinite;
+}

@@ -17,6 +17,7 @@ interface NavbarProps {
   user: User | null;
   locale: LocaleType;
   onToggleLocale: () => void;
+  onChangeLocale?: (locale: LocaleType) => void;
   activeTab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library';
   setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library') => void;
   onOpenCheckout: () => void;
@@ -28,6 +29,7 @@ export function Navbar({
   user,
   locale,
   onToggleLocale,
+  onChangeLocale,
   activeTab,
   setActiveTab,
   onOpenCheckout,
@@ -209,16 +211,31 @@ export function Navbar({
             <span className="hidden sm:inline">{t.recharge}</span>
           </button>
 
-          {/* Language Switcher */}
-          <div className="border-l border-border pl-2 sm:pl-3 flex items-center gap-1">
-            <button
-              onClick={onToggleLocale}
-              className="px-2 py-1 text-xs font-mono font-semibold rounded-lg text-ink-muted hover:text-ink hover:bg-canvas transition-colors flex items-center gap-1"
-              title={locale === 'uz' ? "Tilni o'zgartirish" : locale === 'en' ? 'Change language' : 'Сменить язык'}
-            >
-              <Globe className="h-3.5 w-3.5" />
-              <span className="uppercase font-bold">{locale}</span>
-            </button>
+          {/* Language Switcher: 3-way Segmented Control */}
+          <div className="border-l border-border pl-2 sm:pl-3 flex items-center">
+            <div className="flex items-center p-0.5 rounded-lg bg-canvas border border-border">
+              {(['uz', 'en', 'ru'] as LocaleType[]).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => onChangeLocale ? onChangeLocale(lang) : (lang !== locale && onToggleLocale())}
+                  className={`px-2 py-0.5 text-[11px] font-mono font-bold rounded-md transition-all ${
+                    locale === lang
+                      ? 'bg-white text-ink shadow-2xs font-extrabold'
+                      : 'text-ink-muted hover:text-ink'
+                  }`}
+                  title={
+                    lang === 'uz'
+                      ? "O'zbek tili"
+                      : lang === 'en'
+                      ? 'English'
+                      : 'Русский язык'
+                  }
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* User Account / Auth */}
@@ -241,6 +258,73 @@ export function Navbar({
           </button>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Persistent for Mobile Screens) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-lg px-2 py-1.5 flex items-center justify-around">
+        <button
+          type="button"
+          onClick={() => setActiveTab('studio')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'studio'
+              ? 'text-coral font-bold bg-bento-peach'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-[10px] font-medium">{t.studio}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('prompt')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
+            activeTab === 'prompt'
+              ? 'text-amber-800 font-bold bg-amber-100'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          <Film className="h-4 w-4 text-coral" />
+          <span className="text-[10px] font-medium">Veo 3.1</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('templates')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'templates'
+              ? 'text-emerald-700 font-bold bg-bento-mint'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          <Layers className="h-4 w-4" />
+          <span className="text-[10px] font-medium">{t.templates}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('pricing')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            activeTab === 'pricing'
+              ? 'text-purple-700 font-bold bg-bento-lavender'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          <CreditCard className="h-4 w-4" />
+          <span className="text-[10px] font-medium">{t.pricing}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('library')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
+            activeTab === 'library'
+              ? 'text-ink font-bold bg-canvas'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          <Video className="h-4 w-4 text-coral" />
+          <span className="text-[10px] font-medium">{t.library}</span>
+          {libraryCount > 0 && (
+            <span className="absolute top-1 right-2 h-2 w-2 rounded-full bg-coral animate-ping" />
+          )}
+        </button>
+      </nav>
     </header>
   );
 }
