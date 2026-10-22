@@ -21,6 +21,7 @@ import { PricingSection } from '../components/PricingSection';
 import { VideoLibraryModal } from '../components/VideoLibraryModal';
 import { AskAdminModal } from '../components/AskAdminModal';
 import { AuthModal } from '../components/AuthModal';
+import { ProfileModal } from '../components/ProfileModal';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
 import { User, VideoJob, LocaleType } from '../types';
 import { api } from '../lib/api';
@@ -34,6 +35,7 @@ export default function HomePage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutPlanId, setCheckoutPlanId] = useState('shop_pro');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Selected template to load in Studio
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
@@ -508,10 +510,21 @@ export default function HomePage() {
         setActiveTab={setActiveTab}
         onOpenCheckout={() => setIsCheckoutOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
         libraryCount={jobs.length}
       />
 
       {mainContent}
+
+      {/* Profile & DB Tokens Settings Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={user}
+        onUpdateUser={setUser}
+        locale={locale}
+        onOpenCheckout={() => setIsCheckoutOpen(true)}
+      />
 
       {/* Ask Admin / Token Request Modal (Payments removed) */}
       <AskAdminModal

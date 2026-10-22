@@ -3,7 +3,9 @@ export type LocaleType = 'uz' | 'en' | 'ru';
 export interface User {
   id: string;
   phone_number: string;
+  email?: string | null;
   full_name: string;
+  avatar_url?: string | null;
   telegram_id: number | null;
   locale: string;
   role?: string; // 'user' | 'admin'

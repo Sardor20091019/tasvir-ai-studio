@@ -131,8 +131,10 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      // Add role column and token_requests table
+      // Add role, email, avatar_url columns and token_requests table
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) DEFAULT 'user'`.execute(this._db);
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email varchar(120)`.execute(this._db);
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`.execute(this._db);
       await sql`
         CREATE TABLE IF NOT EXISTS token_requests (
           id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

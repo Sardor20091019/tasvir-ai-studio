@@ -169,6 +169,7 @@ export class AuthService {
 
     let email: string;
     let name: string = 'Google Merchant';
+    let picture: string | null = null;
 
     // Allow mock credential in development for test suites
     if (process.env.NODE_ENV !== 'production' && params.credential.startsWith('mock_demo_credential')) {
@@ -195,6 +196,7 @@ export class AuthService {
 
         email = gInfo.email;
         name = gInfo.name || gInfo.email.split('@')[0] || 'Google User';
+        picture = gInfo.picture || null;
       } catch (err: any) {
         if (err instanceof BadRequestException) throw err;
         throw new BadRequestException(`Google autentifikatsiyasini tekshirib boʻlmadi: ${err.message}`);
@@ -206,7 +208,12 @@ export class AuthService {
     let user = await this.db
       .selectFrom('users')
       .selectAll()
-      .where('phone_number', '=', syntheticPhone)
+      .where((eb) =>
+        eb.or([
+          eb('phone_number', '=', syntheticPhone),
+          eb('email', '=', email),
+        ]),
+      )
       .executeTakeFirst();
 
     if (!user) {
@@ -214,20 +221,98 @@ export class AuthService {
         .insertInto('users')
         .values({
           phone_number: syntheticPhone,
+          email,
           full_name: name,
+          avatar_url: picture,
           telegram_id: null,
           locale: 'uz',
           role: 'user',
           plan_tier: 'starter',
-          credits_balance: 3,
+          credits_balance: 5,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
-      this.logger.log(`Created new verified Google user: ${name} (${syntheticPhone})`);
+      this.logger.log(`Created new verified Google user saved to DB: ${name} (${syntheticPhone}, tokens=${user.credits_balance})`);
+    } else {
+      user = (await this.db
+        .updateTable('users')
+        .set({
+          email: user.email || email,
+          avatar_url: user.avatar_url || picture,
+          updated_at: new Date().toISOString(),
+        })
+        .where('id', '=', user.id)
+        .returningAll()
+        .executeTakeFirst()) || user;
+      this.logger.log(`Loaded existing user from DB: ${user.full_name} (tokens=${user.credits_balance})`);
     }
 
     const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
     return { user, token };
+  }
+
+  async updateProfile(
+    userId: string,
+    data: {
+      fullName?: string;
+      phoneNumber?: string;
+      avatarUrl?: string;
+      locale?: string;
+    },
+  ): Promise<User> {
+    if (!userId) {
+      throw new UnauthorizedException('Avtorizatsiya talab qilinadi. Iltimos, tizimga kiring.');
+    }
+
+    const updates: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (data.fullName !== undefined) {
+      const trimmed = (data.fullName || '').trim();
+      if (trimmed.length < 2 || trimmed.length > 100) {
+        throw new BadRequestException('Ism 2 tadan 100 tagacha belgidan iborat boʻlishi kerak');
+      }
+      updates.full_name = trimmed;
+    }
+
+    if (data.phoneNumber !== undefined && data.phoneNumber.trim()) {
+      const cleanPhone = this.normalizePhone(data.phoneNumber);
+      if (cleanPhone.length >= 9) {
+        const existing = await this.db
+          .selectFrom('users')
+          .selectAll()
+          .where('phone_number', '=', cleanPhone)
+          .where('id', '!=', userId)
+          .executeTakeFirst();
+        if (existing) {
+          throw new BadRequestException('Ushbu telefon raqami boshqa akkauntga biriktirilgan');
+        }
+        updates.phone_number = cleanPhone;
+      }
+    }
+
+    if (data.avatarUrl !== undefined) {
+      updates.avatar_url = data.avatarUrl ? data.avatarUrl.trim() : null;
+    }
+
+    if (data.locale && ['uz', 'en', 'ru'].includes(data.locale)) {
+      updates.locale = data.locale;
+    }
+
+    const updatedUser = await this.db
+      .updateTable('users')
+      .set(updates)
+      .where('id', '=', userId)
+      .returningAll()
+      .executeTakeFirst();
+
+    if (!updatedUser) {
+      throw new UnauthorizedException('Foydalanuvchi hisobi topilmadi');
+    }
+
+    this.logger.log(`Updated user in DB: ${updatedUser.full_name} (${updatedUser.id}, tokens=${updatedUser.credits_balance})`);
+    return updatedUser;
   }
 
   private hashCode(str: string): number {

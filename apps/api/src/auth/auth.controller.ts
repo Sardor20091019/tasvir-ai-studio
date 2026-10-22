@@ -1,6 +1,18 @@
-import { Controller, Post, Get, Body, Headers, Inject, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Headers,
+  Inject,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtUtil } from './jwt.util';
+import { AuthGuard } from './guards/auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -49,5 +61,20 @@ export class AuthController {
     }
 
     throw new UnauthorizedException('Iltimos, avval tizimga kiring (Avtorizatsiya talab qilinadi)');
+  }
+
+  @Patch('profile')
+  @UseGuards(AuthGuard)
+  async updateProfile(
+    @CurrentUser('id') currentUserId: string,
+    @Body()
+    body: {
+      fullName?: string;
+      phoneNumber?: string;
+      avatarUrl?: string;
+      locale?: string;
+    },
+  ) {
+    return this.authService.updateProfile(currentUserId, body);
   }
 }

@@ -12,7 +12,9 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.primaryKey().defaultTo(sql`gen_random_uuid()`)
     )
     .addColumn('phone_number', 'varchar(20)', (col) => col.notNull().unique())
+    .addColumn('email', 'varchar(120)')
     .addColumn('full_name', 'varchar(120)', (col) => col.notNull())
+    .addColumn('avatar_url', 'text')
     .addColumn('telegram_id', 'bigint', (col) => col.unique())
     .addColumn('locale', 'varchar(5)', (col) => col.notNull().defaultTo('uz'))
     .addColumn('plan_tier', 'varchar(30)', (col) =>

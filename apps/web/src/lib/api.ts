@@ -174,6 +174,29 @@ export const api = {
     return null;
   },
 
+  async updateProfile(data: {
+    fullName?: string;
+    phoneNumber?: string;
+    avatarUrl?: string;
+    locale?: string;
+  }): Promise<User> {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || 'Profilni yangilashda xatolik yuz berdi');
+  },
+
   async sendOtp(phoneNumber: string, turnstileToken?: string): Promise<{ success: boolean; message: string; demoCode?: string }> {
     try {
       const res = await fetch(`${API_BASE}/auth/send-otp`, {

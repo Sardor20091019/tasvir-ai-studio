@@ -179,5 +179,43 @@ describe('Security Regression & Remediation Tests', () => {
       'Unauthenticated request must be rejected by AuthGuard',
     );
   });
+
+  test('User Profile Update: updates name and preserves DB token balance', async () => {
+    const { AuthService } = await import('../src/auth/auth.service');
+    const mockDb: any = {
+      updateTable: () => ({
+        set: () => ({
+          where: () => ({
+            returningAll: () => ({
+              executeTakeFirst: async () => ({
+                id: 'usr_1',
+                full_name: 'Sardor Updated',
+                phone_number: '+998990991112',
+                credits_balance: 15,
+                role: 'user',
+              }),
+            }),
+          }),
+        }),
+      }),
+      selectFrom: () => ({
+        selectAll: () => ({
+          where: () => ({
+            where: () => ({
+              executeTakeFirst: async () => null,
+            }),
+          }),
+        }),
+      }),
+    };
+    const authService = new AuthService(mockDb);
+
+    const updated = await authService.updateProfile('usr_1', {
+      fullName: 'Sardor Updated',
+    });
+
+    assert.equal(updated.full_name, 'Sardor Updated');
+    assert.equal(updated.credits_balance, 15);
+  });
 });
 

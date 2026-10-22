@@ -22,6 +22,7 @@ interface NavbarProps {
   setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library') => void;
   onOpenCheckout: () => void;
   onOpenAuth: () => void;
+  onOpenProfile?: () => void;
   libraryCount: number;
 }
 
@@ -34,6 +35,7 @@ export function Navbar({
   setActiveTab,
   onOpenCheckout,
   onOpenAuth,
+  onOpenProfile,
   libraryCount,
 }: NavbarProps) {
   const t = {
@@ -238,11 +240,17 @@ export function Navbar({
             </div>
           </div>
 
-          {/* User Account / Auth */}
+          {/* User Account / Profile & Tokens */}
           <button
-            onClick={onOpenAuth}
+            onClick={() => {
+              if (user && onOpenProfile) {
+                onOpenProfile();
+              } else {
+                onOpenAuth();
+              }
+            }}
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-white text-ink hover:bg-canvas tactile-btn"
-            title={user ? (locale === 'en' ? 'My profile' : 'Mening profilim') : (locale === 'en' ? 'Sign in with Google' : 'Google orqali kirish')}
+            title={user ? (locale === 'en' ? 'My profile & tokens' : 'Mening profilim va tokenlarim') : (locale === 'en' ? 'Sign in with Google' : 'Google orqali kirish')}
           >
             <div className="h-7 w-7 rounded-lg bg-bento-peach text-coral font-bold flex items-center justify-center text-xs">
               {user?.full_name ? user.full_name[0] : <UserIcon className="h-3.5 w-3.5" />}
@@ -252,7 +260,7 @@ export function Navbar({
                 {user?.full_name || t.login}
               </span>
               <span className="text-[10px] font-mono text-ink-muted">
-                {user?.phone_number || (user ? `${user.credits_balance} ${locale === 'en' ? 'tokens' : 'token'}` : (locale === 'en' ? 'Google Account' : 'Google hisob'))}
+                {user ? `${user.credits_balance} ${locale === 'en' ? 'tokens on DB' : 'token (baza)'}` : (locale === 'en' ? 'Google Account' : 'Google hisob')}
               </span>
             </div>
           </button>

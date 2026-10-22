@@ -44,28 +44,29 @@ This document provides the complete, authoritative reference for all REST API en
 | **3** | `POST` | `/api/auth/verify-otp` | Public | Auth | Verify SMS OTP and obtain JWT |
 | **4** | `POST` | `/api/auth/google` | Public (Turnstile Required) | Auth | Google OAuth 2.0 login with Turnstile |
 | **5** | `GET` | `/api/auth/me` | Bearer JWT | Auth | Get authenticated user profile & balance |
-| **6** | `GET` | `/api/products` | Optional Auth | Products | List user or platform demo products |
-| **7** | `GET` | `/api/products/:id` | Public | Products | Retrieve single product details |
-| **8** | `POST` | `/api/products` | Bearer JWT | Products | Create product bound to authenticated user |
-| **9** | `POST` | `/api/products/presign-upload` | Bearer JWT | Products | Get presigned upload configuration |
-| **10** | `POST` | `/api/generate-video` | Bearer JWT (AuthGuard) | Veo 3.1 | Generate 9:16 vertical drama ad (Veo 3.1) |
-| **11** | `GET` | `/api/generate-video/:jobId` | Public | Veo 3.1 | Get drama video status & karaoke subtitles |
-| **12** | `GET` | `/api/generate-video/status/:jobId`| Public | Veo 3.1 | Alias status polling endpoint |
-| **13** | `GET` | `/api/video-jobs/avatars` | Public | Video Jobs | List Central Asian AI avatars |
-| **14** | `POST` | `/api/video-jobs/generate-script` | Public | Video Jobs | Generate Uzum/Reels localized ad script |
-| **15** | `POST` | `/api/video-jobs/tts-preview` | Public | Video Jobs | Synthesize voiceover audio preview |
-| **16** | `POST` | `/api/video-jobs/render` | Bearer JWT | Video Jobs | Start 4-stage 9:16 video render job |
-| **17** | `GET` | `/api/video-jobs` | Bearer JWT | Video Jobs | List video rendering history for user |
-| **18** | `GET` | `/api/video-jobs/:id` | Bearer JWT | Video Jobs | Get single render job status and output |
-| **19** | `GET` | `/api/video-jobs/audio-mock/:avatarId`| Public | Video Jobs | Stream synthetic voice WAV audio |
-| **20** | `GET` | `/api/billing/plans` | Public | Billing | List token subscription/recharge plans |
-| **21** | `POST` | `/api/billing/request-tokens` | Bearer JWT | Billing | Submit token allocation request to admin |
-| **22** | `GET` | `/api/billing/my-requests` | Bearer JWT | Billing | View submitted token request statuses |
-| **23** | `GET` | `/api/billing/transactions` | Bearer JWT | Billing | View user credit transaction history |
-| **24** | `POST` | `/api/admin/grant-tokens` | AdminGuard | Admin | Add tokens to user balance |
-| **25** | `GET` | `/api/admin/requests` | AdminGuard | Admin | List all pending user token requests |
-| **26** | `POST` | `/api/admin/reject-request` | AdminGuard | Admin | Reject user token request |
-| **27** | `GET` | `/api/admin/users` | AdminGuard | Admin | List platform users for token management |
+| **6** | `PATCH` | `/api/auth/profile` | Bearer JWT | Auth | Update name, phone, avatar & profile data on DB |
+| **7** | `GET` | `/api/products` | Optional Auth | Products | List user or platform demo products |
+| **8** | `GET` | `/api/products/:id` | Public | Products | Retrieve single product details |
+| **9** | `POST` | `/api/products` | Bearer JWT | Products | Create product bound to authenticated user |
+| **10** | `POST` | `/api/products/presign-upload` | Bearer JWT | Products | Get presigned upload configuration |
+| **11** | `POST` | `/api/generate-video` | Bearer JWT (AuthGuard) | Veo 3.1 | Generate 9:16 vertical drama ad (Veo 3.1) |
+| **12** | `GET` | `/api/generate-video/:jobId` | Public | Veo 3.1 | Get drama video status & karaoke subtitles |
+| **13** | `GET` | `/api/generate-video/status/:jobId`| Public | Veo 3.1 | Alias status polling endpoint |
+| **14** | `GET` | `/api/video-jobs/avatars` | Public | Video Jobs | List Central Asian AI avatars |
+| **15** | `POST` | `/api/video-jobs/generate-script` | Public | Video Jobs | Generate Uzum/Reels localized ad script |
+| **16** | `POST` | `/api/video-jobs/tts-preview` | Public | Video Jobs | Synthesize voiceover audio preview |
+| **17** | `POST` | `/api/video-jobs/render` | Bearer JWT | Video Jobs | Start 4-stage 9:16 video render job |
+| **18** | `GET` | `/api/video-jobs` | Bearer JWT | Video Jobs | List video rendering history for user |
+| **19** | `GET` | `/api/video-jobs/:id` | Bearer JWT | Video Jobs | Get single render job status and output |
+| **20** | `GET` | `/api/video-jobs/audio-mock/:avatarId`| Public | Video Jobs | Stream synthetic voice WAV audio |
+| **21** | `GET` | `/api/billing/plans` | Public | Billing | List token subscription/recharge plans |
+| **22** | `POST` | `/api/billing/request-tokens` | Bearer JWT | Billing | Submit token allocation request to admin |
+| **23** | `GET` | `/api/billing/my-requests` | Bearer JWT | Billing | View submitted token request statuses |
+| **24** | `GET` | `/api/billing/transactions` | Bearer JWT | Billing | View user credit transaction history |
+| **25** | `POST` | `/api/admin/grant-tokens` | AdminGuard | Admin | Add tokens to user balance |
+| **26** | `GET` | `/api/admin/requests` | AdminGuard | Admin | List all pending user token requests |
+| **27** | `POST` | `/api/admin/reject-request` | AdminGuard | Admin | Reject user token request |
+| **28** | `GET` | `/api/admin/users` | AdminGuard | Admin | List platform users for token management |
 
 ---
 
@@ -189,6 +190,36 @@ Retrieves profile and current video token balance for the authenticated caller.
 {
   "statusCode": 401,
   "message": "Iltimos, avval tizimga kiring (Avtorizatsiya talab qilinadi)"
+}
+```
+
+---
+
+### `PATCH /api/auth/profile`
+Updates user profile fields (full name, phone number, avatar URL, interface language) directly in the database.
+* **Authentication**: `Bearer <JWT_ACCESS_TOKEN>`
+* **Request Body**:
+```json
+{
+  "fullName": "Sardor Sunatullayev",
+  "phoneNumber": "+998990991112",
+  "avatarUrl": "https://lh3.googleusercontent.com/a/...",
+  "locale": "uz"
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "id": "usr-google-998822",
+  "full_name": "Sardor Sunatullayev",
+  "email": "user@gmail.com",
+  "phone_number": "+998990991112",
+  "avatar_url": "https://lh3.googleusercontent.com/a/...",
+  "locale": "uz",
+  "role": "user",
+  "plan_tier": "starter",
+  "credits_balance": 5,
+  "updated_at": "2026-10-22T13:00:00.000Z"
 }
 ```
 

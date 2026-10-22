@@ -3,7 +3,9 @@ import { Generated, Insertable, Selectable, Updateable } from 'kysely';
 export interface UsersTable {
   id: Generated<string>;
   phone_number: string;
+  email?: string | null;
   full_name: string;
+  avatar_url?: string | null;
   telegram_id: number | null;
   locale: Generated<string>;
   role: Generated<string>; // 'user' | 'admin'
