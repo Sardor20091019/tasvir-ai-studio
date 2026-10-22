@@ -409,49 +409,118 @@ export const api = {
     return fallbackPlans;
   },
 
-  async createCheckout(body: {
-    userId?: string;
-    planTier: string;
-    provider: 'payme' | 'click' | 'uzum';
-    phoneNumber: string;
-  }) {
+  async requestTokens(requestedTokens: number, note?: string): Promise<{ success: boolean; message: string; requestId?: string }> {
     try {
-      const res = await fetch(`${API_BASE}/billing/checkout`, {
+      const res = await fetch(`${API_BASE}/billing/request-tokens`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ requestedTokens, note }),
       });
       if (res.ok) return await res.json();
     } catch (e) {
-      console.warn('API createCheckout fallback');
+      console.warn('API requestTokens fallback');
     }
     return {
-      transactionId: 'tx-' + Date.now(),
-      checkoutUrl: 'https://payme.uz',
-      amountUzs: 99000,
-      creditsAdded: 10,
-      provider: body.provider,
+      success: true,
+      message: 'Soʻrovingiz adminga yuborildi. Administrator tez orada tokenlarni hisobingizga qoʻshadi.',
+      requestId: 'req-' + Date.now(),
     };
   },
 
-  async confirmTestPayment(transactionId: string) {
+  async getMyTokenRequests(): Promise<any[]> {
     try {
-      const res = await fetch(`${API_BASE}/billing/confirm-test-payment`, {
+      const res = await fetch(`${API_BASE}/billing/my-requests`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('API getMyTokenRequests fallback');
+    }
+    return [];
+  },
+
+  async adminGrantTokens(dto: {
+    targetUserId?: string;
+    targetPhoneNumber?: string;
+    tokensToAdd: number;
+    reason?: string;
+    requestId?: string;
+  }): Promise<{ success: boolean; message: string; newBalance?: number; user?: any }> {
+    try {
+      const res = await fetch(`${API_BASE}/admin/grant-tokens`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ transactionId }),
+        body: JSON.stringify(dto),
+      });
+      if (res.ok) return await res.json();
+      const err = await res.json();
+      throw new Error(err.message || 'Xatolik yuz berdi');
+    } catch (e: any) {
+      throw e;
+    }
+  },
+
+  async adminListRequests(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE}/admin/requests`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
       if (res.ok) return await res.json();
     } catch (e) {
-      console.warn('API confirmTestPayment fallback');
+      console.warn('API adminListRequests fallback');
     }
-    return { success: true, newCreditsBalance: 13, planTier: 'shop_pro' };
+    return [];
+  },
+
+  async adminRejectRequest(requestId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/admin/reject-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ requestId }),
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('API adminRejectRequest fallback');
+    }
+    return { success: true, message: 'Rad etildi' };
+  },
+
+  async adminListUsers(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE}/admin/users`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('API adminListUsers fallback');
+    }
+    return [];
+  },
+
+  async createCheckout(body: {
+    userId?: string;
+    planTier: string;
+    phoneNumber?: string;
+  }) {
+    // Top-up with payments removed: automatically routes to token request to admin
+    const tokens = body.planTier === 'agency' ? 100 : body.planTier === 'shop_pro' ? 35 : 10;
+    return this.requestTokens(tokens, `${body.planTier} tarifi uchun so'rov`);
   },
 
   async getTransactions() {

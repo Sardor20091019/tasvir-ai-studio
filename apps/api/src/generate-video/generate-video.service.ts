@@ -1,6 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import * as crypto from 'crypto';
+import { UploadThingService } from '../storage/uploadthing.service';
 
 export type AspectRatioType = '9:16' | '16:9' | '1:1';
 
@@ -43,6 +44,10 @@ export interface VideoGenerationJob {
 export class GenerateVideoService {
   private readonly logger = new Logger(GenerateVideoService.name);
   private jobs = new Map<string, VideoGenerationJob>();
+
+  constructor(
+    @Inject(UploadThingService) private readonly uploadThingService: UploadThingService,
+  ) {}
 
   private getGeminiClient(): { client: GoogleGenAI; activeKey: string } {
     const rawKey =
@@ -282,21 +287,34 @@ Respond ONLY with a valid JSON object matching:
     job.currentStepMessage = 'MP4 video stream va audio sintez birlashtirilmoqda...';
     await sleep(1800);
 
-    // Phase 4: Completed
-    let finalVideoUrl = '/videos/tasvir-vertical.mp4';
+    // Phase 4: Completed & Stored in UploadThing
+    let finalVideoUrl = 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4';
     if (job.aspectRatio === '16:9') {
-      finalVideoUrl = '/videos/tasvir-horizontal.mp4';
+      finalVideoUrl = 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3XfLP24WTwZd64RDmg13u0o7treqGxpNQk8iB';
     } else if (pLower.includes('airpod') || pLower.includes('naushnik') || pLower.includes('headphone') || pLower.includes('quloqchin')) {
-      finalVideoUrl = '/videos/tasvir-headphones.mp4';
+      finalVideoUrl = 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG33HtIIIfs6HlV5JcNZiYf2IqRTAwbuLgjDKB1';
+    }
+
+    // Attempt direct dynamic upload to UploadThing if fresh asset is available
+    try {
+      const cloudUrl = await this.uploadThingService.uploadVideo(
+        finalVideoUrl,
+        `tasvir-${job.jobId}-${job.aspectRatio.replace(':', '_')}.mp4`,
+      );
+      if (cloudUrl) {
+        finalVideoUrl = cloudUrl;
+      }
+    } catch (utErr) {
+      this.logger.warn(`UploadThing dynamic upload fallback: ${utErr}`);
     }
 
     job.status = 'completed';
     job.progress = 100;
-    job.currentStepMessage = 'Video muvaffaqiyatli tayyorlandi!';
+    job.currentStepMessage = 'Video muvaffaqiyatli tayyorlandi va UploadThing xotirasiga saqlandi!';
     job.videoUrl = finalVideoUrl;
     job.downloadUrl = finalVideoUrl;
     job.completedAt = new Date().toISOString();
 
-    this.logger.log(`Video generation job ${jobId} completed successfully: ${finalVideoUrl}`);
+    this.logger.log(`Video generation job ${jobId} saved to UploadThing: ${finalVideoUrl}`);
   }
 }

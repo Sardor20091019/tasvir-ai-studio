@@ -5,6 +5,7 @@ import { ProductsModule } from './products/products.module';
 import { VideoJobsModule } from './video-jobs/video-jobs.module';
 import { BillingModule } from './billing/billing.module';
 import { GenerateVideoModule } from './generate-video/generate-video.module';
+import { StorageModule } from './storage/storage.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -15,6 +16,7 @@ import { AppController } from './app.controller';
     VideoJobsModule,
     BillingModule,
     GenerateVideoModule,
+    StorageModule,
   ],
   controllers: [AppController],
 })

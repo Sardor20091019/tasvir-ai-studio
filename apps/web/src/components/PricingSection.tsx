@@ -6,9 +6,10 @@ import {
   Zap,
   Sparkles,
   ShieldCheck,
-  CreditCard,
+  Coins,
   Crown,
   ArrowRight,
+  Lock,
 } from 'lucide-react';
 import { PlanConfig } from '../types';
 import { fallbackPlans } from '../lib/api';
@@ -26,28 +27,32 @@ export function PricingSection({
 
   const t = {
     uz: {
-      badge: 'Shaffof va Qulay Narxlar',
-      title: 'Uzum va Reels savdolaringizni oshirish uchun tariflar',
-      sub: 'Yashirin toʻlovlarsiz. Har bir video toʻliq 9:16 HD formatda, mahalliy AI boshlovchi va subtitrlar bilan taqdim etiladi.',
-      select: 'Tanlash',
+      badge: 'Xavfsiz Token Tizimi',
+      title: 'Uzum va Reels savdolaringiz uchun video tokenlari',
+      sub: 'Avtomatik toʻlovlar oʻrniga xavfsiz administrator orqali token berish tizimi. Soʻrov yuboring yoki Telegram orqali administrator bilan bogʻlaning.',
+      select: 'Admindan soʻrash',
       bestSeller: 'Eng ommabop',
-      videoCredits: (count: number) => `${count} ta video yaratish`,
+      videoCredits: (count: number) => `${count} ta video tokeni`,
+      secTitle: 'Toʻlov shlyuzlari oʻrniga xavfsiz admin tasdiqlash tizimi',
+      secDesc: 'Hisobingizga token olish uchun kerakli tarifni tanlab adminga soʻrov yuboring. Administrator soʻrovingizni tekshirib, hisobingizga darhol tokenlarni qoʻshib beradi.',
     },
     ru: {
-      badge: 'Прозрачные и честные тарифы',
-      title: 'Тарифы для кратного роста продаж на Uzum и Reels',
-      sub: 'Без скрытых платежей. Каждое видео создается в формате 9:16 HD с локальным AI-диктором и субтитрами.',
-      select: 'Выбрать',
+      badge: 'Безопасная система токенов',
+      title: 'Пакеты видео-токенов для Uzum и Reels',
+      sub: 'Вместо автоматических платежных систем токены выдаются напрямую через администратора платформы.',
+      select: 'Запросить у админа',
       bestSeller: 'Популярный',
-      videoCredits: (count: number) => `Создание ${count} видео`,
+      videoCredits: (count: number) => `${count} видео токенов`,
+      secTitle: 'Безопасная выдача токенов через администратора',
+      secDesc: 'Для начисления токенов выберите нужный пакет и отправьте запрос. Администратор проверит заявку и начислит токены на ваш баланс.',
     },
   }[locale];
 
   return (
     <div className="space-y-8 my-6">
       <div className="text-center max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-bento-peach border border-coral/20 text-coral text-xs font-bold mb-3">
-          <CreditCard className="h-3.5 w-3.5" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-3 shadow-xs">
+          <ShieldCheck className="h-3.5 w-3.5" />
           <span>{t.badge}</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink tracking-tight mb-2">
@@ -91,8 +96,9 @@ export function PricingSection({
                       soʻm
                     </span>
                   </div>
-                  <div className="font-mono text-xs font-bold text-coral mt-1">
-                    ⚡ {t.videoCredits(p.credits)}
+                  <div className="font-mono text-xs font-bold text-coral mt-1 flex items-center gap-1">
+                    <Coins className="h-3.5 w-3.5" />
+                    <span>{t.videoCredits(p.credits)}</span>
                   </div>
                 </div>
 
@@ -121,12 +127,28 @@ export function PricingSection({
                     : 'bg-canvas hover:bg-ink hover:text-white text-ink border border-border'
                 }`}
               >
+                <Coins className="h-4 w-4" />
                 <span>{t.select}</span>
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 ml-auto" />
               </button>
             </div>
           );
         })}
+      </div>
+
+      {/* Security info banner */}
+      <div className="max-w-3xl mx-auto rounded-2xl bg-canvas border border-border p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
+        <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+          <Lock className="h-5 w-5" />
+        </div>
+        <div>
+          <h4 className="font-heading font-bold text-xs sm:text-sm text-ink mb-1">
+            {t.secTitle}
+          </h4>
+          <p className="text-xs text-ink-muted leading-relaxed">
+            {t.secDesc}
+          </p>
+        </div>
       </div>
     </div>
   );

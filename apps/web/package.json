@@ -16,7 +16,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remotion": "^4.0.537",
-    "tailwind-merge": "^2.5.5"
+    "tailwind-merge": "^2.5.5",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

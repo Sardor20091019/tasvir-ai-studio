@@ -23,6 +23,8 @@
     "concurrently": "^9.1.2"
   },
   "dependencies": {
-    "@google/genai": "^2.30.0"
+    "@google/genai": "^2.30.0",
+    "next": "^16.4.2",
+    "uploadthing": "^7.7.4"
   }
 }

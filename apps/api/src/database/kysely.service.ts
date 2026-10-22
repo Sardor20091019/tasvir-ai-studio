@@ -129,6 +129,26 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         this.logger.error(`Migration error: ${err.message}`, err.stack);
       }
     }
+
+    try {
+      // Add role column and token_requests table
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) DEFAULT 'user'`.execute(this._db);
+      await sql`
+        CREATE TABLE IF NOT EXISTS token_requests (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          phone_number varchar(20) NOT NULL,
+          requested_tokens integer NOT NULL,
+          note text,
+          status varchar(20) NOT NULL DEFAULT 'pending',
+          admin_id uuid,
+          created_at timestamptz NOT NULL DEFAULT now(),
+          resolved_at timestamptz
+        )
+      `.execute(this._db);
+    } catch (err: any) {
+      this.logger.warn(`Token request schema check notice: ${err.message}`);
+    }
   }
 
   private async seedInitialData() {
@@ -150,15 +170,22 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
             full_name: 'Anvar Rahimov',
             telegram_id: 849201938,
             locale: 'uz',
-            plan_tier: 'starter',
-            credits_balance: 3,
+            role: 'admin',
+            plan_tier: 'agency',
+            credits_balance: 50,
           })
           .returningAll()
           .executeTakeFirstOrThrow();
         defaultUserId = newUser.id;
-        this.logger.log(`Seeded default demo user (Anvar Rahimov, id: ${defaultUserId}) with 3 free credits.`);
+        this.logger.log(`Seeded default demo admin user (Anvar Rahimov, id: ${defaultUserId}) with 50 credits.`);
       } else {
         defaultUserId = existingUser.id;
+        // Ensure default user has admin role
+        await this._db
+          .updateTable('users')
+          .set({ role: 'admin' })
+          .where('id', '=', defaultUserId)
+          .execute();
       }
 
       // 2. Seed 4 Central Asian AI Avatars

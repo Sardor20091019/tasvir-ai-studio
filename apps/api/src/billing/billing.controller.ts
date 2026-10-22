@@ -3,13 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Headers,
-  HttpCode,
   UseGuards,
   Inject,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('billing')
@@ -21,69 +20,83 @@ export class BillingController {
     return this.billingService.getPlans();
   }
 
-  @Post('checkout')
+  // User submits request for tokens to the platform admin
+  @Post('request-tokens')
   @UseGuards(AuthGuard)
-  async createCheckout(
+  async requestTokens(
     @CurrentUser('id') currentUserId: string,
     @Body()
     body: {
-      userId?: string;
-      planTier: string;
-      provider: 'payme' | 'click' | 'uzum';
-      phoneNumber: string;
+      requestedTokens: number;
+      note?: string;
     },
   ) {
-    // Prevent IDOR: always use authenticated user's ID
-    return this.billingService.createCheckoutSession({
+    return this.billingService.requestTokens({
       userId: currentUserId,
-      planTier: body.planTier,
-      provider: body.provider,
-      phoneNumber: body.phoneNumber,
+      requestedTokens: body.requestedTokens,
+      note: body.note,
     });
   }
 
-  @Post('confirm-test-payment')
+  @Get('my-requests')
   @UseGuards(AuthGuard)
-  async confirmTestPayment(
-    @CurrentUser('id') currentUserId: string,
-    @Body()
-    body: {
-      transactionId: string;
-    },
-  ) {
-    // Only enabled in non-production, and checked against the calling user's own transaction
-    return this.billingService.confirmTestPayment(body.transactionId, currentUserId);
+  async getMyRequests(@CurrentUser('id') currentUserId: string) {
+    return this.billingService.getUserRequests(currentUserId);
   }
 
   @Get('transactions')
   @UseGuards(AuthGuard)
   async listTransactions(@CurrentUser('id') currentUserId: string) {
-    // Strictly isolate transactions to authenticated user
     return this.billingService.listUserTransactions(currentUserId);
   }
+}
 
-  // Webhooks
-  @Post('webhook/payme')
-  @HttpCode(200)
-  async paymeWebhook(
-    @Body() body: any,
-    @Headers('authorization') authHeader?: string,
+@Controller('admin')
+@UseGuards(AdminGuard)
+export class AdminController {
+  constructor(@Inject(BillingService) private readonly billingService: BillingService) {}
+
+  // Securely grant tokens to any user (Admin only)
+  @Post('grant-tokens')
+  async grantTokens(
+    @CurrentUser('id') adminId: string,
+    @Body()
+    body: {
+      targetUserId?: string;
+      targetPhoneNumber?: string;
+      tokensToAdd: number;
+      reason?: string;
+      requestId?: string;
+    },
   ) {
-    return this.billingService.handlePaymeWebhook(body, authHeader);
+    return this.billingService.grantTokensByAdmin({
+      adminId,
+      targetUserId: body.targetUserId,
+      targetPhoneNumber: body.targetPhoneNumber,
+      tokensToAdd: body.tokensToAdd,
+      reason: body.reason,
+      requestId: body.requestId,
+    });
   }
 
-  @Post('webhook/click')
-  @HttpCode(200)
-  async clickWebhook(@Body() body: any) {
-    return this.billingService.handleClickWebhook(body);
+  // View all user token requests
+  @Get('requests')
+  async listRequests() {
+    return this.billingService.listPendingRequests();
   }
 
-  @Post('webhook/uzum')
-  @HttpCode(200)
-  async uzumWebhook(
-    @Body() body: any,
-    @Headers('x-uzum-token') uzumToken?: string,
+  // Reject a token request
+  @Post('reject-request')
+  async rejectRequest(
+    @CurrentUser('id') adminId: string,
+    @Body() body: { requestId: string },
   ) {
-    return this.billingService.handleUzumWebhook(body, uzumToken);
+    return this.billingService.rejectRequest(body.requestId, adminId);
+  }
+
+  // List all users for token distribution
+  @Get('users')
+  async listUsers() {
+    return this.billingService.listUsersForAdmin();
   }
 }

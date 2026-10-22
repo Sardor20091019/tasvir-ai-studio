@@ -7,7 +7,7 @@ import { RoiCalculator } from '../components/RoiCalculator';
 import { TemplatesGallery, TemplateItem } from '../components/TemplatesGallery';
 import { PricingSection } from '../components/PricingSection';
 import { VideoLibraryModal } from '../components/VideoLibraryModal';
-import { CheckoutModal } from '../components/CheckoutModal';
+import { AskAdminModal } from '../components/AskAdminModal';
 import { AuthModal } from '../components/AuthModal';
 import { TelegramContainer } from '../components/TelegramContainer';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
@@ -199,7 +199,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-4 font-mono text-[11px]">
-          <span>Payme • Click • Uzum Bank</span>
+          <span>Xavfsiz Token Tizimi • UploadThing Cloud</span>
           <span>© 2026 Tasvir Technologies Inc.</span>
         </div>
       </footer>
@@ -234,8 +234,8 @@ export default function HomePage() {
         mainContent
       )}
 
-      {/* Checkout Modal */}
-      <CheckoutModal
+      {/* Ask Admin / Token Request Modal (Payments removed) */}
+      <AskAdminModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         user={user}

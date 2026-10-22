@@ -3,38 +3,33 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
-  UnauthorizedException,
   Logger,
   Inject,
 } from '@nestjs/common';
 import { KyselyService } from '../database/kysely.service';
 import { sql } from 'kysely';
-import { PaymentTransaction } from '../database/schema';
-import * as crypto from 'crypto';
+import { PaymentTransaction, TokenRequest } from '../database/schema';
 
 export interface PlanConfig {
   id: string;
   nameUz: string;
-  priceUzs: number;
   credits: number;
   description: string;
   badge?: string;
   features: string[];
 }
 
-export const BILLING_PLANS: Record<string, PlanConfig> = {
+export const TOKEN_PLANS: Record<string, PlanConfig> = {
   starter: {
     id: 'starter',
-    nameUz: 'Boshlangʻich',
-    priceUzs: 99000,
+    nameUz: 'Boshlangʻich Tokenlar',
     credits: 10,
     description: 'Yangi boshlagan Uzum va Telegram sotuvchilari uchun',
     features: ['10 ta HD video', 'Barcha 4 ta AI boshlovchi', '9:16 formati', 'Subtitrlar bilan'],
   },
   shop_pro: {
     id: 'shop_pro',
-    nameUz: 'Doʻkon Pro',
-    priceUzs: 249000,
+    nameUz: 'Doʻkon Pro Tokenlar',
     credits: 35,
     badge: 'Eng ommabop',
     description: 'Faol savdo qiluvchi doʻkonlar va brendlar uchun',
@@ -49,7 +44,6 @@ export const BILLING_PLANS: Record<string, PlanConfig> = {
   agency: {
     id: 'agency',
     nameUz: 'Agentlik / Top Seller',
-    priceUzs: 590000,
     credits: 100,
     description: 'Katta doʻkonlar va marketing agentliklari uchun',
     features: [
@@ -69,147 +63,60 @@ export class BillingService {
   constructor(@Inject(KyselyService) private readonly db: KyselyService) {}
 
   getPlans(): PlanConfig[] {
-    return Object.values(BILLING_PLANS);
+    return Object.values(TOKEN_PLANS);
   }
 
-  async createCheckoutSession(params: {
+  // 1. User submits a request for tokens to the admin
+  async requestTokens(params: {
     userId: string;
-    planTier: string;
-    provider: 'payme' | 'click' | 'uzum';
-    phoneNumber: string;
-  }): Promise<{
-    transactionId: string;
-    checkoutUrl: string;
-    amountUzs: number;
-    creditsAdded: number;
-    provider: string;
-  }> {
-    const plan = BILLING_PLANS[params.planTier];
-    if (!plan) {
-      throw new BadRequestException(`Notoʻgʻri tarif rejasi: ${params.planTier}`);
+    requestedTokens: number;
+    note?: string;
+  }): Promise<{ success: boolean; message: string; requestId: string }> {
+    const user = await this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('id', '=', params.userId)
+      .executeTakeFirst();
+
+    if (!user) {
+      throw new NotFoundException('Foydalanuvchi hisobi topilmadi');
     }
 
-    if (!['payme', 'click', 'uzum'].includes(params.provider)) {
-      throw new BadRequestException(`Nomaʼlum toʻlov tizimi: ${params.provider}`);
-    }
+    const tokens = Math.max(1, Math.min(Math.floor(Number(params.requestedTokens) || 10), 1000));
+    const safeNote = (params.note || '').slice(0, 500).trim();
 
-    let cleanPhone = (params.phoneNumber || '').replace(/[^\d+]/g, '');
-    if (!cleanPhone.startsWith('+998') && cleanPhone.length === 9) {
-      cleanPhone = '+998' + cleanPhone;
-    }
-
-    const tx = await this.db
-      .insertInto('payment_transactions')
+    const request = await this.db
+      .insertInto('token_requests')
       .values({
-        user_id: params.userId,
-        provider: params.provider,
-        plan_tier: params.planTier,
-        amount_uzs: plan.priceUzs,
-        credits_added: plan.credits,
-        phone_number: cleanPhone || '+998900000000',
+        user_id: user.id,
+        phone_number: user.phone_number,
+        requested_tokens: tokens,
+        note: safeNote || null,
         status: 'pending',
       })
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    // Generate provider-specific deep link / checkout URL
-    let checkoutUrl = '';
-    const encodedParams = Buffer.from(`m=tasvir;ac.order_id=${tx.id};a=${plan.priceUzs * 100}`).toString('base64');
-
-    if (params.provider === 'payme') {
-      checkoutUrl = `https://checkout.paycom.uz/${encodedParams}`;
-    } else if (params.provider === 'click') {
-      checkoutUrl = `https://my.click.uz/services/pay?service_id=tasvir_ai&merchant_id=9821&amount=${plan.priceUzs}&transaction_param=${tx.id}`;
-    } else {
-      checkoutUrl = `https://www.bankuzum.uz/pay?orderId=${tx.id}&amount=${plan.priceUzs}`;
-    }
+    this.logger.log(`User ${user.phone_number} requested ${tokens} tokens (Req ID: ${request.id})`);
 
     return {
-      transactionId: tx.id,
-      checkoutUrl,
-      amountUzs: plan.priceUzs,
-      creditsAdded: plan.credits,
-      provider: params.provider,
+      success: true,
+      message: 'Soʻrovingiz adminga muvaffaqiyatli yuborildi. Administrator tez orada hisobingizga tokenlarni taqdim etadi.',
+      requestId: request.id,
     };
   }
 
-  async confirmTestPayment(
-    transactionId: string,
-    authenticatedUserId: string,
-  ): Promise<{ success: boolean; newCreditsBalance: number; planTier: string }> {
-    if (process.env.NODE_ENV === 'production') {
-      throw new ForbiddenException('Sinov toʻlovlarini faollashtirish ishlab chiqarish (production) muhitida qatʼiyan man etiladi.');
-    }
-
-    const tx = await this.db
-      .selectFrom('payment_transactions')
+  // 2. User views their own token request history
+  async getUserRequests(userId: string): Promise<TokenRequest[]> {
+    return await this.db
+      .selectFrom('token_requests')
       .selectAll()
-      .where('id', '=', transactionId)
-      .executeTakeFirst();
-
-    if (!tx) {
-      throw new NotFoundException('Toʻlov tranzaksiyasi topilmadi');
-    }
-
-    // BOLA protection: ensure user can only confirm their own test transaction
-    if (tx.user_id !== authenticatedUserId) {
-      throw new ForbiddenException('Siz faqat oʻzingizning toʻlovingizni tasdiqlashingiz mumkin');
-    }
-
-    return this.applyPaymentConfirmation(transactionId);
+      .where('user_id', '=', userId)
+      .orderBy('created_at', 'desc')
+      .execute();
   }
 
-  async applyPaymentConfirmation(transactionId: string): Promise<{ success: boolean; newCreditsBalance: number; planTier: string }> {
-    return await this.db.transaction().execute(async (trx) => {
-      const tx = await trx
-        .selectFrom('payment_transactions')
-        .selectAll()
-        .where('id', '=', transactionId)
-        .forUpdate()
-        .executeTakeFirst();
-
-      if (!tx) {
-        throw new NotFoundException('Toʻlov tranzaksiyasi topilmadi');
-      }
-
-      if (tx.status === 'paid') {
-        const user = await trx
-          .selectFrom('users')
-          .select(['credits_balance', 'plan_tier'])
-          .where('id', '=', tx.user_id)
-          .executeTakeFirstOrThrow();
-        return { success: true, newCreditsBalance: user.credits_balance, planTier: user.plan_tier };
-      }
-
-      // Mark paid
-      await trx
-        .updateTable('payment_transactions')
-        .set({ status: 'paid' })
-        .where('id', '=', transactionId)
-        .execute();
-
-      // Atomically add credits and update plan tier
-      const updatedUser = await trx
-        .updateTable('users')
-        .set({
-          credits_balance: sql`credits_balance + ${tx.credits_added}`,
-          plan_tier: tx.plan_tier,
-          updated_at: sql`now()`,
-        })
-        .where('id', '=', tx.user_id)
-        .returning(['credits_balance', 'plan_tier'])
-        .executeTakeFirstOrThrow();
-
-      this.logger.log(`Confirmed payment ${transactionId}: Added ${tx.credits_added} credits to user ${tx.user_id}`);
-
-      return {
-        success: true,
-        newCreditsBalance: updatedUser.credits_balance,
-        planTier: updatedUser.plan_tier,
-      };
-    });
-  }
-
+  // 3. User views past token grants / transactions
   async listUserTransactions(userId: string): Promise<PaymentTransaction[]> {
     return await this.db
       .selectFrom('payment_transactions')
@@ -219,124 +126,138 @@ export class BillingService {
       .execute();
   }
 
-  // Payme Webhook Handler with Basic Auth Verification
-  async handlePaymeWebhook(body: any, authHeader?: string) {
-    const paymeSecret = process.env.PAYME_SECRET_KEY || process.env.PAYME_KEY;
-
-    if (paymeSecret) {
-      if (!authHeader || !authHeader.startsWith('Basic ')) {
-        throw new UnauthorizedException('Payme Basic Authorization header talab qilinadi');
-      }
-      const rawCreds = Buffer.from(authHeader.slice(6).trim(), 'base64').toString('utf8');
-      const expectedCreds = `Paycom:${paymeSecret}`;
-      const bufA = Buffer.from(rawCreds);
-      const bufB = Buffer.from(expectedCreds);
-
-      if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) {
-        throw new UnauthorizedException('Payme autentifikatsiyasi xato');
-      }
-    } else if (process.env.NODE_ENV === 'production') {
-      this.logger.warn('PAYME_SECRET_KEY is not set in production! Webhook rejected for security.');
-      throw new UnauthorizedException('Server toʻlov kaliti sozlanmagan');
+  // 4. ADMIN ONLY: Grant tokens directly to user with atomic transaction
+  async grantTokensByAdmin(params: {
+    adminId?: string;
+    targetUserId?: string;
+    targetPhoneNumber?: string;
+    tokensToAdd: number;
+    reason?: string;
+    requestId?: string;
+  }): Promise<{ success: boolean; message: string; newBalance: number; user: any }> {
+    const tokens = Math.floor(Number(params.tokensToAdd) || 0);
+    if (tokens <= 0 || tokens > 100000) {
+      throw new BadRequestException('Ajratilayotgan tokenlar soni 1 dan 100,000 gacha boʻlishi kerak');
     }
 
-    this.logger.log(`Payme webhook verified: ${JSON.stringify(body?.method)}`);
-    const { method, params, id } = body || {};
+    return await this.db.transaction().execute(async (trx) => {
+      let targetUserQuery = trx.selectFrom('users').selectAll();
 
-    if (method === 'CheckPerformTransaction') {
-      return { result: { allow: true }, id };
-    }
-
-    if (method === 'PerformTransaction') {
-      const orderId = params?.account?.order_id;
-      if (orderId) {
-        await this.applyPaymentConfirmation(orderId);
+      if (params.targetUserId) {
+        targetUserQuery = targetUserQuery.where('id', '=', params.targetUserId);
+      } else if (params.targetPhoneNumber) {
+        let cleanPhone = params.targetPhoneNumber.replace(/[^\d+]/g, '');
+        if (!cleanPhone.startsWith('+998') && cleanPhone.length === 9) {
+          cleanPhone = '+998' + cleanPhone;
+        }
+        targetUserQuery = targetUserQuery.where('phone_number', '=', cleanPhone);
+      } else {
+        throw new BadRequestException('Foydalanuvchi ID yoki telefon raqami kiritilishi shart');
       }
+
+      const targetUser = await targetUserQuery.forUpdate().executeTakeFirst();
+      if (!targetUser) {
+        throw new NotFoundException('Token berilishi kerak boʻlgan foydalanuvchi topilmadi');
+      }
+
+      // Add tokens atomically
+      const updatedUser = await trx
+        .updateTable('users')
+        .set({
+          credits_balance: sql`credits_balance + ${tokens}`,
+          updated_at: sql`now()`,
+        })
+        .where('id', '=', targetUser.id)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      // If an existing token request was fulfilled, mark it approved
+      if (params.requestId) {
+        await trx
+          .updateTable('token_requests')
+          .set({
+            status: 'approved',
+            admin_id: params.adminId || null,
+            resolved_at: sql`now()`,
+          })
+          .where('id', '=', params.requestId)
+          .execute();
+      }
+
+      // Record immutable audit transaction
+      await trx
+        .insertInto('payment_transactions')
+        .values({
+          user_id: targetUser.id,
+          provider: 'admin_grant',
+          plan_tier: targetUser.plan_tier,
+          amount_uzs: 0,
+          credits_added: tokens,
+          phone_number: targetUser.phone_number,
+          external_tx_id: `admin_${params.adminId || 'key'}_${Date.now()}`,
+          status: 'completed',
+        })
+        .execute();
+
+      this.logger.log(
+        `[ADMIN AUDIT] Granted ${tokens} tokens to user ${targetUser.id} (${targetUser.phone_number}) by admin ${params.adminId || 'API_KEY'}. Reason: ${params.reason || 'None'}`
+      );
+
       return {
-        result: {
-          transaction: params?.id || 'payme_tx',
-          perform_time: Date.now(),
-          state: 2,
-        },
-        id,
+        success: true,
+        message: `${targetUser.full_name} (${targetUser.phone_number}) ga ${tokens} ta token muvaffaqiyatli taqdim etildi. Yangi balans: ${updatedUser.credits_balance}`,
+        newBalance: updatedUser.credits_balance,
+        user: updatedUser,
       };
-    }
-
-    return { result: { state: 2 }, id };
+    });
   }
 
-  // Click Webhook Handler with MD5 Signature Verification
-  async handleClickWebhook(body: any) {
-    const clickSecret = process.env.CLICK_SECRET_KEY;
-    const {
-      click_trans_id,
-      service_id,
-      merchant_trans_id,
-      amount,
-      action,
-      sign_time,
-      sign_string,
-    } = body || {};
+  // 5. ADMIN ONLY: List pending token requests
+  async listPendingRequests(): Promise<any[]> {
+    return await this.db
+      .selectFrom('token_requests')
+      .innerJoin('users', 'users.id', 'token_requests.user_id')
+      .select([
+        'token_requests.id as requestId',
+        'token_requests.requested_tokens as requestedTokens',
+        'token_requests.note as note',
+        'token_requests.status as status',
+        'token_requests.created_at as createdAt',
+        'token_requests.resolved_at as resolvedAt',
+        'users.id as userId',
+        'users.full_name as userName',
+        'users.phone_number as userPhone',
+        'users.credits_balance as currentBalance',
+      ])
+      .orderBy('token_requests.created_at', 'desc')
+      .execute();
+  }
 
-    if (clickSecret) {
-      if (!sign_string) {
-        throw new UnauthorizedException('Click sign_string mavjud emas');
-      }
-      // Click signature: md5(click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + sign_time)
-      const expectedSign = crypto
-        .createHash('md5')
-        .update(`${click_trans_id}${service_id}${clickSecret}${merchant_trans_id}${amount}${action}${sign_time}`)
-        .digest('hex');
-
-      const bufExpected = Buffer.from(expectedSign.toLowerCase());
-      const bufReceived = Buffer.from(String(sign_string).toLowerCase());
-
-      if (bufExpected.length !== bufReceived.length || !crypto.timingSafeEqual(bufExpected, bufReceived)) {
-        throw new UnauthorizedException('Click imzosi notoʻgʻri');
-      }
-    } else if (process.env.NODE_ENV === 'production') {
-      this.logger.warn('CLICK_SECRET_KEY is not set in production! Webhook rejected for security.');
-      throw new UnauthorizedException('Server toʻlov kaliti sozlanmagan');
-    }
-
-    this.logger.log(`Click webhook verified for merchant_trans_id: ${merchant_trans_id}`);
-
-    if (Number(action) === 1 && merchant_trans_id) {
-      await this.applyPaymentConfirmation(merchant_trans_id);
-    }
+  // 6. ADMIN ONLY: Reject token request
+  async rejectRequest(requestId: string, adminId?: string): Promise<{ success: boolean; message: string }> {
+    await this.db
+      .updateTable('token_requests')
+      .set({
+        status: 'rejected',
+        admin_id: adminId || null,
+        resolved_at: sql`now()`,
+      })
+      .where('id', '=', requestId)
+      .execute();
 
     return {
-      click_trans_id,
-      merchant_trans_id,
-      merchant_confirm_id: Date.now(),
-      error: 0,
-      error_note: 'Success',
+      success: true,
+      message: 'Soʻrov rad etildi',
     };
   }
 
-  // Uzum Webhook Handler with Auth Header Verification
-  async handleUzumWebhook(body: any, uzumTokenHeader?: string) {
-    const uzumSecret = process.env.UZUM_SECRET_KEY || process.env.UZUM_WEBHOOK_SECRET;
-
-    if (uzumSecret) {
-      if (!uzumTokenHeader) {
-        throw new UnauthorizedException('Uzum webhook xavfsizlik tokeni kiritilmagan');
-      }
-      const bufA = Buffer.from(uzumTokenHeader);
-      const bufB = Buffer.from(uzumSecret);
-      if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) {
-        throw new UnauthorizedException('Uzum webhook tokeni yaroqsiz');
-      }
-    } else if (process.env.NODE_ENV === 'production') {
-      this.logger.warn('UZUM_SECRET_KEY is not set in production! Webhook rejected for security.');
-      throw new UnauthorizedException('Server toʻlov kaliti sozlanmagan');
-    }
-
-    this.logger.log(`Uzum webhook event received: ${JSON.stringify(body)}`);
-    const { orderId, status } = body || {};
-    if (status === 'SUCCESS' && orderId) {
-      await this.applyPaymentConfirmation(orderId);
-    }
-    return { status: 'OK', orderId };
+  // 7. ADMIN ONLY: List all users to grant tokens
+  async listUsersForAdmin(): Promise<any[]> {
+    return await this.db
+      .selectFrom('users')
+      .select(['id', 'full_name', 'phone_number', 'role', 'plan_tier', 'credits_balance', 'created_at'])
+      .orderBy('created_at', 'desc')
+      .limit(100)
+      .execute();
   }
 }

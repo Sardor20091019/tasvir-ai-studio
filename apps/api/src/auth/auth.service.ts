@@ -133,7 +133,7 @@ export class AuthService {
     }
 
     // Generate cryptographically signed HMAC-SHA256 JWT
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
     return { user, token };
   }
 
@@ -160,6 +160,7 @@ export class AuthService {
           full_name: fullName,
           telegram_id: initData.telegramId,
           locale: 'uz',
+          role: 'user',
           plan_tier: 'starter',
           credits_balance: 3,
         })
@@ -168,7 +169,7 @@ export class AuthService {
     }
 
     // Cryptographically signed JWT token
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
     return { user, token };
   }
 
@@ -232,6 +233,7 @@ export class AuthService {
           full_name: name,
           telegram_id: null,
           locale: 'uz',
+          role: 'user',
           plan_tier: 'starter',
           credits_balance: 3,
         })
@@ -240,7 +242,7 @@ export class AuthService {
       this.logger.log(`Created new Google user: ${name} (${syntheticPhone})`);
     }
 
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number });
+    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
     return { user, token };
   }
 
@@ -274,8 +276,8 @@ export class AuthService {
       return await this.db
         .insertInto('users')
         .values({
-          phone_number: '+998901234567',
-          full_name: 'Anvar Rahimov',
+          phone_number: '+9989990991112',
+          full_name: 'Sardor Sunatullayev',
           telegram_id: 849201938,
           locale: 'uz',
           plan_tier: 'starter',

@@ -6,6 +6,7 @@ export interface UsersTable {
   full_name: string;
   telegram_id: number | null;
   locale: Generated<string>;
+  role: Generated<string>; // 'user' | 'admin'
   plan_tier: Generated<string>;
   credits_balance: Generated<number>;
   created_at: Generated<string>;
@@ -72,13 +73,13 @@ export type VideoJobUpdate = Updateable<VideoJobsTable>;
 export interface PaymentTransactionsTable {
   id: Generated<string>;
   user_id: string;
-  provider: string;
+  provider: string; // 'admin_grant' | 'manual'
   plan_tier: string;
   amount_uzs: number | string;
   credits_added: number;
   phone_number: string;
   external_tx_id: string | null;
-  status: Generated<string>;
+  status: Generated<string>; // 'approved' | 'completed'
   created_at: Generated<string>;
 }
 
@@ -86,11 +87,27 @@ export type PaymentTransaction = Selectable<PaymentTransactionsTable>;
 export type NewPaymentTransaction = Insertable<PaymentTransactionsTable>;
 export type PaymentTransactionUpdate = Updateable<PaymentTransactionsTable>;
 
+export interface TokenRequestsTable {
+  id: Generated<string>;
+  user_id: string;
+  phone_number: string;
+  requested_tokens: number;
+  note: string | null;
+  status: Generated<string>; // 'pending' | 'approved' | 'rejected'
+  admin_id: string | null;
+  created_at: Generated<string>;
+  resolved_at: string | null;
+}
+
+export type TokenRequest = Selectable<TokenRequestsTable>;
+export type NewTokenRequest = Insertable<TokenRequestsTable>;
+export type TokenRequestUpdate = Updateable<TokenRequestsTable>;
+
 export interface Database {
   users: UsersTable;
   ai_avatars: AiAvatarsTable;
   products: ProductsTable;
   video_jobs: VideoJobsTable;
   payment_transactions: PaymentTransactionsTable;
+  token_requests: TokenRequestsTable;
 }
-

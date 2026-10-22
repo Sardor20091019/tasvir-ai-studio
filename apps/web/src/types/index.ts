@@ -4,6 +4,7 @@ export interface User {
   full_name: string;
   telegram_id: number | null;
   locale: string;
+  role?: string; // 'user' | 'admin'
   plan_tier: string;
   credits_balance: number;
   created_at: string;
@@ -54,10 +55,21 @@ export interface VideoJob {
 export interface PlanConfig {
   id: string;
   nameUz: string;
-  priceUzs: number;
+  priceUzs?: number;
   credits: number;
   description: string;
   badge?: string;
   features: string[];
 }
 
+export interface TokenRequest {
+  id: string;
+  user_id: string;
+  phone_number: string;
+  requested_tokens: number;
+  note: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_id: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}

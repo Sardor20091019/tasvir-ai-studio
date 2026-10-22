@@ -139,7 +139,7 @@ export class VideoJobsService {
         status: 'completed',
         progress: 100,
         delay: 1500,
-        outputUrl: '/videos/tasvir-vertical.mp4',
+        outputUrl: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
       },
     ];
 
