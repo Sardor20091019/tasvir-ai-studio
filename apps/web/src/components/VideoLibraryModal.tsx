@@ -12,11 +12,11 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
-import { VideoJob } from '../types';
+import { VideoJob, LocaleType } from '../types';
 
 interface VideoLibraryModalProps {
   jobs: VideoJob[];
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
   onClose?: () => void;
   onOpenStudio?: () => void;
 }
@@ -42,6 +42,18 @@ export function VideoLibraryModal({
       statusCompleted: 'Tayyor',
       statusRendering: 'Tayyorlanmoqda',
     },
+    en: {
+      title: 'My Videos (Render History)',
+      sub: 'Archive of generated and in-progress 9:16 video advertisements',
+      emptyTitle: 'No videos created yet',
+      emptySub: 'Select a product in Studio and generate your first AI video ad!',
+      createFirst: 'Create your first video',
+      download: 'Download MP4',
+      preview: 'Preview',
+      close: 'Close',
+      statusCompleted: 'Ready',
+      statusRendering: 'Rendering',
+    },
     ru: {
       title: 'Мои видео (История рендеров)',
       sub: 'Архив готовых и обрабатываемых 9:16 видео-роликов',
@@ -54,7 +66,18 @@ export function VideoLibraryModal({
       statusCompleted: 'Готово',
       statusRendering: 'В процессе',
     },
-  }[locale];
+  }[locale] || {
+    title: 'My Videos',
+    sub: 'Archive of generated 9:16 video advertisements',
+    emptyTitle: 'No videos yet',
+    emptySub: 'Select a product in Studio to generate your first AI video!',
+    createFirst: 'Create first video',
+    download: 'Download MP4',
+    preview: 'Preview',
+    close: 'Close',
+    statusCompleted: 'Ready',
+    statusRendering: 'In Progress',
+  };
 
   return (
     <div className="bg-white rounded-studio border border-border p-6 shadow-tactile space-y-6">

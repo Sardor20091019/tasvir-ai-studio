@@ -9,12 +9,12 @@ import { VideoLibraryModal } from '../components/VideoLibraryModal';
 import { AskAdminModal } from '../components/AskAdminModal';
 import { AuthModal } from '../components/AuthModal';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
-import { User, VideoJob } from '../types';
+import { User, VideoJob, LocaleType } from '../types';
 import { api } from '../lib/api';
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [locale, setLocale] = useState<'uz' | 'ru'>('uz');
+  const [locale, setLocale] = useState<LocaleType>('uz');
   const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'pricing' | 'library'>('studio');
 
   // Modals
@@ -54,7 +54,11 @@ export default function HomePage() {
   }, []);
 
   const handleToggleLocale = () => {
-    setLocale((prev) => (prev === 'uz' ? 'ru' : 'uz'));
+    setLocale((prev) => {
+      if (prev === 'uz') return 'en';
+      if (prev === 'en') return 'ru';
+      return 'uz';
+    });
   };
 
   const handleOpenCheckoutWithPlan = (planId: string) => {

@@ -113,8 +113,10 @@ export const TEMPLATES: TemplateItem[] = [
   },
 ];
 
+import { LocaleType } from '../types';
+
 interface TemplatesGalleryProps {
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
   onSelectTemplate: (template: TemplateItem) => void;
 }
 
@@ -129,13 +131,24 @@ export function TemplatesGallery({
       sub: 'Eng koʻp sotilgan tovarlar asosida tayyorlangan 9:16 video qoliplar. Bitta tugma orqali studiyaga oʻtkazing.',
       useBtn: 'Studiyada ochish',
     },
+    en: {
+      badge: 'Curated Template Collection',
+      title: 'Proven viral ad scripts for Uzum Market and Reels',
+      sub: 'High-converting 9:16 video templates based on top-selling e-commerce items. Load into Studio with one click.',
+      useBtn: 'Open in Studio',
+    },
     ru: {
       badge: 'Коллекция готовых шаблонов',
       title: 'Проверенные сценарии для Uzum Market и Reels',
       sub: 'Готовые 9:16 видео-шаблоны для топовых категорий e-commerce. Загрузка в студию в один клик.',
       useBtn: 'Открыть в студии',
     },
-  }[locale];
+  }[locale] || {
+    badge: 'Template Collection',
+    title: 'Ad scripts for Uzum Market and Reels',
+    sub: 'High-converting 9:16 video templates. Load into Studio with one click.',
+    useBtn: 'Open in Studio',
+  };
 
   return (
     <div className="space-y-6">
@@ -177,13 +190,13 @@ export function TemplatesGallery({
               {/* Body */}
               <div className="p-4 space-y-2">
                 <h3 className="font-bold text-sm text-ink line-clamp-1">
-                  {locale === 'uz' ? tmpl.titleUz : tmpl.titleRu}
+                  {locale === 'ru' ? tmpl.titleRu : tmpl.titleUz}
                 </h3>
                 <div className="font-mono text-xs font-extrabold text-coral">
-                  {Number(tmpl.priceUzs).toLocaleString('uz-UZ')} soʻm
+                  {Number(tmpl.priceUzs).toLocaleString('uz-UZ')} {locale === 'en' ? 'UZS' : 'soʻm'}
                 </div>
                 <p className="text-xs text-ink-muted line-clamp-2 italic bg-canvas p-2.5 rounded-xl border border-border/70">
-                  &ldquo;{locale === 'uz' ? tmpl.scriptExcerptUz : tmpl.scriptExcerptRu}&rdquo;
+                  &ldquo;{locale === 'ru' ? tmpl.scriptExcerptRu : tmpl.scriptExcerptUz}&rdquo;
                 </p>
               </div>
             </div>

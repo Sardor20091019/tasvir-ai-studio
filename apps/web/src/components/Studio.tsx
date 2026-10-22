@@ -28,14 +28,14 @@ import {
   Layers,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { AiAvatar, Product, User, VideoJob } from '../types';
+import { AiAvatar, Product, User, VideoJob, LocaleType } from '../types';
 import { api, fallbackAvatars, fallbackProducts } from '../lib/api';
 import { SpeechSynthPlayer } from '../lib/audio';
 
 interface StudioProps {
   user: User | null;
   onUpdateUser: (user: User) => void;
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
   onOpenCheckout: () => void;
   onJobCreated?: (job: VideoJob) => void;
   initialTemplate?: {
@@ -101,6 +101,52 @@ export function Studio({
       characters: 'belgi',
       words: 'soʻz',
       durationEst: '~15 soniya',
+      errorOccurred: 'Video yaratishda xatolik yuz berdi. Iltimos, qayta urinib koʻring.',
+      tryAgain: 'Qayta urinish',
+    },
+    en: {
+      step1Title: '1. Product Information',
+      step1Sub: 'Upload a product image or select a ready template',
+      dropzoneText: 'Click to upload or drag & drop image here',
+      dropzoneSub: 'PNG, JPG, WebP formats (Uzum or Instagram product photos)',
+      productName: 'Product name',
+      category: 'Category',
+      price: 'Price (UZS)',
+      discount: 'Discount badge',
+      demoProducts: '⚡ Quick demo items (1-click):',
+      step2Title: '2. Local AI Presenter',
+      step2Sub: 'Central Asian faces and native dialect voice presenters',
+      step3Title: '3. AI Script & Voice',
+      step3Sub: 'Automatic high-converting sales copywriting for Uzum and Reels',
+      scriptPlaceholder: 'Generated ad copywriting will appear here...',
+      listenVoice: 'Preview voice',
+      listening: 'Playing voice...',
+      stopVoice: 'Stop',
+      toneDiscount: '🔥 Discount Hook',
+      toneQuality: '✨ Quality & Review',
+      toneReels: '⚡ Short Reels',
+      step4Title: '4. Format & Render',
+      platformUzum: 'Uzum Market (9:16)',
+      platformReels: 'Instagram Reels (9:16)',
+      platformTelegram: 'Telegram Shop (9:16)',
+      renderBtn: '✨ Create 9:16 Video (1 credit)',
+      rendering: 'Rendering video...',
+      noCredits: 'Out of credits. Request tokens from admin',
+      recharge: 'Request tokens from admin',
+      previewTitle: 'Live 9:16 Smartphone Preview',
+      previewSub: 'Accurate preview of the finalized video advertisement',
+      pipToggle: 'Presenter overlay (PiP)',
+      stage1: '1. Image analysis',
+      stage2: '2. Voice synthesis',
+      stage3: '3. Lip-sync animation',
+      stage4: '4. Video ready!',
+      downloadVideo: 'Download video (MP4)',
+      shareTelegram: 'Share to Telegram',
+      characters: 'chars',
+      words: 'words',
+      durationEst: '~15 seconds',
+      errorOccurred: 'An error occurred while creating the video. Please try again.',
+      tryAgain: 'Try again',
     },
     ru: {
       step1Title: '1. Информация о товаре',
@@ -143,8 +189,53 @@ export function Studio({
       characters: 'симв.',
       words: 'слов',
       durationEst: '~15 секунд',
+      errorOccurred: 'Произошла ошибка при создании видео. Пожалуйста, попробуйте снова.',
+      tryAgain: 'Попробовать снова',
     },
-  }[locale];
+  }[locale] || {
+    step1Title: '1. Product Information',
+    step1Sub: 'Upload a product image or select a ready template',
+    dropzoneText: 'Click to upload or drag & drop image here',
+    dropzoneSub: 'PNG, JPG, WebP formats',
+    productName: 'Product name',
+    category: 'Category',
+    price: 'Price (UZS)',
+    discount: 'Discount badge',
+    demoProducts: '⚡ Quick demo items:',
+    step2Title: '2. Local AI Presenter',
+    step2Sub: 'Central Asian faces and native dialect voice presenters',
+    step3Title: '3. AI Script & Voice',
+    step3Sub: 'Automatic high-converting sales copywriting',
+    scriptPlaceholder: 'Generated ad copywriting will appear here...',
+    listenVoice: 'Preview voice',
+    listening: 'Playing voice...',
+    stopVoice: 'Stop',
+    toneDiscount: '🔥 Discount Hook',
+    toneQuality: '✨ Quality & Review',
+    toneReels: '⚡ Short Reels',
+    step4Title: '4. Format & Render',
+    platformUzum: 'Uzum Market (9:16)',
+    platformReels: 'Instagram Reels (9:16)',
+    platformTelegram: 'Telegram Shop (9:16)',
+    renderBtn: '✨ Create 9:16 Video (1 credit)',
+    rendering: 'Rendering video...',
+    noCredits: 'Out of credits. Request tokens from admin',
+    recharge: 'Request tokens from admin',
+    previewTitle: 'Live 9:16 Smartphone Preview',
+    previewSub: 'Accurate preview of the finalized video',
+    pipToggle: 'Presenter overlay (PiP)',
+    stage1: '1. Image analysis',
+    stage2: '2. Voice synthesis',
+    stage3: '3. Lip-sync animation',
+    stage4: '4. Video ready!',
+    downloadVideo: 'Download video (MP4)',
+    shareTelegram: 'Share to Telegram',
+    characters: 'chars',
+    words: 'words',
+    durationEst: '~15 seconds',
+    errorOccurred: 'An error occurred while creating the video. Please try again.',
+    tryAgain: 'Try again',
+  };
 
   // State
   const [avatars, setAvatars] = useState<AiAvatar[]>(fallbackAvatars);
@@ -178,6 +269,7 @@ export function Studio({
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderStage, setRenderStage] = useState<1 | 2 | 3 | 4>(1);
   const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const synthPlayerRef = useRef<SpeechSynthPlayer>(new SpeechSynthPlayer());
@@ -294,6 +386,7 @@ export function Studio({
       return;
     }
 
+    setRenderError(null);
     setIsRendering(true);
     setRenderProgress(10);
     setRenderStage(1);
@@ -349,8 +442,15 @@ export function Studio({
           });
         } catch (e) {}
       }, 5200);
-    } catch (e) {
+    } catch (e: any) {
+      // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED INSTEAD OF DOING NOTHING
+      console.error('Studio render video error:', e);
       setIsRendering(false);
+      setRenderError(e?.message || t.errorOccurred || 'Error occurred while creating video. Please try again.');
+      // Restore credit on failure
+      if (user) {
+        onUpdateUser(user);
+      }
     }
   };
 
@@ -424,7 +524,7 @@ export function Studio({
                 <Upload className="h-4 w-4" />
               </div>
               <span className="text-xs font-semibold text-ink">
-                {locale === 'uz' ? 'Rasm almashtirish' : 'Загрузить фото'}
+                {locale === 'uz' ? 'Rasm almashtirish' : locale === 'en' ? 'Change photo' : 'Загрузить фото'}
               </span>
               <span className="text-[10px] text-ink-muted mt-0.5">
                 PNG, JPG, WebP
@@ -712,6 +812,23 @@ export function Studio({
               );
             })}
           </div>
+
+          {/* Render Error Alert */}
+          {renderError && (
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2 shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2 min-w-0">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span className="font-semibold">{renderError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleStartRender}
+                className="shrink-0 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] transition-colors"
+              >
+                {t.tryAgain}
+              </button>
+            </div>
+          )}
 
           {/* Large Render Button */}
           <button

@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Users,
 } from 'lucide-react';
-import { User } from '../types';
+import { User, LocaleType } from '../types';
 import { api } from '../lib/api';
 
 interface AskAdminModalProps {
@@ -23,7 +23,7 @@ interface AskAdminModalProps {
   onClose: () => void;
   user: User | null;
   onUpdateUser: (user: User) => void;
-  locale?: 'uz' | 'ru';
+  locale?: LocaleType;
   initialPlanId?: string;
 }
 
@@ -99,6 +99,27 @@ export function AskAdminModal({
       adminTitle: 'Administrator Boshqaruvi: Token Berish',
       grantButton: 'Tokenlarni Taqdim Etish',
     },
+    en: {
+      title: 'Tokens & Balance Recharge',
+      subtitle: 'Automated payment gateways disabled. Tokens are allocated solely by the platform administrator.',
+      currentBalance: 'Your current balance:',
+      tokensUnit: 'video tokens',
+      tabRequest: 'Submit request to admin',
+      tabTelegram: 'Contact via Telegram',
+      tabAdmin: 'Admin Panel',
+      tokenPackages: 'Select desired token amount:',
+      noteLabel: 'Additional note (optional):',
+      notePlaceholder: 'E.g., We plan to create 35 product videos for our e-commerce store...',
+      submitRequest: 'Submit Request to Admin',
+      submitting: 'Submitting...',
+      successTitle: 'Your request has been submitted to admin!',
+      successSub: 'Platform administrator will review your request and credit your account shortly.',
+      tgTitle: 'Contact the administrator directly on Telegram',
+      tgSub: 'In your message, provide your phone number or account ID and the number of tokens needed:',
+      tgButton: 'Message on Telegram (@astro_spectrum)',
+      adminTitle: 'Admin Management: Grant Tokens',
+      grantButton: 'Grant Tokens to User',
+    },
     ru: {
       title: 'Токены & Пополнение Баланса',
       subtitle: 'Платежные системы отключены. Токены выдаются исключительно администратором платформы.',
@@ -120,7 +141,27 @@ export function AskAdminModal({
       adminTitle: 'Управление Администратора: Выдача Токенов',
       grantButton: 'Начислить токены',
     },
-  }[locale];
+  }[locale] || {
+    title: 'Tokens & Balance Recharge',
+    subtitle: 'Tokens are allocated solely by the platform administrator.',
+    currentBalance: 'Your current balance:',
+    tokensUnit: 'video tokens',
+    tabRequest: 'Submit request to admin',
+    tabTelegram: 'Contact via Telegram',
+    tabAdmin: 'Admin Panel',
+    tokenPackages: 'Select token amount:',
+    noteLabel: 'Note:',
+    notePlaceholder: 'Enter note...',
+    submitRequest: 'Submit Request',
+    submitting: 'Submitting...',
+    successTitle: 'Request submitted!',
+    successSub: 'Administrator will review your request shortly.',
+    tgTitle: 'Contact administrator on Telegram',
+    tgSub: 'Provide your account ID and number of tokens needed:',
+    tgButton: 'Message on Telegram (@astro_spectrum)',
+    adminTitle: 'Admin Management',
+    grantButton: 'Grant Tokens',
+  };
 
   const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, ShieldCheck, Lock } from 'lucide-react';
-import { User } from '../types';
+import { User, LocaleType } from '../types';
 import { Turnstile } from './Turnstile';
 import { GoogleSignInButton } from './GoogleSignInButton';
 
@@ -10,7 +10,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginSuccess: (user: User) => void;
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
 }
 
 export function AuthModal({
@@ -30,13 +30,24 @@ export function AuthModal({
       googleNote: 'Bir bosishda xavfsiz autentifikatsiya',
       securityBadge: 'Google OAuth 2.0 & Cloudflare Turnstile bilan himoyalangan',
     },
+    en: {
+      title: 'Sign In with Google',
+      sub: 'Sign in with your Google account to access all AI studio features and generate marketing videos.',
+      googleNote: 'One-click secure authentication',
+      securityBadge: 'Protected by Google OAuth 2.0 & Cloudflare Turnstile',
+    },
     ru: {
       title: 'Вход через Google',
       sub: 'Войдите с помощью учетной записи Google для генерации видео в студии Tasvir AI.',
       googleNote: 'Безопасная авторизация в один клик',
       securityBadge: 'Защищено Google OAuth 2.0 & Cloudflare Turnstile',
     },
-  }[locale];
+  }[locale] || {
+    title: 'Sign In with Google',
+    sub: 'Sign in with your Google account to access all studio features.',
+    googleNote: 'One-click secure authentication',
+    securityBadge: 'Protected by Google OAuth 2.0 & Cloudflare Turnstile',
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in duration-200">

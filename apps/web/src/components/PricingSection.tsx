@@ -11,11 +11,11 @@ import {
   ArrowRight,
   Lock,
 } from 'lucide-react';
-import { PlanConfig } from '../types';
+import { PlanConfig, LocaleType } from '../types';
 import { fallbackPlans } from '../lib/api';
 
 interface PricingSectionProps {
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
   onSelectPlan: (planId: string) => void;
 }
 
@@ -36,6 +36,16 @@ export function PricingSection({
       secTitle: 'Toʻlov shlyuzlari oʻrniga xavfsiz admin tasdiqlash tizimi',
       secDesc: 'Hisobingizga token olish uchun kerakli tarifni tanlab adminga soʻrov yuboring. Administrator soʻrovingizni tekshirib, hisobingizga darhol tokenlarni qoʻshib beradi.',
     },
+    en: {
+      badge: 'Secure Token System',
+      title: 'Video tokens for your Uzum and Reels marketing',
+      sub: 'Instead of automated payment gateways, tokens are allocated securely through platform administrator. Submit a request or contact admin via Telegram.',
+      select: 'Request from admin',
+      bestSeller: 'Most Popular',
+      videoCredits: (count: number) => `${count} video tokens`,
+      secTitle: 'Secure admin verification system instead of third-party payment gateways',
+      secDesc: 'To receive video tokens on your balance, choose a plan and submit a request to the platform administrator.',
+    },
     ru: {
       badge: 'Безопасная система токенов',
       title: 'Пакеты видео-токенов для Uzum и Reels',
@@ -46,7 +56,16 @@ export function PricingSection({
       secTitle: 'Безопасная выдача токенов через администратора',
       secDesc: 'Для начисления токенов выберите нужный пакет и отправьте запрос. Администратор проверит заявку и начислит токены на ваш баланс.',
     },
-  }[locale];
+  }[locale] || {
+    badge: 'Secure Token System',
+    title: 'Video tokens for your marketing',
+    sub: 'Tokens are allocated securely through platform administrator.',
+    select: 'Request from admin',
+    bestSeller: 'Popular',
+    videoCredits: (count: number) => `${count} video tokens`,
+    secTitle: 'Secure admin verification',
+    secDesc: 'Choose a plan and submit a request to the platform administrator.',
+  };
 
   return (
     <div className="space-y-8 my-6">

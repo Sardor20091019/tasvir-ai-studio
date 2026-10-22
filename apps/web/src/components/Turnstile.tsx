@@ -2,13 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
+import { LocaleType } from '../types';
 
 interface TurnstileProps {
   siteKey?: string;
   onVerify: (token: string) => void;
   onExpire?: () => void;
   onError?: (error: any) => void;
-  locale?: 'uz' | 'ru';
+  locale?: LocaleType;
 }
 
 declare global {
@@ -154,6 +155,8 @@ export function Turnstile({
             <span>
               {locale === 'uz'
                 ? "Turnstile xabari: 'localhost' domeni Cloudflare Dashboard-da qo'shilmagan bo'lishi mumkin."
+                : locale === 'en'
+                ? "Turnstile notice: 'localhost' domain might not be added in Cloudflare Dashboard."
                 : "Уведомление Turnstile: домен 'localhost' может быть не указан в Cloudflare Dashboard."}
             </span>
           </div>
@@ -166,6 +169,8 @@ export function Turnstile({
             <span>
               {locale === 'uz'
                 ? 'Test rejimida tasdiqlash (Dev Bypass)'
+                : locale === 'en'
+                ? 'Confirm in test mode (Dev Bypass)'
                 : 'Подтвердить в тестовом режиме (Dev Bypass)'}
             </span>
           </button>

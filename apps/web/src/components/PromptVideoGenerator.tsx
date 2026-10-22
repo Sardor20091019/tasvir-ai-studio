@@ -24,11 +24,11 @@ import {
   Radio,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { KaraokeWord, DramaScene, DramaVideoJob } from '../types';
+import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType } from '../types';
 import { KaraokeSubtitles } from './KaraokeSubtitles';
 
 interface PromptVideoGeneratorProps {
-  locale?: 'uz' | 'ru';
+  locale?: LocaleType;
   onVideoCreated?: (videoUrl: string) => void;
 }
 
@@ -53,6 +53,28 @@ const DRAMA_PROMPT_SUGGESTIONS = {
       label: '✨ Samarqand Ipak Libosi (Xonatlas)',
       prompt:
         "Kelinlik koʻz yoshlari va ajdodlar anʼanasi: Toʻydan oldingi keskin dramatik daqiqa, Samarqand ipak xonatlasining goʻzalligi barcha xafagarchiliklarni unutdiradi.",
+    },
+  ],
+  en: [
+    {
+      label: '💔 Betrayal & Tears (AirPods Max)',
+      prompt:
+        "Dramatic betrayal and tears: my friend deceived me with cheap fake earphones, but original AirPods Max are 30% off on Uzum Market! Sudden plot twist and triumphant resolution.",
+    },
+    {
+      label: '😢 Jealousy & Gold Watch (Smart Watch)',
+      prompt:
+        "High emotional stakes: she rejected my gift due to misunderstandings. But unboxing the Smart Watch Ultra brings tears of cathartic joy. 1+1 Special Promotion!",
+    },
+    {
+      label: '🔥 Revenge & Comeback (Nike Pegasus)',
+      prompt:
+        "Dramatic heartbreak and a relentless comeback: knocked down by rivals, the runner rises in Nike Pegasus 40 sneakers and crosses the finish line in glory.",
+    },
+    {
+      label: '✨ Silk Khan-Atlas (Heritage)',
+      prompt:
+        "A bride crying before the wedding ceremony: the timeless beauty of handcrafted Samarkand silk khan-atlas dissolves all sorrow in pure celebration.",
     },
   ],
   ru: [
@@ -112,6 +134,47 @@ export function PromptVideoGenerator({
       karaokeDomMode: 'Dinamik Reels Matni',
       karaokeCanvasMode: 'Canvas Qatlami',
       actsTitle: 'Dramatik Sahnalar Ketma-ketligi (FFmpeg Concat):',
+      errorOccurred: 'Video yaratishda xatolik yuz berdi. Iltimos, qayta urinib koʻring.',
+      errorTitle: 'Video yaratishda xatolik yuz berdi',
+      tryAgain: 'Qayta urinish',
+      openVideo: 'Videoni ochish',
+      placeholderTitle: '9:16 Dramatik Master Video koʻrinishi',
+      placeholderSub: 'Dramatik prompt kiriting va Google Veo 3.1 ssenariysini yaratishni boshlang.',
+    },
+    en: {
+      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
+      title: 'Dramatic AI Product Ads (Veo 3.1)',
+      subtitle:
+        'Create high-stakes 9:16 vertical master video ads with Google Veo 3.1 ("veo-3.1-lite-generate") featuring betrayal tropes, emotional tears, and victorious redemption.',
+      promptLabel: 'Dramatic Ad Idea (Prompt)',
+      promptPlaceholder:
+        'E.g., A protagonist crying after finding out they were betrayed, but a surprise product turns everything into victory...',
+      suggestionsLabel: '🎭 Dramatic storyline concepts:',
+      aspectRatioLabel: 'Video Format (Strictly 9:16 Vertical):',
+      ratioLockedNote: 'Google Veo 3.1 vertical 9:16 (1080x1920) format locked for Reels, TikTok, and Uzum.',
+      musicLabel: 'Background Music (Audio Muxing):',
+      musicTrackName: 'EMIN & JONY — «Камин» (Fireplace)',
+      musicToggleOn: 'Music enabled (Balanced audio levels between speech and «Камин»)',
+      musicToggleOff: 'Music disabled (Only clean voice dialogue & sound effects)',
+      musicPreviewBtn: 'Listen preview',
+      musicPreviewStop: 'Stop audio',
+      durationBadge: '3 drama acts • 15–18 seconds (4–8s each)',
+      generateBtn: '🎬 Create Veo 3.1 Dramatic Video',
+      generatingBtn: 'Generating scenes with Veo 3.1...',
+      progressTitle: 'Creating Dramatic Video with Google Veo 3.1',
+      completedTitle: 'Dramatic Master Video Ready!',
+      downloadBtn: 'Download Master MP4',
+      createAnother: 'Create another dramatic video',
+      karaokeTitle: 'Karaoke Subtitle Mode:',
+      karaokeDomMode: 'Dynamic Reels Text',
+      karaokeCanvasMode: 'Canvas Layer',
+      actsTitle: 'Dramatic Scenes Breakdown (FFmpeg Concat):',
+      errorOccurred: 'An error occurred while creating the video. Please try again.',
+      errorTitle: 'Error occurred while creating video',
+      tryAgain: 'Try again',
+      openVideo: 'Open video',
+      placeholderTitle: '9:16 Dramatic Master Video Preview',
+      placeholderSub: 'Enter a dramatic prompt and start generating your Google Veo 3.1 storyline.',
     },
     ru: {
       badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
@@ -141,13 +204,51 @@ export function PromptVideoGenerator({
       karaokeDomMode: 'Динамичный Reels Текст',
       karaokeCanvasMode: 'Слой Canvas',
       actsTitle: 'Сцены драмы (Объединение через FFmpeg Concat):',
+      errorOccurred: 'Произошла ошибка при создании видео. Пожалуйста, попробуйте снова.',
+      errorTitle: 'Произошла ошибка при создании видео',
+      tryAgain: 'Попробовать снова',
+      openVideo: 'Открыть видео',
+      placeholderTitle: 'Предпросмотр драматического 9:16 мастер-видео',
+      placeholderSub: 'Введите драматический промпт и начните генерацию сюжета в Google Veo 3.1.',
     },
-  }[locale];
+  }[locale] || {
+    badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
+    title: 'Dramatic AI Product Ads (Veo 3.1)',
+    subtitle: 'Create high-stakes 9:16 vertical master video ads with Google Veo 3.1.',
+    promptLabel: 'Dramatic Ad Idea (Prompt)',
+    promptPlaceholder: 'Enter a dramatic prompt...',
+    suggestionsLabel: '🎭 Dramatic storyline concepts:',
+    aspectRatioLabel: 'Video Format (Strictly 9:16 Vertical):',
+    ratioLockedNote: 'Google Veo 3.1 vertical 9:16 format.',
+    musicLabel: 'Background Music:',
+    musicTrackName: 'EMIN & JONY — «Камин» (Fireplace)',
+    musicToggleOn: 'Music enabled',
+    musicToggleOff: 'Music disabled',
+    musicPreviewBtn: 'Listen preview',
+    musicPreviewStop: 'Stop audio',
+    durationBadge: '3 drama acts • 15–18 seconds',
+    generateBtn: '🎬 Create Veo 3.1 Dramatic Video',
+    generatingBtn: 'Generating scenes with Veo 3.1...',
+    progressTitle: 'Creating Dramatic Video with Google Veo 3.1',
+    completedTitle: 'Dramatic Master Video Ready!',
+    downloadBtn: 'Download Master MP4',
+    createAnother: 'Create another dramatic video',
+    karaokeTitle: 'Karaoke Subtitle Mode:',
+    karaokeDomMode: 'Dynamic Reels Text',
+    karaokeCanvasMode: 'Canvas Layer',
+    actsTitle: 'Dramatic Scenes Breakdown:',
+    errorOccurred: 'An error occurred while creating the video. Please try again.',
+    errorTitle: 'Error occurred while creating video',
+    tryAgain: 'Try again',
+    openVideo: 'Open video',
+    placeholderTitle: '9:16 Dramatic Master Video Preview',
+    placeholderSub: 'Enter a prompt to start generating.',
+  };
+
+  const suggestions = DRAMA_PROMPT_SUGGESTIONS[locale] || DRAMA_PROMPT_SUGGESTIONS.uz;
 
   // User input states
-  const [prompt, setPrompt] = useState(
-    DRAMA_PROMPT_SUGGESTIONS[locale][0].prompt,
-  );
+  const [prompt, setPrompt] = useState(suggestions[0].prompt);
   const [includeBackgroundMusic, setIncludeBackgroundMusic] = useState<boolean>(true);
   const [isPlayingAudioPreview, setIsPlayingAudioPreview] = useState(false);
   const [subtitleMode, setSubtitleMode] = useState<'dom' | 'canvas'>('dom');
@@ -234,8 +335,8 @@ export function PromptVideoGenerator({
     };
   }, []);
 
-  const handleStartGeneration = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStartGeneration = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!prompt.trim()) return;
 
     // Pause audio preview if active
@@ -247,7 +348,13 @@ export function PromptVideoGenerator({
     setIsLoading(true);
     setError(null);
     setProgress(10);
-    setStatusMessage('Google Veo 3.1 va dramatik ssenariy tizimi ishga tushirilmoqda...');
+    setStatusMessage(
+      locale === 'en'
+        ? 'Launching Google Veo 3.1 & dramatic storyline framing...'
+        : locale === 'ru'
+        ? 'Запуск Google Veo 3.1 и драматической раскадровки...'
+        : 'Google Veo 3.1 va dramatik ssenariy tizimi ishga tushirilmoqda...',
+    );
     setResultVideo(null);
     setCurrentTime(0);
 
@@ -258,26 +365,42 @@ export function PromptVideoGenerator({
         includeBackgroundMusic, // User ON/OFF choice
       });
 
+      if (!res?.jobId) {
+        throw new Error(t.errorOccurred);
+      }
+
       setJobId(res.jobId);
       setProgress(res.progress || 15);
-      setStatusMessage(res.message || 'Google Veo 3.1 sahnalari tayyorlanmoqda...');
+      setStatusMessage(
+        res.message ||
+          (locale === 'en'
+            ? 'Generating Google Veo 3.1 scenes...'
+            : 'Google Veo 3.1 sahnalari tayyorlanmoqda...'),
+      );
 
       startPolling(res.jobId);
     } catch (err: any) {
-      setError(err?.message || 'Video yaratishda xatolik yuz berdi');
+      // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED INSTEAD OF DOING NOTHING
+      console.error('Video generation start error:', err);
       setIsLoading(false);
+      setError(err?.message || t.errorOccurred);
     }
   };
 
   const startPolling = (targetJobId: string) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    let pollFailures = 0;
 
     pollIntervalRef.current = setInterval(async () => {
       try {
         const jobData: DramaVideoJob = await api.getPromptVideoStatus(targetJobId);
+        pollFailures = 0; // reset on success
         setProgress(jobData.progress || 25);
         setStatusMessage(
-          jobData.currentStepMessage || 'Google Veo 3.1 dramatik video qayta ishlanmoqda...',
+          jobData.currentStepMessage ||
+            (locale === 'en'
+              ? 'Processing Google Veo 3.1 dramatic video...'
+              : 'Google Veo 3.1 dramatik video qayta ishlanmoqda...'),
         );
 
         if (jobData.status === 'completed' && jobData.videoUrl) {
@@ -295,15 +418,19 @@ export function PromptVideoGenerator({
           });
           onVideoCreated?.(jobData.videoUrl);
         } else if (jobData.status === 'failed') {
+          // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setIsLoading(false);
-          setError(
-            jobData.error ||
-              'Video generatsiyasida xatolik yuz berdi. Qayta urinib koʻring.',
-          );
+          setError(jobData.error || t.errorOccurred);
         }
-      } catch (pollErr) {
-        console.warn('Polling check error, retrying...');
+      } catch (pollErr: any) {
+        pollFailures++;
+        console.warn('Polling check warning, attempt:', pollFailures);
+        if (pollFailures >= 4) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          setIsLoading(false);
+          setError(pollErr?.message || t.errorOccurred);
+        }
       }
     }, 1500);
   };
@@ -367,7 +494,7 @@ export function PromptVideoGenerator({
                 {t.suggestionsLabel}
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {DRAMA_PROMPT_SUGGESTIONS[locale].map((sug, i) => (
+                {suggestions.map((sug, i) => (
                   <button
                     key={i}
                     type="button"
@@ -397,7 +524,7 @@ export function PromptVideoGenerator({
               </p>
               <div className="flex items-center gap-2 pt-1">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-ink text-xs font-bold shadow-2xs">
-                  📱 9:16 Vertikal format
+                  📱 9:16
                 </span>
                 <span className="text-xs text-ink-muted">
                   • {t.durationBadge}
@@ -482,11 +609,20 @@ export function PromptVideoGenerator({
               </div>
             </div>
 
-            {/* Error Message */}
+            {/* Error Message in Form */}
             {error && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                <span>{error}</span>
+              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2 shadow-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span className="font-medium truncate">{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleStartGeneration()}
+                  className="shrink-0 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] transition-colors"
+                >
+                  {t.tryAgain}
+                </button>
               </div>
             )}
 
@@ -505,19 +641,44 @@ export function PromptVideoGenerator({
         {/* Right Column: Processing State or HTML5 Video Preview */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-border shadow-sm flex flex-col justify-center min-h-[500px]">
           {/* STATE 1: Empty Initial Placeholder */}
-          {!isLoading && !resultVideo && (
+          {!isLoading && !resultVideo && !error && (
             <div className="text-center py-14 px-4 space-y-4">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-canvas border border-border flex items-center justify-center text-ink-muted shadow-xs">
                 <Video className="h-8 w-8 text-coral" />
               </div>
               <div className="space-y-1">
                 <h4 className="font-heading font-bold text-ink text-base">
-                  9:16 Dramatik Master Video koʻrinishi
+                  {t.placeholderTitle}
                 </h4>
                 <p className="text-xs text-ink-muted max-w-xs mx-auto leading-relaxed">
-                  Dramatik prompt kiriting va Google Veo 3.1 ssenariysini yaratishni boshlang.
+                  {t.placeholderSub}
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* STATE 1.5: Explicit Error Display Card (Instead of Doing Nothing) */}
+          {error && !isLoading && !resultVideo && (
+            <div className="text-center py-12 px-4 space-y-4 animate-in fade-in duration-200">
+              <div className="h-16 w-16 mx-auto rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shadow-xs">
+                <AlertCircle className="h-8 w-8 text-red-500" />
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="font-heading font-bold text-red-700 text-base">
+                  {t.errorTitle}
+                </h4>
+                <p className="text-xs text-red-600 max-w-sm mx-auto leading-relaxed">
+                  {error}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleStartGeneration()}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors shadow-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>{t.tryAgain}</span>
+              </button>
             </div>
           )}
 
@@ -549,7 +710,7 @@ export function PromptVideoGenerator({
                   />
                 </div>
                 <div className="flex items-center justify-between text-[11px] font-mono text-ink-muted">
-                  <span>Jarayon:</span>
+                  <span>{locale === 'en' ? 'Progress:' : 'Jarayon:'}</span>
                   <span className="font-bold text-coral">{progress}%</span>
                 </div>
               </div>
@@ -562,15 +723,15 @@ export function PromptVideoGenerator({
                     <span>Veo 3.1 & FFmpeg Pipeline:</span>
                   </span>
                   <span className="font-mono text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded">
-                    9:16 Vertikal
+                    9:16
                   </span>
                 </div>
                 <div className="space-y-1 text-[11px] text-ink-muted">
-                  <p>• 1-Akt: Shubhali Koʻz Qarash & Xiyonat Alomati (4–8s)</p>
-                  <p>• 2-Akt: Koʻz Yoshlar & Keskin Kulminatsiya (4–8s)</p>
-                  <p>• 3-Akt: Gʻolibona Qahramonlik Kadri (4–8s)</p>
+                  <p>• {locale === 'en' ? 'Act 1: Suspicion & Betrayal Tropes (4–8s)' : '1-Akt: Shubhali Koʻz Qarash & Xiyonat Alomati (4–8s)'}</p>
+                  <p>• {locale === 'en' ? 'Act 2: Crying & Climax Confrontation (4–8s)' : '2-Akt: Koʻz Yoshlar & Keskin Kulminatsiya (4–8s)'}</p>
+                  <p>• {locale === 'en' ? 'Act 3: Triumphant Resolution & Hero Shot (4–8s)' : '3-Akt: Gʻolibona Qahramonlik Kadri (4–8s)'}</p>
                   <p>
-                    • FFmpeg Concat Demuxer + {includeBackgroundMusic ? 'EMIN & JONY «Камин» audio' : 'Tabiiy nutq'}
+                    • FFmpeg Concat Demuxer + {includeBackgroundMusic ? 'EMIN & JONY «Камин» audio' : (locale === 'en' ? 'Clean speech' : 'Tabiiy nutq')}
                   </p>
                 </div>
               </div>
@@ -651,15 +812,15 @@ export function PromptVideoGenerator({
 
               {/* Audio Track Tag & Duration */}
               <div className="flex items-center justify-between text-[11px] text-ink-muted px-1">
-                <span className="flex items-center gap-1 text-ink font-medium">
-                  <Music className="h-3.5 w-3.5 text-coral" />
-                  <span>
+                <span className="flex items-center gap-1 text-ink font-medium truncate max-w-[200px]">
+                  <Music className="h-3.5 w-3.5 shrink-0 text-coral" />
+                  <span className="truncate">
                     {resultVideo.includeBackgroundMusic
                       ? resultVideo.bgMusicTrack
-                      : 'Ovoz: Tabiiy nutq (Musiqasiz)'}
+                      : (locale === 'en' ? 'Audio: Clean dialogue' : 'Ovoz: Tabiiy nutq')}
                   </span>
                 </span>
-                <span className="font-mono text-[10px] bg-canvas border border-border px-1.5 py-0.5 rounded">
+                <span className="font-mono text-[10px] bg-canvas border border-border px-1.5 py-0.5 rounded shrink-0">
                   {currentTime.toFixed(1)}s / {resultVideo.totalDurationSeconds}s
                 </span>
               </div>
@@ -674,7 +835,7 @@ export function PromptVideoGenerator({
                     className="py-2.5 px-3 rounded-xl bg-ink hover:bg-neutral-800 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    <span>{locale === 'uz' ? 'Videoni ochish' : 'Открыть видео'}</span>
+                    <span>{t.openVideo}</span>
                   </a>
 
                   <a
@@ -716,11 +877,11 @@ export function PromptVideoGenerator({
                             {scene.actTitle}
                           </span>
                           <span className="font-mono text-[10px] bg-amber-500/10 text-amber-800 font-bold px-1.5 py-0.5 rounded">
-                            {scene.durationSeconds}s • Ziddiyat: {scene.tensionLevel}/10
+                            {scene.durationSeconds}s • {locale === 'en' ? 'Tension' : 'Ziddiyat'}: {scene.tensionLevel}/10
                           </span>
                         </div>
                         <p className="text-[11px] text-ink-muted">
-                          <strong className="text-ink">Emotsiya:</strong> {scene.emotion}
+                          <strong className="text-ink">{locale === 'en' ? 'Emotion:' : 'Emotsiya:'}</strong> {scene.emotion}
                         </p>
                         <p className="text-[11px] text-ink-muted italic">
                           &quot;{scene.dialogueScript}&quot;

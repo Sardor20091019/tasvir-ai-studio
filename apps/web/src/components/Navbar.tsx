@@ -11,11 +11,11 @@ import {
   Film,
   User as UserIcon,
 } from 'lucide-react';
-import { User } from '../types';
+import { User, LocaleType } from '../types';
 
 interface NavbarProps {
   user: User | null;
-  locale: 'uz' | 'ru';
+  locale: LocaleType;
   onToggleLocale: () => void;
   activeTab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library';
   setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library') => void;
@@ -46,6 +46,17 @@ export function Navbar({
       recharge: 'Token soʻrash',
       login: 'Kirish (Google)',
     },
+    en: {
+      brandSub: 'AI Video Ads',
+      studio: 'Studio',
+      prompt: 'AI Prompt Video',
+      templates: 'Templates',
+      pricing: 'Pricing',
+      library: 'My Videos',
+      credits: (count: number) => `${count} videos left`,
+      recharge: 'Request tokens',
+      login: 'Sign In (Google)',
+    },
     ru: {
       brandSub: 'AI Видео Реклама',
       studio: 'Студия',
@@ -57,7 +68,17 @@ export function Navbar({
       recharge: 'Запросить токены',
       login: 'Вход (Google)',
     },
-  }[locale];
+  }[locale] || {
+    brandSub: 'AI Video Ads',
+    studio: 'Studio',
+    prompt: 'AI Prompt Video',
+    templates: 'Templates',
+    pricing: 'Pricing',
+    library: 'My Videos',
+    credits: (count: number) => `${count} videos left`,
+    recharge: 'Request tokens',
+    login: 'Sign In (Google)',
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
@@ -167,7 +188,7 @@ export function Navbar({
                   {user.credits_balance}
                 </span>
                 <span className="text-ink-muted text-[11px] hidden lg:inline">
-                  {locale === 'uz' ? 'ta' : 'видео'}
+                  {locale === 'uz' ? 'ta' : locale === 'en' ? 'videos' : 'видео'}
                 </span>
               </div>
               <button
@@ -193,10 +214,10 @@ export function Navbar({
             <button
               onClick={onToggleLocale}
               className="px-2 py-1 text-xs font-mono font-semibold rounded-lg text-ink-muted hover:text-ink hover:bg-canvas transition-colors flex items-center gap-1"
-              title="Tilni o'zgartirish"
+              title={locale === 'uz' ? "Tilni o'zgartirish" : locale === 'en' ? 'Change language' : 'Сменить язык'}
             >
               <Globe className="h-3.5 w-3.5" />
-              <span className="uppercase">{locale}</span>
+              <span className="uppercase font-bold">{locale}</span>
             </button>
           </div>
 
@@ -204,7 +225,7 @@ export function Navbar({
           <button
             onClick={onOpenAuth}
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-white text-ink hover:bg-canvas tactile-btn"
-            title={user ? 'Mening profilim' : 'Google orqali kirish'}
+            title={user ? (locale === 'en' ? 'My profile' : 'Mening profilim') : (locale === 'en' ? 'Sign in with Google' : 'Google orqali kirish')}
           >
             <div className="h-7 w-7 rounded-lg bg-bento-peach text-coral font-bold flex items-center justify-center text-xs">
               {user?.full_name ? user.full_name[0] : <UserIcon className="h-3.5 w-3.5" />}
@@ -214,7 +235,7 @@ export function Navbar({
                 {user?.full_name || t.login}
               </span>
               <span className="text-[10px] font-mono text-ink-muted">
-                {user?.phone_number || (user ? `${user.credits_balance} token` : 'Google hisob')}
+                {user?.phone_number || (user ? `${user.credits_balance} ${locale === 'en' ? 'tokens' : 'token'}` : (locale === 'en' ? 'Google Account' : 'Google hisob'))}
               </span>
             </div>
           </button>

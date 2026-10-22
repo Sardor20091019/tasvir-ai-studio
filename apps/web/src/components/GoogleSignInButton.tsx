@@ -2,12 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
-import { User } from '../types';
+import { User, LocaleType } from '../types';
 
 interface GoogleSignInButtonProps {
   onSuccess: (user: User) => void;
   onError?: (err: any) => void;
-  locale?: 'uz' | 'ru';
+  locale?: LocaleType;
 }
 
 declare global {
@@ -261,7 +261,7 @@ export function GoogleSignInButton({
                 />
               </svg>
               <span>
-                {locale === 'uz' ? 'Google orqali kirish' : 'Войти через Google'}
+                {locale === 'uz' ? 'Google orqali kirish' : locale === 'en' ? 'Sign in with Google' : 'Войти через Google'}
               </span>
             </>
           )}
@@ -274,6 +274,8 @@ export function GoogleSignInButton({
           <span>
             {locale === 'uz'
               ? "Eslatma: Google Console-da 'http://localhost:3000' Authorized JavaScript origins qatoriga qo'shilishi kerak."
+              : locale === 'en'
+              ? "Note: Add 'http://localhost:3000' to Authorized JavaScript origins in Google Cloud Console."
               : "Примечание: добавьте 'http://localhost:3000' в Authorized JavaScript origins в Google Console."}
           </span>
         </div>

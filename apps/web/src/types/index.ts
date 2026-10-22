@@ -1,3 +1,5 @@
+export type LocaleType = 'uz' | 'en' | 'ru';
+
 export interface User {
   id: string;
   phone_number: string;
