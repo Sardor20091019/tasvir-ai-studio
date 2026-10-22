@@ -26,6 +26,23 @@ describe('Security Regression & Remediation Tests', () => {
     );
   });
 
+  test('Cloudflare Turnstile Enforcement: Google Login strictly rejects requests without Turnstile token', async () => {
+    const { AuthService } = await import('../src/auth/auth.service');
+    const mockDb: any = {};
+    const authService = new AuthService(mockDb);
+
+    await assert.rejects(
+      async () => {
+        await authService.googleLogin({ credential: 'valid_google_credential_xyz' });
+      },
+      (err: any) => {
+        assert.match(err.message, /Cloudflare Turnstile tekshiruvidan oʻtish shart/);
+        return true;
+      },
+      'Expected failure when turnstileToken is missing',
+    );
+  });
+
   test('VULN-02: Auth Service getCurrentUser must reject unauthenticated requests without leaking admin', async () => {
     const { AuthService } = await import('../src/auth/auth.service');
     const mockDb: any = {};

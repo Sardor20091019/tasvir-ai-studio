@@ -8,6 +8,7 @@ interface GoogleSignInButtonProps {
   onSuccess: (user: User) => void;
   onError?: (err: any) => void;
   locale?: LocaleType;
+  turnstileToken?: string | null;
 }
 
 declare global {
@@ -54,6 +55,7 @@ export function GoogleSignInButton({
   onSuccess,
   onError,
   locale = 'uz',
+  turnstileToken,
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
@@ -69,10 +71,15 @@ export function GoogleSignInButton({
 
     const handleCredential = async (response: { credential: string }) => {
       if (!isMounted) return;
+      if (!turnstileToken) {
+        onError?.(new Error('Cloudflare Turnstile verification is required'));
+        return;
+      }
       setIsLoading(true);
       try {
         const res = await api.googleLogin({
           credential: response.credential,
+          turnstileToken,
         });
         if (res?.user) {
           onSuccess(res.user);
@@ -151,6 +158,10 @@ export function GoogleSignInButton({
 
   // Direct OAuth2 popup fallback if user clicks or GSI origin is pending approval
   const handleCustomPopupLogin = () => {
+    if (!turnstileToken) {
+      onError?.(new Error('Cloudflare Turnstile verification is required'));
+      return;
+    }
     setIsLoading(true);
 
     // If Google token client is available
@@ -173,6 +184,8 @@ export function GoogleSignInButton({
                 );
                 const userInfo = await userInfoRes.json();
                 const res = await api.googleLogin({
+                  credential: userInfo.sub,
+                  turnstileToken,
                   email: userInfo.email,
                   name: userInfo.name || 'Google Merchant',
                   googleId: userInfo.sub,
@@ -208,8 +221,14 @@ export function GoogleSignInButton({
   };
 
   const fallbackToVerified = async () => {
+    if (!turnstileToken) {
+      onError?.(new Error('Cloudflare Turnstile verification is required'));
+      return;
+    }
     try {
       const res = await api.googleLogin({
+        credential: 'mock_demo_credential_google',
+        turnstileToken,
         email: 'user@google.com',
         name: 'Google Foydalanuvchisi',
         googleId: `google_oauth_sub_${Date.now()}`,
@@ -217,6 +236,7 @@ export function GoogleSignInButton({
       onSuccess(res.user);
     } catch (e) {
       console.error(e);
+      onError?.(e);
     } finally {
       setIsLoading(false);
     }

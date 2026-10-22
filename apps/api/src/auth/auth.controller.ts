@@ -27,6 +27,7 @@ export class AuthController {
     @Body()
     body: {
       credential?: string;
+      turnstileToken?: string;
     },
   ) {
     return this.authService.googleLogin(body);

@@ -188,7 +188,17 @@ export const api = {
     return { success: true, message: 'SMS kod yuborildi', demoCode: '1234' };
   },
 
-  async googleLogin(payload: { credential?: string; email?: string; name?: string; googleId?: string; avatarUrl?: string }): Promise<{ user: User; token: string }> {
+  async googleLogin(payload: {
+    credential?: string;
+    email?: string;
+    name?: string;
+    googleId?: string;
+    avatarUrl?: string;
+    turnstileToken?: string;
+  }): Promise<{ user: User; token: string }> {
+    if (!payload.turnstileToken) {
+      throw new Error('Cloudflare Turnstile tekshiruvidan oʻtish shart');
+    }
     try {
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: 'POST',
@@ -202,24 +212,11 @@ export const api = {
         }
         return data;
       }
-    } catch (e) {
-      console.warn('API googleLogin fallback');
+      const errData = await res.json().catch(() => null);
+      throw new Error(errData?.message || 'Google orqali kirishda xatolik yuz berdi');
+    } catch (e: any) {
+      throw e;
     }
-    return {
-      user: {
-        id: 'google-user-' + Date.now(),
-        phone_number: '',
-        full_name: payload.name || 'Google Foydalanuvchisi',
-        telegram_id: null,
-        locale: 'uz',
-        role: 'user',
-        plan_tier: 'starter',
-        credits_balance: 3,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      token: 'mock-google-token',
-    };
   },
 
   async verifyOtp(phoneNumber: string, code: string): Promise<{ user: User; token: string }> {

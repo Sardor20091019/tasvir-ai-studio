@@ -14,18 +14,21 @@ export class AuthService {
   constructor(@Inject(KyselyService) private readonly db: KyselyService) {}
 
   async verifyTurnstile(token?: string, remoteip?: string): Promise<boolean> {
+    // Without token, Turnstile verification always fails
+    if (!token) return false;
+
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
     if (!secretKey) {
       if (process.env.NODE_ENV === 'production') {
         this.logger.error('TURNSTILE_SECRET_KEY is not configured in production!');
         return false;
       }
-      return true; // If not configured in dev, allow
+      // In local dev without secretKey, accept token if provided
+      return true;
     }
-    if (!token) return false;
 
     // Local dev bypass token strictly prohibited in production
-    if (token.startsWith('cf_test_pass_')) {
+    if (token.startsWith('cf_test_pass_') || token === 'test_dev_bypass_token') {
       if (process.env.NODE_ENV === 'production') {
         this.logger.warn('Turnstile test bypass token rejected in production environment.');
         return false;
@@ -50,8 +53,8 @@ export class AuthService {
       this.logger.log(`Cloudflare Turnstile verification result: ${data.success}`);
       return Boolean(data.success);
     } catch (err: any) {
-      this.logger.warn(`Turnstile verify network error: ${err.message}. Permitting in dev.`);
-      return process.env.NODE_ENV !== 'production';
+      this.logger.warn(`Turnstile verify network error: ${err.message}.`);
+      return false;
     }
   }
 
@@ -152,9 +155,16 @@ export class AuthService {
 
   async googleLogin(params: {
     credential?: string;
+    turnstileToken?: string;
   }): Promise<{ user: User; token: string }> {
     if (!params?.credential || typeof params.credential !== 'string') {
       throw new BadRequestException('Google ID tokeni (credential) kiritilishi shart');
+    }
+
+    // Mandatory Cloudflare Turnstile confirmation
+    const isHuman = await this.verifyTurnstile(params.turnstileToken);
+    if (!isHuman) {
+      throw new BadRequestException('Cloudflare Turnstile tekshiruvidan oʻtish shart (Botlardan himoya)');
     }
 
     let email: string;
