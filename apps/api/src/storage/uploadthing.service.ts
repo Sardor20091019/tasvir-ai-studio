@@ -68,7 +68,7 @@ export class UploadThingService {
       const res = await this.utapi.uploadFiles(file);
 
       if (res && res.data) {
-        const ufsUrl = res.data.ufsUrl || res.data.url;
+        const ufsUrl = res.data.ufsUrl || (res.data.key ? `https://n6ogfqlb21.ufs.sh/f/${res.data.key}` : null);
         this.logger.log(`Successfully saved video to UploadThing: ${ufsUrl}`);
         return ufsUrl;
       } else if (res && res.error) {
