@@ -145,5 +145,39 @@ describe('Security Regression & Remediation Tests', () => {
       },
     );
   });
+
+  test('Video Generation Auth Enforcement: Unauthenticated requests without account are strictly rejected (AuthGuard)', async () => {
+    const { AuthGuard } = await import('../src/auth/guards/auth.guard');
+    const mockDb: any = {
+      selectFrom: () => ({
+        selectAll: () => ({
+          where: () => ({
+            executeTakeFirst: async () => null,
+          }),
+        }),
+      }),
+    };
+    const authGuard = new AuthGuard(mockDb);
+
+    // Mock ExecutionContext without Authorization header
+    const mockContext: any = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers: {},
+        }),
+      }),
+    };
+
+    await assert.rejects(
+      async () => {
+        await authGuard.canActivate(mockContext);
+      },
+      (err: any) => {
+        assert.match(err.message, /Iltimos, avval tizimga kiring/);
+        return true;
+      },
+      'Unauthenticated request must be rejected by AuthGuard',
+    );
+  });
 });
 

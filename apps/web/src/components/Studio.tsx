@@ -26,9 +26,10 @@ import {
   Music,
   Camera,
   Layers,
+  Lock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { AiAvatar, Product, User, VideoJob, LocaleType } from '../types';
+import { AiAvatar, Product, User, LocaleType, VideoJob } from '../types';
 import { api, fallbackAvatars, fallbackProducts } from '../lib/api';
 import { SpeechSynthPlayer } from '../lib/audio';
 
@@ -37,6 +38,7 @@ interface StudioProps {
   onUpdateUser: (user: User) => void;
   locale: LocaleType;
   onOpenCheckout: () => void;
+  onOpenAuth?: () => void;
   onJobCreated?: (job: VideoJob) => void;
   initialTemplate?: {
     productTitle: string;
@@ -55,6 +57,7 @@ export function Studio({
   onUpdateUser,
   locale,
   onOpenCheckout,
+  onOpenAuth,
   onJobCreated,
   initialTemplate,
 }: StudioProps) {
@@ -381,7 +384,20 @@ export function Studio({
 
   // Trigger Render Job
   const handleStartRender = async () => {
-    if (!user || user.credits_balance <= 0) {
+    // Check: user MUST have an account before generating videos
+    if (!user) {
+      const authMsg =
+        locale === 'en'
+          ? 'You must have an account to generate videos. Please sign in with Google first.'
+          : locale === 'ru'
+          ? 'Для создания видео необходимо войти в аккаунт. Пожалуйста, авторизуйтесь через Google.'
+          : 'Video yaratish uchun avval hisobingizga kiring. Iltimos, Google orqali kiring.';
+      setRenderError(authMsg);
+      onOpenAuth?.();
+      return;
+    }
+
+    if (user.credits_balance <= 0) {
       onOpenCheckout();
       return;
     }
@@ -831,27 +847,44 @@ export function Studio({
           )}
 
           {/* Large Render Button */}
-          <button
-            onClick={handleStartRender}
-            disabled={isRendering}
-            className={`w-full py-4 px-6 rounded-xl text-white font-heading font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-tactile transition-all tactile-btn ${
-              isRendering
-                ? 'bg-ink-muted cursor-not-allowed opacity-90'
-                : 'bg-coral hover:bg-coral-hover active:scale-[0.99] shadow-coral/20'
-            }`}
-          >
-            {isRendering ? (
-              <>
-                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>{t.rendering} ({renderProgress}%)</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5" />
-                <span>{t.renderBtn}</span>
-              </>
-            )}
-          </button>
+          {!user ? (
+            <button
+              type="button"
+              onClick={() => onOpenAuth?.()}
+              className="w-full py-4 px-6 rounded-xl bg-coral hover:bg-coral-hover text-white font-heading font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-tactile transition-all tactile-btn"
+            >
+              <Lock className="h-5 w-5" />
+              <span>
+                {locale === 'en'
+                  ? '🔒 Sign In with Google to Generate Video'
+                  : locale === 'ru'
+                  ? '🔒 Войдите через Google для создания видео'
+                  : '🔒 Video yaratish uchun avval tizimga kiring (Google)'}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={handleStartRender}
+              disabled={isRendering}
+              className={`w-full py-4 px-6 rounded-xl text-white font-heading font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-tactile transition-all tactile-btn ${
+                isRendering
+                  ? 'bg-ink-muted cursor-not-allowed opacity-90'
+                  : 'bg-coral hover:bg-coral-hover active:scale-[0.99] shadow-coral/20'
+              }`}
+            >
+              {isRendering ? (
+                <>
+                  <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>{t.rendering} ({renderProgress}%)</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  <span>{t.renderBtn}</span>
+                </>
+              )}
+            </button>
+          )}
         </section>
       </div>
 

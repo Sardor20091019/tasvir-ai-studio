@@ -22,13 +22,16 @@ import {
   Film,
   Type,
   Radio,
+  Lock,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType } from '../types';
+import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType, User } from '../types';
 import { KaraokeSubtitles } from './KaraokeSubtitles';
 
 interface PromptVideoGeneratorProps {
   locale?: LocaleType;
+  user?: User | null;
+  onRequireAuth?: () => void;
   onVideoCreated?: (videoUrl: string) => void;
 }
 
@@ -103,6 +106,8 @@ const DRAMA_PROMPT_SUGGESTIONS = {
 
 export function PromptVideoGenerator({
   locale = 'uz',
+  user,
+  onRequireAuth,
   onVideoCreated,
 }: PromptVideoGeneratorProps) {
   const t = {
@@ -338,6 +343,19 @@ export function PromptVideoGenerator({
   const handleStartGeneration = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!prompt.trim()) return;
+
+    // Check: user MUST have an account before generating videos
+    if (!user) {
+      const authMsg =
+        locale === 'en'
+          ? 'You must have an account to generate videos. Please sign in with Google first.'
+          : locale === 'ru'
+          ? 'Для создания видео необходимо войти в аккаунт. Пожалуйста, авторизуйтесь через Google.'
+          : 'Video yaratish uchun avval hisobingizga kiring. Iltimos, Google orqali kiring.';
+      setError(authMsg);
+      onRequireAuth?.();
+      return;
+    }
 
     // Pause audio preview if active
     if (audioPreviewRef.current && isPlayingAudioPreview) {
@@ -626,15 +644,32 @@ export function PromptVideoGenerator({
               </div>
             )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading || !prompt.trim()}
-              className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
-            >
-              <Sparkles className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>{isLoading ? t.generatingBtn : t.generateBtn}</span>
-            </button>
+            {/* Submit / Auth Gate Button */}
+            {!user ? (
+              <button
+                type="button"
+                onClick={() => onRequireAuth?.()}
+                className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
+              >
+                <Lock className="h-4 w-4" />
+                <span>
+                  {locale === 'en'
+                    ? '🔒 Sign in with Google to Generate Video'
+                    : locale === 'ru'
+                    ? '🔒 Войдите через Google для создания видео'
+                    : '🔒 Video yaratish uchun avval tizimga kiring (Google)'}
+                </span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isLoading || !prompt.trim()}
+                className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
+              >
+                <Sparkles className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>{isLoading ? t.generatingBtn : t.generateBtn}</span>
+              </button>
+            )}
           </form>
         </div>
 

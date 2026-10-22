@@ -48,7 +48,7 @@ This document provides the complete, authoritative reference for all REST API en
 | **7** | `GET` | `/api/products/:id` | Public | Products | Retrieve single product details |
 | **8** | `POST` | `/api/products` | Bearer JWT | Products | Create product bound to authenticated user |
 | **9** | `POST` | `/api/products/presign-upload` | Bearer JWT | Products | Get presigned upload configuration |
-| **10** | `POST` | `/api/generate-video` | Rate-Limited | Veo 3.1 | Generate 9:16 vertical drama ad (Veo 3.1) |
+| **10** | `POST` | `/api/generate-video` | Bearer JWT (AuthGuard) | Veo 3.1 | Generate 9:16 vertical drama ad (Veo 3.1) |
 | **11** | `GET` | `/api/generate-video/:jobId` | Public | Veo 3.1 | Get drama video status & karaoke subtitles |
 | **12** | `GET` | `/api/generate-video/status/:jobId`| Public | Veo 3.1 | Alias status polling endpoint |
 | **13** | `GET` | `/api/video-jobs/avatars` | Public | Video Jobs | List Central Asian AI avatars |
@@ -270,7 +270,7 @@ Provides presigned parameters for secure direct file upload to storage.
 
 ### `POST /api/generate-video`
 Triggers the dramatic product video pipeline targeting Google **Veo 3.1** (`veo-3.1-lite-generate`), strictly vertical **9:16**, dynamic scene durations (4–8s each), karaoke subtitles, and optional background music overlay.
-* **Authentication**: None (Rate-limited to 15 requests per 5 minutes per IP)
+* **Authentication**: `Bearer <JWT_ACCESS_TOKEN>` (AuthGuard strictly enforced; rate-limited to 15 requests per 5 minutes per IP)
 * **Request Body**:
 ```json
 {
@@ -628,6 +628,7 @@ curl -i http://localhost:4000/api/health
 ```bash
 curl -i -X POST http://localhost:4000/api/generate-video \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
   -d '{
     "prompt": "Dramatik xiyonat va koʻz yoshlar: AirPods Max chegirmada!",
     "aspectRatio": "9:16",
@@ -651,3 +652,4 @@ curl -i -X POST http://localhost:4000/api/admin/grant-tokens \
     "reason": "Test grant"
   }'
 ```
+

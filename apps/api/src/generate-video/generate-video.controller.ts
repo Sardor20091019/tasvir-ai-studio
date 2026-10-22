@@ -7,10 +7,13 @@ import {
   Req,
   BadRequestException,
   Inject,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { GenerateVideoService, AspectRatioType } from './generate-video.service';
 import { InMemoryRateLimiter } from '../auth/rate-limiter';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 const JOB_ID_REGEX = /^[a-zA-Z0-9_-]{4,64}$/;
 
@@ -19,8 +22,10 @@ export class GenerateVideoController {
   constructor(@Inject(GenerateVideoService) private readonly generateVideoService: GenerateVideoService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   async createVideoJob(
     @Req() req: Request,
+    @CurrentUser('id') currentUserId: string,
     @Body()
     body: {
       prompt: string;

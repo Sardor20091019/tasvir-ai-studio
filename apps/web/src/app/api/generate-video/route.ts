@@ -4,14 +4,24 @@ const API_BASE = process.env.API_URL || 'http://127.0.0.1:4000/api';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
     const authHeader = req.headers.get('authorization') || '';
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        {
+          statusCode: 401,
+          message: 'Video yaratish uchun avval tizimga kiring (Google hisobingiz orqali)',
+        },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
 
     const apiRes = await fetch(`${API_BASE}/generate-video`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        Authorization: authHeader,
       },
       body: JSON.stringify(body),
     });
@@ -19,14 +29,13 @@ export async function POST(req: NextRequest) {
     const data = await apiRes.json();
     return NextResponse.json(data, { status: apiRes.status });
   } catch (error: any) {
-    // If backend isn't running or proxy fails, return high-fidelity fallback response
-    const fallbackId = `vid_${Date.now()}`;
-    return NextResponse.json({
-      jobId: fallbackId,
-      status: 'queued',
-      progress: 5,
-      message: 'Video generatsiyasi boshlandi',
-    });
+    return NextResponse.json(
+      {
+        statusCode: 500,
+        message: 'Video yaratishda xatolik yuz berdi. Iltimos, qayta urinib koʻring.',
+      },
+      { status: 500 }
+    );
   }
 }
 

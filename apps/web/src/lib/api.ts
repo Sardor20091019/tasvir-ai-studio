@@ -534,31 +534,27 @@ export const api = {
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
   }): Promise<{ jobId: string; status: string; progress: number; message: string; model?: string }> {
-    try {
-      const res = await fetch(`${API_BASE}/generate-video`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          ...params,
-          aspectRatio: '9:16', // Enforced 9:16 vertical ratio
-        }),
-      });
-      if (res.ok) return await res.json();
-    } catch (e) {
-      console.warn('API generateVideoFromPrompt fallback');
+    const res = await fetch(`${API_BASE}/generate-video`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({
+        ...params,
+        aspectRatio: '9:16', // Enforced 9:16 vertical ratio
+      }),
+    });
+
+    if (res.ok) {
+      return await res.json();
     }
 
-    const fallbackJobId = `drama_${Date.now()}_sim`;
-    return {
-      jobId: fallbackJobId,
-      status: 'queued',
-      progress: 10,
-      message: 'Google Veo 3.1 dramatik video generatsiyasi boshlandi',
-      model: 'veo-3.1-lite-generate',
-    };
+    const err = await res.json().catch(() => null);
+    if (res.status === 401) {
+      throw new Error(err?.message || 'Video yaratish uchun avval tizimga kiring (Google hisobingiz orqali)');
+    }
+    throw new Error(err?.message || 'Video yaratishda xatolik yuz berdi');
   },
 
   async getPromptVideoStatus(jobId: string): Promise<any> {

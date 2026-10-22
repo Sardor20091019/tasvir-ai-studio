@@ -352,6 +352,7 @@ export default function HomePage() {
             onUpdateUser={setUser}
             locale={locale}
             onOpenCheckout={() => setIsCheckoutOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
             onJobCreated={handleJobCreated}
             initialTemplate={
               selectedTemplate
@@ -375,7 +376,9 @@ export default function HomePage() {
       {activeTab === 'prompt' && (
         <div className="animate-in fade-in duration-200">
           <PromptVideoGenerator
+            user={user}
             locale={locale}
+            onRequireAuth={() => setIsAuthOpen(true)}
             onVideoCreated={(videoUrl) => {
               const newPromptJob: VideoJob = {
                 id: `job-prompt-${Date.now()}`,
