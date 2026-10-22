@@ -41,7 +41,7 @@ export default function HomePage() {
       status: 'completed',
       progress_percent: 100,
       audio_preview_url: null,
-      output_video_url: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+      output_video_url: '/videos/tasvir-vertical.mp4',
       credits_charged: 1,
       error_message: null,
       created_at: new Date(Date.now() - 3600000).toISOString(),
@@ -114,7 +114,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab: AI Video Prompt Generator (Gemini Omni 1.1 Flash & Remotion) */}
+      {/* Tab: AI Video Prompt Generator (Google Gemini & Remotion) */}
       {activeTab === 'prompt' && (
         <div className="animate-in fade-in duration-200">
           <PromptVideoGenerator
@@ -127,7 +127,7 @@ export default function HomePage() {
                 avatar_id: 'malika',
                 platform_preset: 'uzum_9_16',
                 script_tone: 'discount_hook',
-                script_text: 'Gemini Omni 1.1 Flash AI Prompt Video',
+                script_text: 'Google Gemini AI Prompt Video',
                 status: 'completed',
                 progress_percent: 100,
                 audio_preview_url: null,

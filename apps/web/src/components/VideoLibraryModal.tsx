@@ -100,7 +100,7 @@ export function VideoLibraryModal({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => {
             const isCompleted = job.status === 'completed';
-            const videoSrc = job.output_video_url || 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4';
+            const videoSrc = job.output_video_url || '/videos/tasvir-vertical.mp4';
 
             return (
               <div

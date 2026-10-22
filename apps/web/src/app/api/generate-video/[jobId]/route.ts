@@ -29,8 +29,8 @@ export async function GET(
     status: 'completed',
     progress: 100,
     currentStepMessage: 'Video muvaffaqiyatli tayyorlandi!',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
-    downloadUrl: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+    videoUrl: '/videos/tasvir-vertical.mp4',
+    downloadUrl: '/videos/tasvir-vertical.mp4',
     script: {
       hook: 'Hozirroq koʻring! Maxsus taklif faqat bugun amal qiladi!',
       body: 'Aynan bugun katta chegirmada sifatli mahsulotga buyurtma bering.',

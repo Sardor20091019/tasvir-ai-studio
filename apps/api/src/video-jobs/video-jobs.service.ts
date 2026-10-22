@@ -6,6 +6,7 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
+import { GoogleGenAI } from '@google/genai';
 import { KyselyService } from '../database/kysely.service';
 import { sql } from 'kysely';
 import { VideoJob, AiAvatar } from '../database/schema';
@@ -18,6 +19,22 @@ export class VideoJobsService {
   private readonly logger = new Logger(VideoJobsService.name);
 
   constructor(@Inject(KyselyService) private readonly db: KyselyService) {}
+
+  private getGeminiClient(): { client: GoogleGenAI; activeKey: string } | null {
+    const rawKey =
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.GOOGLE_GENAI_API_KEY ||
+      process.env.GEMINI_SECRET_KEY;
+    const activeKey =
+      rawKey && rawKey !== 'YOUR_API_KEY_HERE' ? rawKey.trim() : '';
+
+    if (!activeKey) return null;
+    return {
+      client: new GoogleGenAI({ apiKey: activeKey }),
+      activeKey,
+    };
+  }
 
   async getAvatars(): Promise<AiAvatar[]> {
     return await this.db
@@ -122,7 +139,7 @@ export class VideoJobsService {
         status: 'completed',
         progress: 100,
         delay: 1500,
-        outputUrl: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+        outputUrl: '/videos/tasvir-vertical.mp4',
       },
     ];
 
@@ -181,10 +198,61 @@ export class VideoJobsService {
       ? `${validPrice.toLocaleString('uz-UZ')} so'm`
       : 'maxsus narxda';
 
+    const tone = ALLOWED_TONES.has(params.tone) ? params.tone : 'discount_hook';
+    const gemini = this.getGeminiClient();
+
+    // Try Google Gemini 2.5 Flash if available
+    if (gemini) {
+      try {
+        const toneDesc =
+          tone === 'discount_hook'
+            ? 'katta chegirma va shoshilinch taklif'
+            : tone === 'quality_review'
+            ? 'yuqori sifat, xolis sharh va ishonch'
+            : 'yoshlarbop, qisqa dinamik trend reels';
+
+        const prompt = `Siz O'zbekiston e-commerce bozori (Uzum Market, Instagram Reels) uchun eng kuchli reklama mutaxassisisiz.
+Mahsulot: "${title}"
+Kategoriya: "${params.category || 'Umumiy'}"
+Narx: ${priceFormatted}
+Uslub (tone): ${toneDesc}
+Sheva: ${params.dialect || 'Adabiy oʻzbek'}
+
+Iltimos, ushbu mahsulot uchun 15 soniyalik sotuvchi reklama matni va 3 ta diqqatni tortuvchi hook yarating.
+Javobni FAQAT toza JSON formatida bering:
+{
+  "scriptText": "15 soniyalik video uchun to'liq reklama matni...",
+  "hooks": ["1-hook...", "2-hook...", "3-hook..."]
+}`;
+
+        const res: any = await gemini.client.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.7,
+          },
+        });
+
+        if (res && res.text) {
+          const parsed = JSON.parse(res.text.replace(/```json|```/g, '').trim());
+          if (parsed.scriptText && Array.isArray(parsed.hooks) && parsed.hooks.length > 0) {
+            this.logger.log(`Generated AI script via Google Gemini for product: "${title}"`);
+            return {
+              scriptText: parsed.scriptText,
+              estimatedDurationSeconds: 15,
+              hooks: parsed.hooks,
+            };
+          }
+        }
+      } catch (geminiErr: any) {
+        this.logger.warn(`Google Gemini script generation fallback: ${geminiErr.message}`);
+      }
+    }
+
+    // High fidelity fallback templates
     let script = '';
     let hooks: string[] = [];
-
-    const tone = ALLOWED_TONES.has(params.tone) ? params.tone : 'discount_hook';
 
     if (tone === 'discount_hook') {
       hooks = [

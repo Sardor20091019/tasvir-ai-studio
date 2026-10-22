@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as express from 'express';
 
 // Load environment variables from apps/api/.env or root .env
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -75,6 +77,12 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('api');
+
+  const videosPath = path.resolve(process.cwd(), 'apps/web/public/videos');
+  if (fs.existsSync(videosPath)) {
+    app.use('/videos', express.static(videosPath));
+    logger.log(`Serving static video previews from ${videosPath}`);
+  }
 
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');

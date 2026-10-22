@@ -16,6 +16,7 @@ import {
   Layers,
   Send,
   Zap,
+  ExternalLink,
 } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -45,7 +46,7 @@ export function PromptVideoGenerator({
 }: PromptVideoGeneratorProps) {
   const t = {
     uz: {
-      badge: 'GEMINI OMNI 1.1 FLASH & REMOTION',
+      badge: 'GOOGLE GEMINI AI & REMOTION',
       title: 'Prompt orqali AI Video Generatsiyasi',
       subtitle: 'Istalgan mahsulot yoki reklama gʻoyasini yozing — sunʼiy intellekt uni toʻliq video rolikka aylantirib beradi.',
       promptLabel: 'Video tavsifi (Prompt)',
@@ -69,7 +70,7 @@ export function PromptVideoGenerator({
       storyboardTitle: 'Kadrlar ketma-ketligi (Storyboard):',
     },
     ru: {
-      badge: 'GEMINI OMNI 1.1 FLASH & REMOTION',
+      badge: 'GOOGLE GEMINI AI & REMOTION',
       title: 'Генерация AI Видео по Промпту',
       subtitle: 'Опишите товар или рекламную идею — искусственный интеллект создаст готовый видеоролик.',
       promptLabel: 'Описание видео (Промпт)',
@@ -144,7 +145,7 @@ export function PromptVideoGenerator({
 
       setJobId(res.jobId);
       setProgress(res.progress || 15);
-      setStatusMessage(res.message || 'gemini-omni-1.1-flash ishga tushdi...');
+      setStatusMessage(res.message || 'Google Gemini AI ishga tushdi...');
 
       // Start background polling
       startPolling(res.jobId);
@@ -396,7 +397,7 @@ export function PromptVideoGenerator({
                   <Zap className="h-3 w-3 text-coral" />
                   <span className="font-semibold text-ink">Pipeline:</span>
                 </div>
-                <p>• gemini-omni-1.1-flash ssenariy tuzilishi</p>
+                <p>• Google Gemini 2.5 Flash ssenariy tuzilishi</p>
                 <p>• Remotion canvas kadrlar sintezi ({aspectRatio})</p>
                 <p>• MP4 video montaj va audio sinxronizatsiya</p>
               </div>
@@ -428,27 +429,50 @@ export function PromptVideoGenerator({
               >
                 <video
                   ref={videoRef}
+                  key={resultVideo.videoUrl}
                   src={resultVideo.videoUrl}
                   controls
                   autoPlay
+                  muted
                   loop
                   playsInline
+                  preload="auto"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes('/videos/tasvir-vertical.mp4')) {
+                      target.src = '/videos/tasvir-vertical.mp4';
+                      target.load();
+                      target.play().catch(() => {});
+                    }
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>
 
               {/* Action Buttons: Download MP4 & Restart */}
               <div className="space-y-2 pt-2">
-                <a
-                  href={resultVideo.downloadUrl}
-                  download="tasvir-ai-generated-video.mp4"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>{t.downloadBtn}</span>
-                </a>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={resultVideo.videoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-2.5 px-3 rounded-xl bg-ink hover:bg-neutral-800 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>{locale === 'uz' ? 'Videoni ochish' : 'Открыть видео'}</span>
+                  </a>
+
+                  <a
+                    href={resultVideo.downloadUrl}
+                    download="tasvir-ai-generated-video.mp4"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>{t.downloadBtn}</span>
+                  </a>
+                </div>
 
                 <button
                   type="button"
@@ -475,6 +499,44 @@ export function PromptVideoGenerator({
                   <p className="text-ink-muted leading-relaxed">
                     <strong className="text-coral font-bold">CTA:</strong> {resultVideo.script.cta}
                   </p>
+                </div>
+              )}
+
+              {/* Generated Storyboard Frames */}
+              {Array.isArray(resultVideo.storyboard) && resultVideo.storyboard.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <span className="font-heading font-bold text-ink block text-xs">
+                    {t.storyboardTitle}
+                  </span>
+                  <div className="space-y-2">
+                    {resultVideo.storyboard.map((frame, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-2.5 p-2.5 rounded-xl bg-canvas border border-border text-xs"
+                      >
+                        {frame.visualLayerUrl && (
+                          <img
+                            src={frame.visualLayerUrl}
+                            alt={`Frame ${frame.frameNumber}`}
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-border shadow-2xs"
+                          />
+                        )}
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono font-bold bg-coral/10 text-coral px-1.5 py-0.5 rounded">
+                              {frame.timestampSec}s
+                            </span>
+                            <span className="font-semibold text-ink text-[11px] truncate">
+                              {frame.caption || `Kadr ${frame.frameNumber}`}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-ink-muted line-clamp-2">
+                            {frame.sceneDescription}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

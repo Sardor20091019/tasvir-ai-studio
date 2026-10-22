@@ -45,12 +45,13 @@ export class GenerateVideoService {
   private jobs = new Map<string, VideoGenerationJob>();
 
   private getGeminiClient(): { client: GoogleGenAI; activeKey: string } {
-    const rawKey = process.env.GEMINI_API_KEY;
-    const secretKey = process.env.GEMINI_SECRET_KEY;
+    const rawKey =
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.GOOGLE_GENAI_API_KEY ||
+      process.env.GEMINI_SECRET_KEY;
     const activeKey =
-      rawKey && rawKey !== 'YOUR_API_KEY_HERE'
-        ? rawKey
-        : secretKey || rawKey || 'YOUR_API_KEY_HERE';
+      rawKey && rawKey !== 'YOUR_API_KEY_HERE' ? rawKey.trim() : '';
 
     return {
       client: new GoogleGenAI({ apiKey: activeKey }),
@@ -84,7 +85,7 @@ export class GenerateVideoService {
     this.jobs.set(jobId, job);
     this.logger.log(`Created video generation job ${jobId} with prompt: "${params.prompt}"`);
 
-    // Asynchronously execute generation pipeline using gemini-omni-1.1-flash & Remotion frame assembly
+    // Asynchronously execute generation pipeline using Google Gemini & Remotion engine
     this.processJobAsync(jobId).catch((err) => {
       this.logger.error(`Error in video generation job ${jobId}: ${err.message}`, err.stack);
       const current = this.jobs.get(jobId);
@@ -115,10 +116,10 @@ export class GenerateVideoService {
     const job = this.jobs.get(jobId);
     if (!job) return;
 
-    // Phase 1: Gemini Omni 1.1 Flash AI Content & Script Generation
+    // Phase 1: Google Gemini Flash AI Content & Script Generation
     job.status = 'generating_script';
     job.progress = 20;
-    job.currentStepMessage = 'gemini-omni-1.1-flash orqali ssenariy va kadrlar tahlil qilinmoqda...';
+    job.currentStepMessage = 'Google Gemini 2.5 Flash orqali ssenariy va kadrlar tahlil qilinmoqda...';
     await sleep(1500);
 
     const { client, activeKey } = this.getGeminiClient();
@@ -127,29 +128,64 @@ export class GenerateVideoService {
       body: `Assalomu alaykum! Biz eng sifatli mahsulotlarni siz uchun tanladik. Bugun katta chegirma bilan xarid qiling!`,
       cta: `Hoziroq profilga o'ting yoki pastdagi havolani bosing!`,
     };
+    let dynamicScenes: Array<{ sceneDescription: string; caption: string }> = [];
 
-    try {
-      if (activeKey && activeKey !== 'YOUR_API_KEY_HERE') {
-        this.logger.log(`Invoking gemini-omni-1.1-flash for prompt: "${job.prompt}"`);
-        const response: any = await client.models.generateContent({
-          model: 'gemini-omni-1.1-flash',
-          contents: `Create a 3-part e-commerce video ad script in Uzbek for this prompt: "${job.prompt}". 
-Respond with clean JSON with keys: "hook", "body", "cta".`,
-        });
+    if (activeKey) {
+      const candidateModels = [
+        process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        'gemini-flash-latest',
+        'gemini-3.5-flash',
+      ];
 
-        if (response && response.text) {
-          try {
-            const parsed = JSON.parse(response.text.replace(/```json|```/g, '').trim());
-            if (parsed.hook && parsed.body) {
-              generatedScript = parsed;
+      for (const modelName of candidateModels) {
+        try {
+          this.logger.log(`Invoking Google Gemini (${modelName}) for prompt: "${job.prompt}"`);
+          const response: any = await client.models.generateContent({
+            model: modelName,
+            contents: `Create an engaging e-commerce video ad script and 3 visual scene descriptions for: "${job.prompt}".
+Language: match the prompt (default to Uzbek if ambiguous).
+Respond ONLY with a valid JSON object matching:
+{
+  "hook": "Catchy short hook under 15 words",
+  "body": "Engaging product description highlighting key benefits",
+  "cta": "Urgent and clear call to action",
+  "scenes": [
+    { "sceneDescription": "Visual scene 1 description for video camera", "caption": "Short on-screen text 1" },
+    { "sceneDescription": "Visual scene 2 description for video camera", "caption": "Short on-screen text 2" },
+    { "sceneDescription": "Visual scene 3 description for video camera", "caption": "Short on-screen text 3" }
+  ]
+}`,
+            config: {
+              responseMimeType: 'application/json',
+              temperature: 0.7,
+            },
+          });
+
+          if (response && response.text) {
+            try {
+              const parsed = JSON.parse(response.text.replace(/```json|```/g, '').trim());
+              if (parsed.hook && parsed.body) {
+                generatedScript = {
+                  hook: parsed.hook,
+                  body: parsed.body,
+                  cta: parsed.cta || generatedScript.cta,
+                };
+                if (Array.isArray(parsed.scenes) && parsed.scenes.length >= 3) {
+                  dynamicScenes = parsed.scenes;
+                }
+                this.logger.log(`Google Gemini (${modelName}) successfully generated script & storyboard.`);
+                break;
+              }
+            } catch (e) {
+              this.logger.warn(`Could not parse JSON response from ${modelName}, attempting fallback.`);
             }
-          } catch (e) {
-            this.logger.warn(`Could not parse Gemini JSON response, using text.`);
           }
+        } catch (apiErr: any) {
+          this.logger.warn(`Google Gemini ${modelName} call failed: ${apiErr.message}. Checking next model candidate.`);
         }
       }
-    } catch (apiErr: any) {
-      this.logger.warn(`Gemini API call handled: ${apiErr.message}. Utilizing local high-fidelity generator.`);
+    } else {
+      this.logger.warn('No active Gemini API key found. Using local template engine.');
     }
 
     job.script = generatedScript;
@@ -180,27 +216,61 @@ Respond with clean JSON with keys: "hook", "body", "cta".`,
       height: res.height,
     };
 
+    // Contextual stock media based on prompt keywords
+    const pLower = job.prompt.toLowerCase();
+    let visualLayers = [
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
+    ];
+
+    if (pLower.includes('airpod') || pLower.includes('naushnik') || pLower.includes('наушник') || pLower.includes('headphone') || pLower.includes('quloqchin')) {
+      visualLayers = [
+        'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&q=80',
+      ];
+    } else if (pLower.includes('soat') || pLower.includes('часы') || pLower.includes('watch')) {
+      visualLayers = [
+        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80',
+      ];
+    } else if (pLower.includes('atlas') || pLower.includes('libos') || pLower.includes('платье') || pLower.includes('dress') || pLower.includes('ko\'ylak') || pLower.includes('kiyim')) {
+      visualLayers = [
+        'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80',
+      ];
+    } else if (pLower.includes('parfyum') || pLower.includes('духи') || pLower.includes('perfume') || pLower.includes('krem') || pLower.includes('mushk')) {
+      visualLayers = [
+        'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=800&q=80',
+      ];
+    }
+
     job.storyboard = [
       {
         frameNumber: 1,
         timestampSec: 0,
-        sceneDescription: 'Kirish dinamik hook kadri va diqqatni tortuvchi sarlavha',
-        caption: generatedScript.hook,
-        visualLayerUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
+        sceneDescription: dynamicScenes[0]?.sceneDescription || 'Kirish dinamik hook kadri va diqqatni tortuvchi sarlavha',
+        caption: dynamicScenes[0]?.caption || generatedScript.hook,
+        visualLayerUrl: visualLayers[0],
       },
       {
         frameNumber: 2,
-        timestampSec: 5,
-        sceneDescription: 'Mahsulot detallari, sifat va xususiyatlar koʻrinishi',
-        caption: generatedScript.body,
-        visualLayerUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+        timestampSec: Math.round(job.durationSeconds * 0.33),
+        sceneDescription: dynamicScenes[1]?.sceneDescription || 'Mahsulot detallari, sifat va xususiyatlar koʻrinishi',
+        caption: dynamicScenes[1]?.caption || generatedScript.body.slice(0, 80) + '...',
+        visualLayerUrl: visualLayers[1],
       },
       {
         frameNumber: 3,
-        timestampSec: 10,
-        sceneDescription: 'Uzum / Instagram xarid havolasi va harakatga chaqiruv (CTA)',
-        caption: generatedScript.cta,
-        visualLayerUrl: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
+        timestampSec: Math.round(job.durationSeconds * 0.66),
+        sceneDescription: dynamicScenes[2]?.sceneDescription || 'Uzum / Instagram xarid havolasi va harakatga chaqiruv (CTA)',
+        caption: dynamicScenes[2]?.caption || generatedScript.cta,
+        visualLayerUrl: visualLayers[2],
       },
     ];
 
@@ -213,9 +283,11 @@ Respond with clean JSON with keys: "hook", "body", "cta".`,
     await sleep(1800);
 
     // Phase 4: Completed
-    let finalVideoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4';
+    let finalVideoUrl = '/videos/tasvir-vertical.mp4';
     if (job.aspectRatio === '16:9') {
-      finalVideoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4';
+      finalVideoUrl = '/videos/tasvir-horizontal.mp4';
+    } else if (pLower.includes('airpod') || pLower.includes('naushnik') || pLower.includes('headphone') || pLower.includes('quloqchin')) {
+      finalVideoUrl = '/videos/tasvir-headphones.mp4';
     }
 
     job.status = 'completed';
@@ -228,4 +300,3 @@ Respond with clean JSON with keys: "hook", "body", "cta".`,
     this.logger.log(`Video generation job ${jobId} completed successfully: ${finalVideoUrl}`);
   }
 }
-

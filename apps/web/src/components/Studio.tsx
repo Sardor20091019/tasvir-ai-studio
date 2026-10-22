@@ -337,7 +337,7 @@ export function Studio({
         setRenderStage(4);
         setIsRendering(false);
         setRenderedVideoUrl(
-          'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+          '/videos/tasvir-vertical.mp4',
         );
 
         // Confetti celebration

@@ -392,7 +392,7 @@ export const api = {
       progress_percent: 100,
       credits_charged: 1,
       audio_preview_url: null,
-      output_video_url: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+      output_video_url: '/videos/tasvir-vertical.mp4',
       error_message: null,
       created_at: new Date().toISOString(),
       completed_at: new Date().toISOString(),
@@ -468,7 +468,7 @@ export const api = {
     return [];
   },
 
-  // Asynchronous Video Generation from Prompt (gemini-omni-1.1-flash & Remotion)
+  // Asynchronous Video Generation from Prompt (Google Gemini & Remotion)
   async generateVideoFromPrompt(params: {
     prompt: string;
     aspectRatio?: '9:16' | '16:9' | '1:1';
@@ -528,8 +528,8 @@ export const api = {
       status: 'completed',
       progress: 100,
       currentStepMessage: 'Video muvaffaqiyatli tayyorlandi!',
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
-      downloadUrl: 'https://assets.mixkit.co/videos/preview/mixkit-vertical-fashion-model-showing-her-shoes-42795-large.mp4',
+      videoUrl: '/videos/tasvir-vertical.mp4',
+      downloadUrl: '/videos/tasvir-vertical.mp4',
       script: {
         hook: 'Hozirroq koʻring! Ushbu taklif faqat bugun amal qiladi!',
         body: 'Aynan bugun katta chegirmada sifatli mahsulotga buyurtma bering.',
