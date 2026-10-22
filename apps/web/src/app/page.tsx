@@ -13,8 +13,9 @@ import {
   CheckCircle2,
   ExternalLink,
   MessageCircle,
+  Crown,
 } from 'lucide-react';
-import { Navbar } from '../components/Navbar';
+import { Navbar, NavTabType } from '../components/Navbar';
 import { Studio } from '../components/Studio';
 import { TemplatesGallery, TemplateItem } from '../components/TemplatesGallery';
 import { PricingSection } from '../components/PricingSection';
@@ -22,6 +23,7 @@ import { VideoLibraryModal } from '../components/VideoLibraryModal';
 import { AskAdminModal } from '../components/AskAdminModal';
 import { AuthModal } from '../components/AuthModal';
 import { ProfileModal } from '../components/ProfileModal';
+import { AdminPanel } from '../components/AdminPanel';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
 import { User, VideoJob, LocaleType } from '../types';
 import { api } from '../lib/api';
@@ -29,7 +31,7 @@ import { api } from '../lib/api';
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<LocaleType>('uz');
-  const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'pricing' | 'library'>('studio');
+  const [activeTab, setActiveTab] = useState<NavTabType>('studio');
 
   // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -342,6 +344,23 @@ export default function HomePage() {
                 </span>
               )}
             </button>
+
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
+                  activeTab === 'admin'
+                    ? 'bg-red-600 text-white shadow-2xs'
+                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                }`}
+              >
+                <Crown className="h-3.5 w-3.5 text-amber-300" />
+                <span>Admin Panel</span>
+                <span className="text-[9px] font-mono bg-white/20 text-white px-1.5 py-0.2 rounded font-bold uppercase">
+                  role: admin
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -433,6 +452,13 @@ export default function HomePage() {
             locale={locale}
             onOpenStudio={() => setActiveTab('studio')}
           />
+        </div>
+      )}
+
+      {/* Tab 6: Admin Panel (role === 'admin') */}
+      {activeTab === 'admin' && (
+        <div className="animate-in fade-in duration-200">
+          <AdminPanel user={user} locale={locale} />
         </div>
       )}
 

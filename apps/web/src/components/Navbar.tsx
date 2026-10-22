@@ -9,17 +9,20 @@ import {
   Globe,
   Coins,
   Film,
+  Crown,
   User as UserIcon,
 } from 'lucide-react';
 import { User, LocaleType } from '../types';
+
+export type NavTabType = 'studio' | 'prompt' | 'templates' | 'pricing' | 'library' | 'admin';
 
 interface NavbarProps {
   user: User | null;
   locale: LocaleType;
   onToggleLocale: () => void;
   onChangeLocale?: (locale: LocaleType) => void;
-  activeTab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library';
-  setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library') => void;
+  activeTab: NavTabType;
+  setActiveTab: (tab: NavTabType) => void;
   onOpenCheckout: () => void;
   onOpenAuth: () => void;
   onOpenProfile?: () => void;
@@ -160,6 +163,19 @@ export function Navbar({
               <CreditCard className="h-3.5 w-3.5" />
               {t.pricing}
             </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-3 py-1.5 text-xs font-heading font-extrabold rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTab === 'admin'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                }`}
+              >
+                <Crown className="h-3.5 w-3.5 text-amber-300" />
+                <span>Admin</span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -332,6 +348,20 @@ export function Navbar({
             <span className="absolute top-1 right-2 h-2 w-2 rounded-full bg-coral animate-ping" />
           )}
         </button>
+        {user?.role === 'admin' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('admin')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
+              activeTab === 'admin'
+                ? 'text-red-700 font-bold bg-red-100'
+                : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            <Crown className="h-4 w-4 text-amber-500" />
+            <span className="text-[10px] font-medium">Admin</span>
+          </button>
+        )}
       </nav>
     </header>
   );
