@@ -53,6 +53,7 @@ export function AuthModal({
     setIsLoading(true);
     try {
       const res = await api.googleLogin({
+        credential: 'mock_demo_credential_sardor',
         email: 'sardor.sunatullayev@tasvir.ai',
         name: 'Sardor Sunatullayev',
         googleId: 'google_oauth_sub_sardor_sunatullayev',

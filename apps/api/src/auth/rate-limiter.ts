@@ -7,6 +7,7 @@ interface RateLimitRecord {
 
 export class InMemoryRateLimiter {
   private static store = new Map<string, RateLimitRecord>();
+  private static MAX_STORE_SIZE = 10000;
 
   /**
    * Enforces max `limit` requests within `windowMs` seconds.
@@ -14,6 +15,12 @@ export class InMemoryRateLimiter {
    */
   static check(key: string, limit: number, windowMs: number, errorMessage?: string): void {
     const now = Date.now();
+
+    // Prevent memory exhaustion: prune expired entries when store grows large
+    if (this.store.size > this.MAX_STORE_SIZE) {
+      this.cleanup(now);
+    }
+
     const record = this.store.get(key);
 
     if (!record || record.resetAt <= now) {
@@ -35,5 +42,16 @@ export class InMemoryRateLimiter {
   static reset(key: string): void {
     this.store.delete(key);
   }
-}
 
+  static clearAll(): void {
+    this.store.clear();
+  }
+
+  private static cleanup(now: number): void {
+    for (const [k, v] of this.store.entries()) {
+      if (v.resetAt <= now) {
+        this.store.delete(k);
+      }
+    }
+  }
+}

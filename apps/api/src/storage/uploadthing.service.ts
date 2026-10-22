@@ -38,17 +38,25 @@ export class UploadThingService {
     try {
       let buffer: Buffer;
       if (typeof source === 'string') {
-        // If it's a file path on disk
-        if (fs.existsSync(source)) {
-          buffer = fs.readFileSync(source);
+        // Prevent arbitrary file reads & path traversal (OWASP A01 / CWE-22)
+        if (source.includes('..')) {
+          this.logger.warn(`Rejected path traversal attempt in uploadVideo: ${source}`);
+          return null;
+        }
+
+        const allowedBaseDir = path.resolve(process.cwd(), 'apps/web/public');
+        const resolvedPath = path.resolve(allowedBaseDir, source.replace(/^\//, ''));
+
+        // Verify the resolved path stays strictly within the whitelisted public directory
+        if (!resolvedPath.startsWith(allowedBaseDir)) {
+          this.logger.warn(`Path outside allowed base directory blocked: ${source}`);
+          return null;
+        }
+
+        if (fs.existsSync(resolvedPath)) {
+          buffer = fs.readFileSync(resolvedPath);
         } else {
-          // If it starts with /videos/, try finding it in public
-          const publicPath = path.resolve(__dirname, '../../../web/public', source.replace(/^\//, ''));
-          if (fs.existsSync(publicPath)) {
-            buffer = fs.readFileSync(publicPath);
-          } else {
-            return null;
-          }
+          return null;
         }
       } else {
         buffer = source;

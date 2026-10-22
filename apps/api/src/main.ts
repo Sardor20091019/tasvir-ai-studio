@@ -48,12 +48,10 @@ async function bootstrap() {
       // Allow requests with no origin (e.g. mobile apps, curl, webhooks)
       if (!origin) return callback(null, true);
 
+      const isDevelopment = process.env.NODE_ENV !== 'production';
       const isAllowed =
         allowedOrigins.includes(origin) ||
-        origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin.endsWith('.vercel.app') ||
-        process.env.NODE_ENV !== 'production';
+        (isDevelopment && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')));
 
       if (isAllowed) {
         callback(null, true);
@@ -64,7 +62,7 @@ async function bootstrap() {
     },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type,Authorization,X-Requested-With,x-user-id,x-uzum-token',
+    allowedHeaders: 'Content-Type,Authorization,X-Requested-With,x-user-id,x-admin-key',
   });
 
   // Global Input Validation & Transformation

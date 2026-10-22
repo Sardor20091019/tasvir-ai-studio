@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Headers, Inject } from '@nestjs/common';
+import { Controller, Post, Get, Body, Headers, Inject, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtUtil } from './jwt.util';
 
@@ -27,10 +27,6 @@ export class AuthController {
     @Body()
     body: {
       credential?: string;
-      email?: string;
-      name?: string;
-      googleId?: string;
-      avatarUrl?: string;
     },
   ) {
     return this.authService.googleLogin(body);
@@ -42,13 +38,15 @@ export class AuthController {
     @Headers('x-user-id') fallbackUserId?: string,
   ) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const payload = JwtUtil.verify(authHeader.slice(7).trim());
-        return this.authService.getCurrentUser(payload.sub);
-      } catch (e) {}
+      const payload = JwtUtil.verify(authHeader.slice(7).trim());
+      return this.authService.getCurrentUser(payload.sub);
     }
-    // Only permit unauthenticated fallback in non-production environments
-    const allowedFallback = process.env.NODE_ENV !== 'production' ? fallbackUserId : undefined;
-    return this.authService.getCurrentUser(allowedFallback);
+
+    // Only permit explicit fallback user in non-production development environments if specifically passed
+    if (process.env.NODE_ENV === 'development' && fallbackUserId) {
+      return this.authService.getCurrentUser(fallbackUserId);
+    }
+
+    throw new UnauthorizedException('Iltimos, avval tizimga kiring (Avtorizatsiya talab qilinadi)');
   }
 }

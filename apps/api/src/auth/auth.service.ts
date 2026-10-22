@@ -1,4 +1,5 @@
-import { Injectable, BadRequestException, Logger, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger, Inject } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { KyselyService } from '../database/kysely.service';
 import { User } from '../database/schema';
 import { JwtUtil } from './jwt.util';
@@ -14,12 +15,22 @@ export class AuthService {
 
   async verifyTurnstile(token?: string, remoteip?: string): Promise<boolean> {
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
-    if (!secretKey) return true; // If not configured, allow
+    if (!secretKey) {
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error('TURNSTILE_SECRET_KEY is not configured in production!');
+        return false;
+      }
+      return true; // If not configured in dev, allow
+    }
     if (!token) return false;
 
-    // Local dev bypass token
+    // Local dev bypass token strictly prohibited in production
     if (token.startsWith('cf_test_pass_')) {
-      this.logger.log('Turnstile dev test token accepted.');
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.warn('Turnstile test bypass token rejected in production environment.');
+        return false;
+      }
+      this.logger.log('Turnstile dev test token accepted in non-production.');
       return true;
     }
 
@@ -40,7 +51,7 @@ export class AuthService {
       return Boolean(data.success);
     } catch (err: any) {
       this.logger.warn(`Turnstile verify network error: ${err.message}. Permitting in dev.`);
-      return true;
+      return process.env.NODE_ENV !== 'production';
     }
   }
 
@@ -63,8 +74,8 @@ export class AuthService {
       throw new BadRequestException('Botlardan himoya (Turnstile) tekshiruvidan oʻtmadi. Qaytadan urinib koʻring.');
     }
 
-    // Generate cryptographically random 4-digit OTP
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    // Cryptographically secure 4-digit OTP generation (CWE-330 fix)
+    const code = crypto.randomInt(1000, 10000).toString();
     this.otpCache.set(cleanPhone, {
       code,
       expiresAt: Date.now() + 5 * 60 * 1000,
@@ -99,9 +110,10 @@ export class AuthService {
     }
 
     const isDev = process.env.NODE_ENV !== 'production';
-    const isValid = cached.code === code || (isDev && (code === '1234' || code === '7777'));
+    const isExactMatch = cached.code === code;
+    const isDevBypass = isDev && (code === '1234' || code === '7777');
 
-    if (!isValid) {
+    if (!isExactMatch && !isDevBypass) {
       const remainingAttempts = 5 - cached.attempts;
       throw new BadRequestException(`Tasdiqlash kodi notoʻgʻri. ${remainingAttempts} ta urinish qoldi.`);
     }
@@ -125,6 +137,7 @@ export class AuthService {
           full_name: 'Yangi Foydalanuvchi',
           telegram_id: null,
           locale: 'uz',
+          role: 'user',
           plan_tier: 'starter',
           credits_balance: 3,
         })
@@ -139,49 +152,46 @@ export class AuthService {
 
   async googleLogin(params: {
     credential?: string;
-    email?: string;
-    name?: string;
-    googleId?: string;
-    avatarUrl?: string;
   }): Promise<{ user: User; token: string }> {
-    let email = params.email;
-    let name = params.name || 'Google Merchant';
-    let googleId = params.googleId;
+    if (!params?.credential || typeof params.credential !== 'string') {
+      throw new BadRequestException('Google ID tokeni (credential) kiritilishi shart');
+    }
 
-    if (params.credential) {
+    let email: string;
+    let name: string = 'Google Merchant';
+
+    // Allow mock credential in development for test suites
+    if (process.env.NODE_ENV !== 'production' && params.credential.startsWith('mock_demo_credential')) {
+      email = 'sardor.sunatullayev@tasvir.ai';
+      name = 'Sardor Sunatullayev';
+    } else {
       try {
-        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${params.credential}`);
-        if (verifyRes.ok) {
-          const gInfo: any = await verifyRes.json();
-          if (gInfo.email) email = gInfo.email;
-          if (gInfo.name) name = gInfo.name;
-          if (gInfo.sub) googleId = gInfo.sub;
-          this.logger.log(`Google token verified via tokeninfo: ${email} (${name})`);
-        } else {
-          // If token verification with Google fails
-          if (process.env.NODE_ENV === 'production') {
-            throw new BadRequestException('Google tokeni yaroqsiz yoki muddati oʻtgan');
-          }
-          this.logger.warn('Google tokeninfo failed, allowing dev inspection fallback.');
-          const parts = params.credential.split('.');
-          if (parts.length === 3) {
-            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-            if (payload.email) email = payload.email;
-            if (payload.name) name = payload.name;
-            if (payload.sub) googleId = payload.sub;
-          }
+        const verifyRes = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(params.credential)}`,
+        );
+        if (!verifyRes.ok) {
+          throw new BadRequestException('Google tokeni yaroqsiz yoki muddati oʻtgan');
         }
-      } catch (e: any) {
-        if (process.env.NODE_ENV === 'production') {
-          throw new BadRequestException(`Google autentifikatsiyasini tekshirib boʻlmadi: ${e.message}`);
+        const gInfo: any = await verifyRes.json();
+
+        const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+        if (expectedClientId && gInfo.aud !== expectedClientId && gInfo.azp !== expectedClientId) {
+          throw new BadRequestException('Google token auditoriyasi (aud) mos kelmadi');
         }
-        this.logger.warn(`Could not verify Google JWT: ${e.message}`);
+
+        if (!gInfo.email) {
+          throw new BadRequestException('Google tokenida email mavjud emas');
+        }
+
+        email = gInfo.email;
+        name = gInfo.name || gInfo.email.split('@')[0] || 'Google User';
+      } catch (err: any) {
+        if (err instanceof BadRequestException) throw err;
+        throw new BadRequestException(`Google autentifikatsiyasini tekshirib boʻlmadi: ${err.message}`);
       }
     }
 
-    const syntheticPhone = email
-      ? `+998${Math.abs(this.hashCode(email)).toString().slice(0, 9).padStart(9, '9')}`
-      : '+998900000000';
+    const syntheticPhone = `+998${Math.abs(this.hashCode(email)).toString().slice(0, 9).padStart(9, '9')}`;
 
     let user = await this.db
       .selectFrom('users')
@@ -203,7 +213,7 @@ export class AuthService {
         })
         .returningAll()
         .executeTakeFirstOrThrow();
-      this.logger.log(`Created new Google user: ${name} (${syntheticPhone})`);
+      this.logger.log(`Created new verified Google user: ${name} (${syntheticPhone})`);
     }
 
     const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
@@ -220,39 +230,21 @@ export class AuthService {
   }
 
   async getCurrentUser(userId?: string): Promise<User> {
-    if (userId) {
-      const user = await this.db
-        .selectFrom('users')
-        .selectAll()
-        .where('id', '=', userId)
-        .executeTakeFirst();
-      if (user) return user;
+    if (!userId) {
+      throw new UnauthorizedException('Avtorizatsiya talab qilinadi. Iltimos, tizimga kiring.');
     }
 
-    // Default demo user
-    const defaultUser = await this.db
+    const user = await this.db
       .selectFrom('users')
       .selectAll()
-      .orderBy('created_at', 'asc')
+      .where('id', '=', userId)
       .executeTakeFirst();
 
-    if (!defaultUser) {
-      return await this.db
-        .insertInto('users')
-        .values({
-          phone_number: '+998990991112',
-          full_name: 'Sardor Sunatullayev',
-          telegram_id: null,
-          locale: 'uz',
-          role: 'admin',
-          plan_tier: 'agency',
-          credits_balance: 100,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
+    if (!user) {
+      throw new UnauthorizedException('Foydalanuvchi hisobi topilmadi');
     }
 
-    return defaultUser;
+    return user;
   }
 
   private normalizePhone(phone: string): string {
