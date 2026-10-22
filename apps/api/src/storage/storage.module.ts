@@ -7,3 +7,4 @@ import { UploadThingService } from './uploadthing.service';
   exports: [UploadThingService],
 })
 export class StorageModule {}
+

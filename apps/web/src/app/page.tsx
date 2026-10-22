@@ -9,7 +9,6 @@ import { PricingSection } from '../components/PricingSection';
 import { VideoLibraryModal } from '../components/VideoLibraryModal';
 import { AskAdminModal } from '../components/AskAdminModal';
 import { AuthModal } from '../components/AuthModal';
-import { TelegramContainer } from '../components/TelegramContainer';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
 import { User, VideoJob } from '../types';
 import { api } from '../lib/api';
@@ -18,7 +17,6 @@ export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<'uz' | 'ru'>('uz');
   const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library'>('studio');
-  const [isTelegramMode, setIsTelegramMode] = useState(false);
 
   // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -213,8 +211,6 @@ export default function HomePage() {
         user={user}
         locale={locale}
         onToggleLocale={handleToggleLocale}
-        isTelegramMode={isTelegramMode}
-        onToggleTelegramMode={() => setIsTelegramMode(!isTelegramMode)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenCheckout={() => setIsCheckoutOpen(true)}
@@ -222,17 +218,7 @@ export default function HomePage() {
         libraryCount={jobs.length}
       />
 
-      {/* If Telegram Mode is toggled on, show wrapped in TelegramContainer */}
-      {isTelegramMode ? (
-        <TelegramContainer
-          onExit={() => setIsTelegramMode(false)}
-          locale={locale}
-        >
-          {mainContent}
-        </TelegramContainer>
-      ) : (
-        mainContent
-      )}
+      {mainContent}
 
       {/* Ask Admin / Token Request Modal (Payments removed) */}
       <AskAdminModal

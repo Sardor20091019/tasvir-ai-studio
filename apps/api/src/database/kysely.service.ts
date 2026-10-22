@@ -157,7 +157,7 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       const existingUser = await this._db
         .selectFrom('users')
         .selectAll()
-        .where('phone_number', '=', '+998901234567')
+        .where('phone_number', 'in', ['+998990991112', '+998901234567'])
         .executeTakeFirst();
 
       let defaultUserId: string;
@@ -166,24 +166,29 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         const newUser = await this._db
           .insertInto('users')
           .values({
-            phone_number: '+998901234567',
-            full_name: 'Anvar Rahimov',
-            telegram_id: 849201938,
+            phone_number: '+998990991112',
+            full_name: 'Sardor Sunatullayev',
+            telegram_id: null,
             locale: 'uz',
             role: 'admin',
             plan_tier: 'agency',
-            credits_balance: 50,
+            credits_balance: 100,
           })
           .returningAll()
           .executeTakeFirstOrThrow();
         defaultUserId = newUser.id;
-        this.logger.log(`Seeded default demo admin user (Anvar Rahimov, id: ${defaultUserId}) with 50 credits.`);
+        this.logger.log(`Seeded default admin user (Sardor Sunatullayev, id: ${defaultUserId}) with 100 credits.`);
       } else {
         defaultUserId = existingUser.id;
-        // Ensure default user has admin role
+        // Ensure default user has admin role, new name, and new phone number
         await this._db
           .updateTable('users')
-          .set({ role: 'admin' })
+          .set({
+            role: 'admin',
+            full_name: 'Sardor Sunatullayev',
+            phone_number: '+998990991112',
+            credits_balance: 100,
+          })
           .where('id', '=', defaultUserId)
           .execute();
       }

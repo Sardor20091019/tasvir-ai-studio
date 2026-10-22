@@ -137,42 +137,6 @@ export class AuthService {
     return { user, token };
   }
 
-  async validateTelegramWebapp(initData: {
-    telegramId: number;
-    firstName: string;
-    lastName?: string;
-    username?: string;
-  }): Promise<{ user: User; token: string }> {
-    let user = await this.db
-      .selectFrom('users')
-      .selectAll()
-      .where('telegram_id', '=', initData.telegramId)
-      .executeTakeFirst();
-
-    if (!user) {
-      const fullName = [initData.firstName, initData.lastName].filter(Boolean).join(' ') || initData.username || 'Telegram Merchant';
-      const fakePhone = `+99899${String(initData.telegramId).slice(-7).padStart(7, '0')}`;
-
-      user = await this.db
-        .insertInto('users')
-        .values({
-          phone_number: fakePhone,
-          full_name: fullName,
-          telegram_id: initData.telegramId,
-          locale: 'uz',
-          role: 'user',
-          plan_tier: 'starter',
-          credits_balance: 3,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-    }
-
-    // Cryptographically signed JWT token
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
-    return { user, token };
-  }
-
   async googleLogin(params: {
     credential?: string;
     email?: string;
@@ -276,12 +240,13 @@ export class AuthService {
       return await this.db
         .insertInto('users')
         .values({
-          phone_number: '+9989990991112',
+          phone_number: '+998990991112',
           full_name: 'Sardor Sunatullayev',
-          telegram_id: 849201938,
+          telegram_id: null,
           locale: 'uz',
-          plan_tier: 'starter',
-          credits_balance: 3,
+          role: 'admin',
+          plan_tier: 'agency',
+          credits_balance: 100,
         })
         .returningAll()
         .executeTakeFirstOrThrow();

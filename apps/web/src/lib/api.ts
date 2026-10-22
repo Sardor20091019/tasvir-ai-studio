@@ -171,12 +171,13 @@ export const api = {
     }
     return {
       id: 'demo-user-1',
-      phone_number: '+998901234567',
-      full_name: 'Anvar Rahimov',
-      telegram_id: 849201938,
+      phone_number: '+998-99-099-11-12',
+      full_name: 'Sardor Sunatullayev',
+      telegram_id: null,
       locale: 'uz',
-      plan_tier: 'starter',
-      credits_balance: 3,
+      role: 'admin',
+      plan_tier: 'agency',
+      credits_balance: 100,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -216,12 +217,13 @@ export const api = {
     return {
       user: {
         id: 'google-user-' + Date.now(),
-        phone_number: '+998901234567',
-        full_name: payload.name || 'Google Merchant',
+        phone_number: '+998-99-099-11-12',
+        full_name: payload.name || 'Sardor Sunatullayev',
         telegram_id: null,
         locale: 'uz',
-        plan_tier: 'starter',
-        credits_balance: 3,
+        role: 'admin',
+        plan_tier: 'agency',
+        credits_balance: 100,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },

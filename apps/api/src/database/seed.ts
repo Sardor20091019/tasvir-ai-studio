@@ -20,18 +20,26 @@ async function seed() {
 
   try {
     console.log('Seeding demo user, avatars and products...');
-    const existing = await db.selectFrom('users').selectAll().where('phone_number', '=', '+998901234567').executeTakeFirst();
+    const existing = await db.selectFrom('users').selectAll().where('phone_number', 'in', ['+998990991112', '+998901234567']).executeTakeFirst();
     let userId = existing?.id;
     if (!userId) {
       const u = await db.insertInto('users').values({
-        phone_number: '+998901234567',
-        full_name: 'Anvar Rahimov',
-        telegram_id: 849201938,
+        phone_number: '+998990991112',
+        full_name: 'Sardor Sunatullayev',
+        telegram_id: null,
         locale: 'uz',
-        plan_tier: 'starter',
-        credits_balance: 3,
+        role: 'admin',
+        plan_tier: 'agency',
+        credits_balance: 100,
       }).returningAll().executeTakeFirstOrThrow();
       userId = u.id;
+    } else {
+      await db.updateTable('users').set({
+        full_name: 'Sardor Sunatullayev',
+        phone_number: '+998990991112',
+        role: 'admin',
+        credits_balance: 100,
+      }).where('id', '=', userId).execute();
     }
 
     console.log(`User ID: ${userId}`);

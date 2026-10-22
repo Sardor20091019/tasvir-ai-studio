@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   Film,
   Download,
-  Send,
   Play,
   Pause,
   ExternalLink,
@@ -38,7 +37,6 @@ export function VideoLibraryModal({
       emptySub: 'Studiyada mahsulot tanlab, birinchi AI video reklamangizni yarating!',
       createFirst: 'Birinchi videoni yaratish',
       download: 'MP4 Yuklash',
-      telegram: 'Telegram',
       preview: 'Koʻrish',
       close: 'Yopish',
       statusCompleted: 'Tayyor',
@@ -51,7 +49,6 @@ export function VideoLibraryModal({
       emptySub: 'Выберите товар в студии и создайте свой первый AI ролик!',
       createFirst: 'Создать первое видео',
       download: 'Скачать MP4',
-      telegram: 'Telegram',
       preview: 'Смотреть',
       close: 'Закрыть',
       statusCompleted: 'Готово',
@@ -145,24 +142,17 @@ export function VideoLibraryModal({
                 </div>
 
                 {isCompleted && (
-                  <div className="p-3 pt-0 grid grid-cols-2 gap-2">
+                  <div className="p-3 pt-0">
                     <a
                       href={videoSrc}
                       target="_blank"
                       rel="noreferrer"
                       download={`tasvir-${job.id}.mp4`}
-                      className="py-1.5 px-2 rounded-lg bg-white border border-border hover:bg-canvas text-ink text-[11px] font-semibold flex items-center justify-center gap-1 tactile-btn"
+                      className="w-full py-2 px-3 rounded-xl bg-white border border-border hover:bg-canvas text-ink text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs"
                     >
-                      <Download className="h-3 w-3" />
+                      <Download className="h-3.5 w-3.5 text-coral" />
                       <span>{t.download}</span>
                     </a>
-                    <button
-                      onClick={() => alert('Telegram @TasvirBot orqali botingizga yuborildi!')}
-                      className="py-1.5 px-2 rounded-lg bg-bento-sky text-cobalt hover:bg-sky-100 text-[11px] font-semibold flex items-center justify-center gap-1 tactile-btn"
-                    >
-                      <Send className="h-3 w-3" />
-                      <span>{t.telegram}</span>
-                    </button>
                   </div>
                 )}
               </div>

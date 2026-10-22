@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   Sparkles,
-  Smartphone,
   Plus,
   Coins,
   Film,
@@ -20,8 +19,6 @@ interface NavbarProps {
   user: User | null;
   locale: 'uz' | 'ru';
   onToggleLocale: () => void;
-  isTelegramMode: boolean;
-  onToggleTelegramMode: () => void;
   activeTab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library';
   setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library') => void;
   onOpenCheckout: () => void;
@@ -33,8 +30,6 @@ export function Navbar({
   user,
   locale,
   onToggleLocale,
-  isTelegramMode,
-  onToggleTelegramMode,
   activeTab,
   setActiveTab,
   onOpenCheckout,
@@ -52,8 +47,7 @@ export function Navbar({
       library: 'Videolarim',
       credits: (count: number) => `${count} ta video qoldi`,
       recharge: 'Token soʻrash',
-      tgApp: 'Telegram Mini App',
-      login: 'Kirish',
+      login: 'Kirish (Google)',
     },
     ru: {
       brandSub: 'AI Видео Реклама',
@@ -65,8 +59,7 @@ export function Navbar({
       library: 'Мои видео',
       credits: (count: number) => `Осталось: ${count} видео`,
       recharge: 'Запросить токены',
-      tgApp: 'Telegram Mini App',
-      login: 'Войти',
+      login: 'Войти (Google)',
     },
   }[locale];
 
@@ -188,20 +181,6 @@ export function Navbar({
             </span>
           </button>
 
-          {/* Telegram Mini App Mode Toggle */}
-          <button
-            onClick={onToggleTelegramMode}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all tactile-btn ${
-              isTelegramMode
-                ? 'border-cobalt bg-cobalt text-white shadow-sm'
-                : 'border-border bg-bento-sky text-cobalt hover:bg-sky-100'
-            }`}
-          >
-            <Smartphone className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline font-semibold">📱 {t.tgApp}</span>
-            <span className="sm:hidden">Bot</span>
-          </button>
-
           {/* Live Credit Balance Pill */}
           <div className="flex items-center bg-canvas border border-border rounded-xl p-1 shadow-inner">
             <div
@@ -245,7 +224,7 @@ export function Navbar({
                 {user?.full_name || t.login}
               </span>
               <span className="text-[10px] font-mono text-ink-muted">
-                {user?.phone_number || '+998 ...'}
+                {user?.phone_number || '+998-99-099-11-12'}
               </span>
             </div>
           </button>

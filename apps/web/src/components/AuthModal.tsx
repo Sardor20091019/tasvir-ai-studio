@@ -3,13 +3,11 @@
 import React, { useState } from 'react';
 import {
   X,
-  Phone,
   ShieldCheck,
-  Send,
   Sparkles,
+  Lock,
   ArrowRight,
   CheckCircle2,
-  Lock,
 } from 'lucide-react';
 import { User } from '../types';
 import { api } from '../lib/api';
@@ -29,108 +27,47 @@ export function AuthModal({
   onLoginSuccess,
   locale,
 }: AuthModalProps) {
-  const [phone, setPhone] = useState('+998901234567');
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [otpCode, setOtpCode] = useState('1234');
-  const [isLoading, setIsLoading] = useState(false);
-  const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const t = {
     uz: {
-      title: 'Tizimga kirish',
-      sub: 'SMS, Google yoki Telegram orqali bir zumda kiring',
-      phoneLabel: 'Telefon raqamingiz:',
-      sendOtp: 'SMS kod yuborish',
-      otpLabel: 'SMS orqali yuborilgan 4 xonali kod:',
-      verifyOtp: 'Tasdiqlash va kirish',
-      changePhone: 'Raqamni oʻzgartirish',
-      googleLogin: 'Google orqali kirish',
-      tgLogin: 'Telegram orqali bir bosishda kirish',
-      turnstileActive: 'Cloudflare Turnstile himoyasi faol',
-      demoHint: (code: string) => `⚡ Tezkor test kodi: ${code}`,
+      title: 'Google orqali tizimga kirish',
+      sub: 'Tasvir AI studiyasidan toʻliq foydalanish va video yaratish uchun Google hisobingiz orqali kiring.',
+      googleNote: 'Bir bosishda xavfsiz autentifikatsiya',
+      quickLogin: 'Sardor Sunatullayev sifatida tezkor kirish',
+      securityBadge: 'Google OAuth 2.0 & Cloudflare Turnstile bilan himoyalangan',
     },
     ru: {
-      title: 'Вход в систему',
-      sub: 'Вход по SMS, через Google или Telegram',
-      phoneLabel: 'Номер телефона:',
-      sendOtp: 'Получить SMS код',
-      otpLabel: '4-значный код из SMS:',
-      verifyOtp: 'Подтвердить и войти',
-      changePhone: 'Изменить номер',
-      googleLogin: 'Войти через Google',
-      tgLogin: 'Быстрый вход через Telegram',
-      turnstileActive: 'Защита Cloudflare Turnstile активна',
-      demoHint: (code: string) => `⚡ Тестовый код: ${code}`,
+      title: 'Вход через Google',
+      sub: 'Войдите с помощью учетной записи Google для генерации видео в студии Tasvir AI.',
+      googleNote: 'Безопасная авторизация в один клик',
+      quickLogin: 'Быстрый вход как Сардор Сунатуллаев',
+      securityBadge: 'Защищено Google OAuth 2.0 & Cloudflare Turnstile',
     },
   }[locale];
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!turnstileToken) {
-      alert(locale === 'uz' ? "Iltimos, avval Turnstile captcha tekshiruvini tasdiqlang." : "Пожалуйста, сначала пройдите капчу Turnstile.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await api.sendOtp(phone, turnstileToken);
-      if (res.demoCode) {
-        setDemoCodeHint(res.demoCode);
-        setOtpCode(res.demoCode);
-      }
-      setStep('otp');
-    } catch (err: any) {
-      alert(err.message || 'Xatolik yuz berdi');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const res = await api.verifyOtp(phone, otpCode);
-      onLoginSuccess(res.user);
-      onClose();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
+  const handleQuickDemoLogin = async () => {
     setIsLoading(true);
     try {
       const res = await api.googleLogin({
-        email: 'merchant.uzum@gmail.com',
+        email: 'sardor.sunatullayev@tasvir.ai',
         name: 'Sardor Sunatullayev',
-        googleId: 'google_oauth_sub_210623201179',
+        googleId: 'google_oauth_sub_sardor_sunatullayev',
       });
-      onLoginSuccess(res.user);
-      onClose();
+      if (res?.user) {
+        onLoginSuccess({
+          ...res.user,
+          full_name: 'Sardor Sunatullayev',
+          phone_number: '+998-99-099-11-12',
+          role: 'admin',
+        });
+        onClose();
+      }
     } catch (err) {
       console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTelegramFastLogin = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.verifyOtp('+998998492019', '1234');
-      const tgUser: User = {
-        ...res.user,
-        full_name: 'Anvar Rahimov (@anvar_uzum)',
-        telegram_id: 849201938,
-      };
-      onLoginSuccess(tgUser);
-      onClose();
     } finally {
       setIsLoading(false);
     }
@@ -141,78 +78,34 @@ export function AuthModal({
       <div className="relative w-full max-w-md rounded-2xl bg-white border border-border shadow-2xl p-6 sm:p-7">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 h-8 w-8 rounded-full border border-border bg-canvas hover:bg-white flex items-center justify-center text-ink-muted hover:text-ink"
+          className="absolute top-5 right-5 h-8 w-8 rounded-full border border-border bg-canvas hover:bg-white flex items-center justify-center text-ink-muted hover:text-ink transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="mb-6">
-          <div className="h-10 w-10 rounded-xl bg-bento-peach text-coral flex items-center justify-center font-bold mb-3">
+          <div className="h-10 w-10 rounded-xl bg-bento-peach text-coral flex items-center justify-center font-bold mb-3 shadow-xs">
             <Lock className="h-5 w-5" />
           </div>
           <h2 className="text-xl font-heading font-extrabold text-ink tracking-tight">
             {t.title}
           </h2>
-          <p className="text-xs text-ink-muted">{t.sub}</p>
+          <p className="text-xs text-ink-muted mt-1 leading-relaxed">{t.sub}</p>
         </div>
 
-        {step === 'phone' ? (
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-ink-muted block mb-1">
-                {t.phoneLabel}
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+998 90 123 45 67"
-                required
-                className="w-full font-mono text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
-              />
-            </div>
+        <div className="space-y-4">
+          {/* Cloudflare Turnstile Bot Protection */}
+          <div className="py-1">
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+              onVerify={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken(null)}
+              locale={locale}
+            />
+          </div>
 
-            {/* Real Interactive Cloudflare Turnstile Captcha Widget */}
-            <div className="py-1">
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                locale={locale}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !turnstileToken}
-              className={`w-full py-3 px-4 rounded-xl text-white text-xs sm:text-sm font-bold shadow-tactile flex items-center justify-center gap-2 transition-all tactile-btn ${
-                !turnstileToken
-                  ? 'bg-ink-muted/50 cursor-not-allowed opacity-80'
-                  : 'bg-coral hover:bg-coral-hover'
-              }`}
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{t.sendOtp}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-            {!turnstileToken && (
-              <p className="text-[10px] text-center text-ink-muted -mt-2">
-                {locale === 'uz' ? 'Tugma captcha tasdiqlangandan soʻng faollashadi' : 'Кнопка станет активной после прохождения капчи'}
-              </p>
-            )}
-
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-border"></div>
-              <span className="flex-shrink mx-3 text-[11px] text-ink-muted font-mono">yoki</span>
-              <div className="flex-grow border-t border-border"></div>
-            </div>
-
-            {/* Real Official Google Sign-In Button (GIS SDK) */}
+          {/* Official Google Sign-In Button */}
+          <div className="pt-2">
             <GoogleSignInButton
               onSuccess={(googleUser) => {
                 onLoginSuccess(googleUser);
@@ -223,68 +116,39 @@ export function AuthModal({
               }}
               locale={locale}
             />
+          </div>
 
-            {/* Telegram Fast Login Button */}
-            <button
-              type="button"
-              onClick={handleTelegramFastLogin}
-              disabled={isLoading}
-              className="w-full py-2.5 px-3 rounded-xl bg-bento-sky border border-cobalt/30 text-cobalt hover:bg-sky-100 text-xs font-bold flex items-center justify-center gap-2 transition-colors tactile-btn"
-            >
-              <Send className="h-3.5 w-3.5" />
-              <span>{t.tgLogin}</span>
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            {demoCodeHint && (
-              <div className="p-2.5 rounded-lg bg-bento-mint text-emerald-800 text-xs font-mono font-bold flex items-center gap-1.5 border border-emerald-500/20">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>{t.demoHint(demoCodeHint)}</span>
-              </div>
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-border"></div>
+            <span className="flex-shrink mx-3 text-[11px] text-ink-muted font-mono">yoki</span>
+            <div className="flex-grow border-t border-border"></div>
+          </div>
+
+          {/* Quick 1-Click Login for Sardor Sunatullayev */}
+          <button
+            type="button"
+            onClick={handleQuickDemoLogin}
+            disabled={isLoading}
+            className="w-full py-3 px-4 rounded-xl bg-canvas hover:bg-ink hover:text-white border border-border text-ink text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all tactile-btn"
+          >
+            {isLoading ? (
+              <div className="h-4 w-4 border-2 border-coral border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 text-coral" />
+                <span>{t.quickLogin}</span>
+                <ArrowRight className="h-4 w-4 ml-auto" />
+              </>
             )}
+          </button>
 
-            <div>
-              <label className="text-xs font-semibold text-ink-muted block mb-1">
-                {t.otpLabel}
-              </label>
-              <input
-                type="text"
-                maxLength={4}
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                placeholder="1234"
-                required
-                className="w-full font-mono text-center tracking-[0.5em] text-xl font-bold px-3.5 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl bg-coral hover:bg-coral-hover text-white text-xs sm:text-sm font-bold shadow-tactile flex items-center justify-center gap-2 tactile-btn"
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{t.verifyOtp}</span>
-                  <CheckCircle2 className="h-4 w-4" />
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setStep('phone')}
-              className="w-full text-center text-xs text-ink-muted hover:text-ink font-semibold"
-            >
-              {t.changePhone}
-            </button>
-          </form>
-        )}
+          {/* Security Badge */}
+          <div className="pt-3 border-t border-border flex items-center justify-center gap-1.5 text-[11px] text-emerald-700 font-medium">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>{t.securityBadge}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-

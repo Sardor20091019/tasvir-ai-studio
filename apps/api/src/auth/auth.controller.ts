@@ -36,19 +36,6 @@ export class AuthController {
     return this.authService.googleLogin(body);
   }
 
-  @Post('telegram-webapp')
-  async telegramWebapp(
-    @Body()
-    body: {
-      telegramId: number;
-      firstName: string;
-      lastName?: string;
-      username?: string;
-    },
-  ) {
-    return this.authService.validateTelegramWebapp(body);
-  }
-
   @Get('me')
   async getMe(
     @Headers('authorization') authHeader?: string,

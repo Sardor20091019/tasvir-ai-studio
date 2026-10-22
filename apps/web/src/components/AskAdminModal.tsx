@@ -95,7 +95,7 @@ export function AskAdminModal({
       successSub: 'Platforma administratori soʻrovingizni koʻrib chiqib, hisobingizga tez orada tokenlarni qoʻshadi.',
       tgTitle: 'Administrator bilan Telegramda toʻgʻridan-toʻgʻri bogʻlaning',
       tgSub: 'Xabaringizda oʻz telefon raqamingiz va kerakli tokenlar sonini koʻrsating:',
-      tgButton: 'Telegramda Yozish (@tasvir_admin)',
+      tgButton: 'Telegramda Yozish (@astro_spectrum)',
       adminTitle: 'Administrator Boshqaruvi: Token Berish',
       grantButton: 'Tokenlarni Taqdim Etish',
     },
@@ -116,7 +116,7 @@ export function AskAdminModal({
       successSub: 'Администратор платформы рассмотрит запрос и начислит токены на ваш аккаунт.',
       tgTitle: 'Свяжитесь напрямую с администратором в Telegram',
       tgSub: 'В сообщении укажите ваш номер телефона и желаемое количество токенов:',
-      tgButton: 'Написать в Telegram (@tasvir_admin)',
+      tgButton: 'Написать в Telegram (@astro_spectrum)',
       adminTitle: 'Управление Администратора: Выдача Токенов',
       grantButton: 'Начислить токены',
     },
@@ -355,7 +355,7 @@ export function AskAdminModal({
               </div>
 
               <a
-                href={`https://t.me/tasvir_admin?text=${telegramPrefillMessage}`}
+                href={`https://t.me/astro_spectrum?text=${telegramPrefillMessage}`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full py-3.5 px-4 rounded-xl bg-[#229ED9] hover:bg-[#1E88E5] text-white font-heading font-bold text-xs shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
@@ -376,7 +376,7 @@ export function AskAdminModal({
                   <span>{t.adminTitle}</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                  Admin: {user?.phone_number}
+                  Admin: {user?.phone_number || '+998-99-099-11-12'}
                 </span>
               </div>
 
@@ -397,7 +397,7 @@ export function AskAdminModal({
                     type="text"
                     value={adminTargetPhone}
                     onChange={(e) => setAdminTargetPhone(e.target.value)}
-                    placeholder="+998901234567"
+                    placeholder="+998-99-099-11-12"
                     className="sm:col-span-6 px-3 py-2 text-xs rounded-lg border border-border bg-white"
                   />
                   <input

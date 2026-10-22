@@ -977,24 +977,17 @@ export function Studio({
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 <span>9:16 Video muvaffaqiyatli render qilindi!</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div>
                 <a
                   href={renderedVideoUrl}
                   target="_blank"
                   rel="noreferrer"
                   download="tasvir-ad-9-16.mp4"
-                  className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm tactile-btn"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-tactile tactile-btn"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>MP4 Yuklash</span>
+                  <Download className="h-4 w-4" />
+                  <span>MP4 Videoni Yuklab Olish</span>
                 </a>
-                <button
-                  onClick={() => alert("Telegram @TasvirBot orqali kanalingizga to'g'ridan-to'g'ri yuborildi!")}
-                  className="px-3 py-2 rounded-lg bg-white border border-emerald-600/30 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-50 tactile-btn"
-                >
-                  <Send className="h-3.5 w-3.5 text-cobalt" />
-                  <span>Telegram</span>
-                </button>
               </div>
             </div>
           )}
