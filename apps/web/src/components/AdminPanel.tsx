@@ -33,8 +33,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Manual Grant Form
-  const [targetPhone, setTargetPhone] = useState('');
+  const [targetEmail, setTargetEmail] = useState('');
   const [tokensToGrant, setTokensToGrant] = useState(20);
   const [grantReason, setGrantReason] = useState('');
   const [isGranting, setIsGranting] = useState(false);
@@ -67,19 +66,19 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
 
   const handleGrant = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetPhone.trim()) return;
+    if (!targetEmail.trim()) return;
 
     setIsGranting(true);
     setStatusMessage(null);
     try {
       const res = await api.adminGrantTokens({
-        targetPhoneNumber: targetPhone.trim(),
+        targetEmail: targetEmail.trim(),
         tokensToAdd: Number(tokensToGrant),
         reason: grantReason.trim() || 'Admin qoʻlda token ajratdi',
       });
 
       setStatusMessage({ type: 'success', text: res.message || 'Tokenlar muvaffaqiyatli berildi!' });
-      setTargetPhone('');
+      setTargetEmail('');
       setGrantReason('');
       loadAdminData();
     } catch (err: any) {
@@ -95,6 +94,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
     try {
       const res = await api.adminGrantTokens({
         targetUserId: req.userId,
+        targetEmail: req.userEmail,
         targetPhoneNumber: req.userPhone,
         tokensToAdd: req.requestedTokens,
         requestId: req.requestId,
@@ -120,11 +120,11 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
     }
   };
 
-  const handleQuickGrant = async (targetUserId: string, targetPhone: string, count: number) => {
+  const handleQuickGrant = async (targetUserId: string, targetEmail: string, count: number) => {
     try {
       const res = await api.adminGrantTokens({
         targetUserId,
-        targetPhoneNumber: targetPhone,
+        targetEmail,
         tokensToAdd: count,
         reason: `Admin tezkor +${count} token berdi`,
       });
@@ -161,6 +161,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
   const filteredUsers = usersList.filter(
     (u) =>
       u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.phone_number?.includes(searchQuery) ||
       u.id?.includes(searchQuery),
   );
@@ -169,7 +170,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
-      {/* Top Admin Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-mono font-bold uppercase tracking-wide">
@@ -194,7 +194,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
         </button>
       </div>
 
-      {/* Status Notice */}
       {statusMessage && (
         <div
           className={`p-4 rounded-2xl border text-xs flex items-center gap-2 shadow-xs ${
@@ -212,7 +211,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
         </div>
       )}
 
-      {/* Bento Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-border shadow-xs interactive-card">
           <div className="flex items-center justify-between mb-2">
@@ -260,7 +258,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (7 cols): Pending Requests Queue */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-3xl border border-border p-6 shadow-xs space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -288,7 +285,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-ink">{req.userName}</span>
-                        <span className="font-mono text-[11px] text-ink-muted">({req.userPhone})</span>
+                        <span className="font-mono text-[11px] text-ink-muted">({req.userEmail || req.userPhone || '—'})</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <span className="font-bold text-coral bg-bento-peach px-2 py-0.5 rounded-md">
@@ -329,7 +326,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
           </div>
         </div>
 
-        {/* Right Column (5 cols): Manual Grant Form */}
         <div className="lg:col-span-5 bg-white rounded-3xl border border-border p-6 shadow-xs space-y-5">
           <div className="flex items-center gap-2 pb-3 border-b border-border">
             <Coins className="h-5 w-5 text-coral" />
@@ -341,13 +337,13 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
           <form onSubmit={handleGrant} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-heading font-bold text-ink">
-                Telefon raqam yoki Foydalanuvchi ID
+                Foydalanuvchi Emaili yoki ID
               </label>
               <input
                 type="text"
-                value={targetPhone}
-                onChange={(e) => setTargetPhone(e.target.value)}
-                placeholder="+998901234567"
+                value={targetEmail}
+                onChange={(e) => setTargetEmail(e.target.value)}
+                placeholder="user@example.com"
                 required
                 className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-border bg-canvas/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
               />
@@ -398,7 +394,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
 
             <button
               type="submit"
-              disabled={isGranting || !targetPhone.trim()}
+              disabled={isGranting || !targetEmail.trim()}
               className="w-full py-3 px-4 rounded-xl bg-coral hover:bg-coral-dark disabled:opacity-60 text-white font-heading font-extrabold text-xs shadow-tactile transition-all tactile-btn flex items-center justify-center gap-2"
             >
               <Send className="h-4 w-4" />
@@ -408,7 +404,6 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
         </div>
       </div>
 
-      {/* Bottom Section: All Platform Users Table */}
       <div className="bg-white rounded-3xl border border-border p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -424,7 +419,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Ism yoki telefon boʻyicha izlash..."
+              placeholder="Ism yoki email boʻyicha izlash..."
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-canvas/40 focus:bg-white"
             />
           </div>
@@ -435,7 +430,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
             <thead>
               <tr className="border-b border-border text-ink-muted font-mono uppercase text-[10px]">
                 <th className="py-2.5 px-3">Foydalanuvchi</th>
-                <th className="py-2.5 px-3">Telefon</th>
+                <th className="py-2.5 px-3">Email</th>
                 <th className="py-2.5 px-3">Rol</th>
                 <th className="py-2.5 px-3">Tokenlar (DB)</th>
                 <th className="py-2.5 px-3">Sana</th>
@@ -454,7 +449,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
                     </div>
                   </td>
                   <td className="py-3 px-3 font-mono text-ink-muted">
-                    {u.phone_number}
+                    {u.email || u.phone_number || '—'}
                   </td>
                   <td className="py-3 px-3">
                     <span
@@ -478,13 +473,13 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
                   <td className="py-3 px-3 text-right">
                     <div className="inline-flex items-center gap-1">
                       <button
-                        onClick={() => handleQuickGrant(u.id, u.phone_number, 5)}
+                        onClick={() => handleQuickGrant(u.id, u.email || '', 5)}
                         className="px-2 py-1 rounded bg-canvas hover:bg-emerald-50 text-emerald-800 border border-border text-[10px] font-bold"
                       >
                         +5
                       </button>
                       <button
-                        onClick={() => handleQuickGrant(u.id, u.phone_number, 20)}
+                        onClick={() => handleQuickGrant(u.id, u.email || '', 20)}
                         className="px-2 py-1 rounded bg-canvas hover:bg-coral hover:text-white text-coral border border-border text-[10px] font-bold transition-colors"
                       >
                         +20
@@ -500,3 +495,4 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
     </div>
   );
 }
+

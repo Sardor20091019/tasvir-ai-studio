@@ -20,7 +20,6 @@ export {
   KaraokeWord,
 };
 
-
 @Injectable()
 export class GenerateVideoService {
   private readonly logger = new Logger(GenerateVideoService.name);
@@ -53,9 +52,7 @@ export class GenerateVideoService {
     dramaLevel?: string;
   }): Promise<{ jobId: string; status: string; progress: number; message: string; model: string }> {
     const jobId = `drama_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-    // Requirement 1: Enforce an aspect ratio parameter of '9:16' for vertical video formats on all requests
     const aspectRatio: AspectRatioType = '9:16';
-    // Requirement 4: USER SHOULD BE ABLE TO TURN ON OR OFF BY HIMSELF (defaults to true)
     const includeBackgroundMusic = params.includeBackgroundMusic !== false;
 
     const job: DramaVideoGenerationJob = {
@@ -78,7 +75,6 @@ export class GenerateVideoService {
       `Created Veo 3.1 drama ad job ${jobId} (Model: veo-3.1-lite-generate, 9:16, Music: ${includeBackgroundMusic ? 'ON (EMIN & JONY - Kamin)' : 'OFF'})`,
     );
 
-    // Asynchronously execute Veo 3.1 + Drama Prompting + FFmpeg Concat pipeline
     this.processJobAsync(jobId).catch((err) => {
       this.logger.error(`Error in drama generation job ${jobId}: ${err.message}`, err.stack);
       const current = this.jobs.get(jobId);
@@ -112,10 +108,6 @@ export class GenerateVideoService {
 
     const { client, activeKey } = this.getGeminiClient();
 
-    // =========================================================================
-    // PHASE 1: Drama Prompting & Multi-Scene LLM Framing Engine
-    // High emotional stakes, betrayal tropes, crying, or intense cinematic tension
-    // =========================================================================
     job.status = 'framing_drama_scenes';
     job.progress = 20;
     job.currentStepMessage = 'Dramatik LLM tizimi ssenariyni keskin emotsional sahnalarga ajratmoqda...';
@@ -123,7 +115,6 @@ export class GenerateVideoService {
     const scenes = await this.generateDramaScenesWithLLM(client, activeKey, job.prompt);
     job.scenes = scenes;
 
-    // Calculate cumulative timeline & karaoke timestamps
     let accumulatedTime = 0;
     const masterKaraokeTimeline: KaraokeWord[] = [];
 
@@ -143,17 +134,12 @@ export class GenerateVideoService {
     job.progress = 35;
     job.currentStepMessage = 'Google Veo 3.1 (veo-3.1-lite-generate) orqali 9:16 sahna kadrlari generatsiya qilinmoqda...';
 
-    // =========================================================================
-    // PHASE 2: Google Veo 3.1 Model Integration ("veo-3.1-lite-generate")
-    // Enforcing 9:16 vertical ratio and dynamic duration strictly between 4 and 8 seconds
-    // =========================================================================
     job.status = 'generating_veo_clips';
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `tasvir-veo-${jobId}-`));
     const generatedClipPaths: string[] = [];
 
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
-      // Requirement 1: duration constraint strictly between 4 and 8 seconds
       const sceneDuration = Math.max(4, Math.min(scene.durationSeconds, 8));
       scene.durationSeconds = sceneDuration;
 
@@ -163,14 +149,12 @@ export class GenerateVideoService {
       const clipOutputPath = path.join(tempDir, `scene_${scene.sceneIndex}.mp4`);
       let clipGenerated = false;
 
-      // 1. Attempt official Google Veo 3.1 API generation
       if (activeKey) {
         try {
           this.logger.log(
             `Calling Google Veo 3.1 ("veo-3.1-lite-generate") for scene ${scene.sceneIndex} [duration: ${sceneDuration}s, aspect: 9:16]`,
           );
 
-          // Invoke official Veo 3.1 video generation model
           const veoOperation: any = await (client.models as any).generateVideos({
             model: 'veo-3.1-lite-generate',
             prompt: `${scene.cinematicPrompt}, vertical 9:16 aspect ratio, dramatic cinematic lighting, emotional crying tears, 4k ultra realistic, high cinematic tension, movie cinematography`,
@@ -209,7 +193,6 @@ export class GenerateVideoService {
         }
       }
 
-      // 2. Synthesize individual vertical 9:16 scene clip with high tension cinematography
       try {
         await this.ffmpegConcatService.synthesizeDramaSceneClip({
           outputPath: clipOutputPath,
@@ -233,11 +216,6 @@ export class GenerateVideoService {
       throw new Error('Hech qanday Veo dramatik video sahnalarini shakllantirib boʻlmadi');
     }
 
-    // =========================================================================
-    // PHASE 3: FFmpeg Concat Demuxer Routine & Background Music Overlay
-    // Sequentially joins scene arrays into one continuous master video file,
-    // and loops/clips EMIN & JONY - Kamin perfectly if user enabled it
-    // =========================================================================
     job.status = 'concatenating_master_video';
     job.progress = 80;
     job.currentStepMessage = 'FFmpeg concat demuxer orqali sahnalar yagona master videoga birlashtirilmoqda...';
@@ -257,9 +235,6 @@ export class GenerateVideoService {
     job.status = 'saving_to_cloud';
     job.currentStepMessage = 'Master video UploadThing doimiy CDN xotirasiga yuklanmoqda...';
 
-    // =========================================================================
-    // PHASE 4: Upload to UploadThing Storage & CDN Delivery
-    // =========================================================================
     let finalCdnUrl: string | null = null;
     try {
       const videoBuffer = fs.readFileSync(masterOutputPath);
@@ -272,12 +247,10 @@ export class GenerateVideoService {
       this.logger.warn(`UploadThing upload notice: ${uploadErr.message}`);
     }
 
-    // Fallback if cloud token is pending
     if (!finalCdnUrl) {
       finalCdnUrl = 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4';
     }
 
-    // Save final paths
     job.status = 'completed';
     job.progress = 100;
     job.currentStepMessage = 'Google Veo 3.1 dramatik video roligi muvaffaqiyatli tayyorlandi!';
@@ -288,10 +261,6 @@ export class GenerateVideoService {
     this.logger.log(`Job ${jobId} finished with ${scenes.length} scenes, total: ${job.totalDurationSeconds}s`);
   }
 
-  /**
-   * Automated LLM framing system that breaks user input down into
-   * 3 high-intensity drama scenes with betrayal tropes, crying, or intense cinematic tension.
-   */
   private async generateDramaScenesWithLLM(
     client: GoogleGenAI,
     activeKey: string,
@@ -303,7 +272,6 @@ export class GenerateVideoService {
       .trim()
       .slice(0, 1000);
 
-    // Fallback default high-intensity drama script
     const fallbackDramaScenes: DramaScene[] = [
       {
         sceneIndex: 1,
@@ -433,7 +401,6 @@ Respond ONLY with valid JSON:
         const parsed = JSON.parse(response.text.replace(/```json|```/g, '').trim());
         if (Array.isArray(parsed?.scenes) && parsed.scenes.length >= 3) {
           const validatedScenes: DramaScene[] = parsed.scenes.slice(0, 3).map((s: any, idx: number) => {
-            // Strictly enforce duration between 4 and 8 seconds
             const duration = Math.max(4, Math.min(Number(s.durationSeconds) || 5, 8));
             return {
               sceneIndex: idx + 1,

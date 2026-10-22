@@ -8,12 +8,12 @@ export interface KaraokeWord {
 
 export interface DramaScene {
   sceneIndex: number;
-  actTitle: string; // e.g. "Act 1: The Suspicion / Betrayal Hint"
-  emotion: string; // e.g. "heartbreak", "intense confrontation", "crying", "cathartic triumph"
-  tensionLevel: number; // 1 - 10
-  durationSeconds: number; // Strictly constrained between 4 and 8 seconds
-  cinematicPrompt: string; // Google Veo 3.1 tailored vertical 9:16 prompt
-  dialogueScript: string; // Spoken line / hook
+  actTitle: string; 
+  emotion: string; 
+  tensionLevel: number; 
+  durationSeconds: number; 
+  cinematicPrompt: string; 
+  dialogueScript: string; 
   caption: string;
   karaokeSubtitles: KaraokeWord[];
   clipVideoUrl?: string;

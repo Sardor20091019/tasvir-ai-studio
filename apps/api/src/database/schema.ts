@@ -2,13 +2,13 @@ import { Generated, Insertable, Selectable, Updateable } from 'kysely';
 
 export interface UsersTable {
   id: Generated<string>;
-  phone_number: string;
   email?: string | null;
+  phone_number?: string | null;
   full_name: string;
   avatar_url?: string | null;
   telegram_id: number | null;
   locale: Generated<string>;
-  role: Generated<string>; // 'user' | 'admin'
+  role: Generated<string>; 
   plan_tier: Generated<string>;
   credits_balance: Generated<number>;
   created_at: Generated<string>;
@@ -75,13 +75,13 @@ export type VideoJobUpdate = Updateable<VideoJobsTable>;
 export interface PaymentTransactionsTable {
   id: Generated<string>;
   user_id: string;
-  provider: string; // 'admin_grant' | 'manual'
+  provider: string; 
   plan_tier: string;
   amount_uzs: number | string;
   credits_added: number;
-  phone_number: string;
+  phone_number?: string | null;
   external_tx_id: string | null;
-  status: Generated<string>; // 'approved' | 'completed'
+  status: Generated<string>; 
   created_at: Generated<string>;
 }
 
@@ -92,10 +92,10 @@ export type PaymentTransactionUpdate = Updateable<PaymentTransactionsTable>;
 export interface TokenRequestsTable {
   id: Generated<string>;
   user_id: string;
-  phone_number: string;
+  phone_number?: string | null;
   requested_tokens: number;
   note: string | null;
-  status: Generated<string>; // 'pending' | 'approved' | 'rejected'
+  status: Generated<string>; 
   admin_id: string | null;
   created_at: Generated<string>;
   resolved_at: string | null;

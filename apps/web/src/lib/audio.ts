@@ -1,4 +1,3 @@
-// Web Audio API helper for realistic synthetic voice waveform preview
 export class SpeechSynthPlayer {
   private audioCtx: AudioContext | null = null;
   private isPlaying = false;
@@ -18,10 +17,8 @@ export class SpeechSynthPlayer {
     this.isPlaying = true;
     this.onEndCallback = onEnd;
 
-    // Check if SpeechSynthesis is available in browser for natural speech
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 160));
-      // Voice characteristics
       if (avatarSlug === 'timur') {
         utterance.lang = 'ru-RU';
         utterance.pitch = 0.95;
@@ -40,7 +37,6 @@ export class SpeechSynthPlayer {
         utterance.rate = 1.05;
       }
 
-      // Animated waveform bar simulator while speaking
       const interval = setInterval(() => {
         if (!this.isPlaying) {
           clearInterval(interval);

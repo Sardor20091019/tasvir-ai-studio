@@ -34,7 +34,6 @@ export class GenerateVideoController {
       dramaLevel?: string;
     },
   ) {
-    // Prevent unauthenticated API abuse & resource exhaustion (OWASP A04)
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
     InMemoryRateLimiter.check(
       `generate_video:${clientIp}`,

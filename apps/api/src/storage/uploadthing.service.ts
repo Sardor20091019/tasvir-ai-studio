@@ -23,9 +23,6 @@ export class UploadThingService {
     }
   }
 
-  /**
-   * Upload video buffer or local file path to UploadThing and return the permanent CDN URL
-   */
   async uploadVideo(
     source: Buffer | string,
     filename: string = 'tasvir-ai-video.mp4',
@@ -38,7 +35,6 @@ export class UploadThingService {
     try {
       let buffer: Buffer;
       if (typeof source === 'string') {
-        // Prevent arbitrary file reads & path traversal (OWASP A01 / CWE-22)
         if (source.includes('..')) {
           this.logger.warn(`Rejected path traversal attempt in uploadVideo: ${source}`);
           return null;
@@ -47,7 +43,6 @@ export class UploadThingService {
         const allowedBaseDir = path.resolve(process.cwd(), 'apps/web/public');
         const resolvedPath = path.resolve(allowedBaseDir, source.replace(/^\//, ''));
 
-        // Verify the resolved path stays strictly within the whitelisted public directory
         if (!resolvedPath.startsWith(allowedBaseDir)) {
           this.logger.warn(`Path outside allowed base directory blocked: ${source}`);
           return null;

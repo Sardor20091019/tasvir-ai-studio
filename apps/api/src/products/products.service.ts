@@ -32,7 +32,6 @@ export class ProductsService {
       }
     }
 
-    // Return all available products (including demo products)
     return await this.db
       .selectFrom('products')
       .selectAll()
@@ -62,7 +61,6 @@ export class ProductsService {
     discountBadge?: string;
     imageUrl: string;
   }): Promise<Product> {
-    // Input validation & sanitization
     const title = (dto.title || '').trim().slice(0, 160);
     if (!title) {
       throw new BadRequestException('Mahsulot nomi kiritilishi shart');
@@ -109,12 +107,10 @@ export class ProductsService {
       throw new BadRequestException('Faqat rasm fayllari (JPEG, PNG, WebP) qabul qilinadi');
     }
 
-    // Path traversal defense: strip any directory components
     const safeBase = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
     const rawExt = path.extname(safeBase).toLowerCase();
     const finalExt = ALLOWED_EXTENSIONS.has(rawExt) ? rawExt : expectedExt;
 
-    // Cryptographically random unique key to prevent collisions or predictability
     const randomKey = crypto.randomBytes(16).toString('hex');
     const key = `products/${Date.now()}-${randomKey}${finalExt}`;
 

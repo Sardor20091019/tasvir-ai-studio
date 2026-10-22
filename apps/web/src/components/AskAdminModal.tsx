@@ -53,9 +53,8 @@ export function AskAdminModal({
     }
   }, [initialPlanId]);
 
-  // Admin Panel State
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
-  const [adminTargetPhone, setAdminTargetPhone] = useState('');
+  const [adminTargetEmail, setAdminTargetEmail] = useState('');
   const [adminTokensToGrant, setAdminTokensToGrant] = useState<number>(20);
   const [adminReason, setAdminReason] = useState('Admin orqali ajratildi');
   const [adminActionSuccess, setAdminActionSuccess] = useState<string | null>(null);
@@ -94,7 +93,7 @@ export function AskAdminModal({
       successTitle: 'Soʻrovingiz adminga yuborildi!',
       successSub: 'Platforma administratori soʻrovingizni koʻrib chiqib, hisobingizga tez orada tokenlarni qoʻshadi.',
       tgTitle: 'Administrator bilan Telegramda toʻgʻridan-toʻgʻri bogʻlaning',
-      tgSub: 'Xabaringizda oʻz telefon raqamingiz va kerakli tokenlar sonini koʻrsating:',
+      tgSub: 'Xabaringizda oʻz emailingiz va kerakli tokenlar sonini koʻrsating:',
       tgButton: 'Telegramda Yozish (@astro_spectrum)',
       adminTitle: 'Administrator Boshqaruvi: Token Berish',
       grantButton: 'Tokenlarni Taqdim Etish',
@@ -115,7 +114,7 @@ export function AskAdminModal({
       successTitle: 'Your request has been submitted to admin!',
       successSub: 'Platform administrator will review your request and credit your account shortly.',
       tgTitle: 'Contact the administrator directly on Telegram',
-      tgSub: 'In your message, provide your phone number or account ID and the number of tokens needed:',
+      tgSub: 'In your message, provide your email or account ID and the number of tokens needed:',
       tgButton: 'Message on Telegram (@astro_spectrum)',
       adminTitle: 'Admin Management: Grant Tokens',
       grantButton: 'Grant Tokens to User',
@@ -136,7 +135,7 @@ export function AskAdminModal({
       successTitle: 'Запрос отправлен администратору!',
       successSub: 'Администратор платформы рассмотрит запрос и начислит токены на ваш аккаунт.',
       tgTitle: 'Свяжитесь напрямую с администратором в Telegram',
-      tgSub: 'В сообщении укажите ваш номер телефона и желаемое количество токенов:',
+      tgSub: 'В сообщении укажите ваш email и желаемое количество токенов:',
       tgButton: 'Написать в Telegram (@astro_spectrum)',
       adminTitle: 'Управление Администратора: Выдача Токенов',
       grantButton: 'Начислить токены',
@@ -178,12 +177,12 @@ export function AskAdminModal({
     }
   };
 
-  const handleAdminGrantToUser = async (targetPhone?: string, tokens?: number, reqId?: string) => {
+  const handleAdminGrantToUser = async (targetEmail?: string, tokens?: number, reqId?: string) => {
     setIsLoading(true);
     setAdminActionSuccess(null);
     try {
       const res = await api.adminGrantTokens({
-        targetPhoneNumber: targetPhone || adminTargetPhone,
+        targetEmail: targetEmail || adminTargetEmail,
         tokensToAdd: tokens || adminTokensToGrant,
         reason: adminReason,
         requestId: reqId,
@@ -191,7 +190,6 @@ export function AskAdminModal({
 
       setAdminActionSuccess(res.message);
 
-      // Refresh admin requests and user balance if current user was target
       await loadAdminRequests();
       const me = await api.getMe();
       if (me) onUpdateUser(me);
@@ -203,13 +201,12 @@ export function AskAdminModal({
   };
 
   const telegramPrefillMessage = encodeURIComponent(
-    `Assalomu alaykum! Tasvir.ai hisobimga ${requestedTokens} ta token soʻramoqchiman.\nFoydalanuvchi: ${user?.full_name || 'Mijoz'}\nTelefon: ${user?.phone_number || ''}\nID: ${user?.id || ''}`
+    `Assalomu alaykum! Tasvir.ai hisobimga ${requestedTokens} ta token soʻramoqchiman.\nFoydalanuvchi: ${user?.full_name || 'Mijoz'}\nEmail: ${user?.email || ''}\nID: ${user?.id || ''}`
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-border overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-canvas/40">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral shadow-xs">
@@ -233,13 +230,11 @@ export function AskAdminModal({
           </button>
         </div>
 
-        {/* Security Alert: Payments Removed */}
         <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-center gap-2">
           <Lock className="h-4 w-4 text-amber-600 shrink-0" />
           <span className="font-medium">{t.subtitle}</span>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex border-b border-border text-xs font-semibold bg-canvas/20">
           <button
             onClick={() => setActiveTab('request')}
@@ -277,9 +272,7 @@ export function AskAdminModal({
           )}
         </div>
 
-        {/* Content Body */}
         <div className="p-6">
-          {/* TAB 1: USER REQUEST FORM */}
           {activeTab === 'request' && (
             <div>
               {!requestSuccess ? (
@@ -374,7 +367,6 @@ export function AskAdminModal({
             </div>
           )}
 
-          {/* TAB 2: TELEGRAM DIRECT CONTACT */}
           {activeTab === 'telegram' && (
             <div className="space-y-5 text-center py-3">
               <div className="h-14 w-14 mx-auto rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600">
@@ -391,7 +383,7 @@ export function AskAdminModal({
 
               <div className="p-3.5 rounded-xl bg-canvas border border-border text-xs font-mono text-left space-y-1 text-ink-muted">
                 <p>👤 Foydalanuvchi: <strong className="text-ink">{user?.full_name}</strong></p>
-                <p>📞 Telefon: <strong className="text-ink">{user?.phone_number}</strong></p>
+                <p>✉️ Email: <strong className="text-ink">{user?.email || '—'}</strong></p>
                 <p>🪙 Soʻralayotgan token: <strong className="text-coral">{requestedTokens} ta</strong></p>
               </div>
 
@@ -408,7 +400,6 @@ export function AskAdminModal({
             </div>
           )}
 
-          {/* TAB 3: ADMIN MANAGEMENT PANEL (Admin Only) */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-6 max-h-[420px] overflow-y-auto pr-1">
               <div className="flex items-center justify-between pb-2 border-b border-border">
@@ -417,7 +408,7 @@ export function AskAdminModal({
                   <span>{t.adminTitle}</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                  Admin: {user?.phone_number || user?.full_name || 'Admin'}
+                  Admin: {user?.email || user?.full_name || 'Admin'}
                 </span>
               </div>
 
@@ -428,17 +419,16 @@ export function AskAdminModal({
                 </div>
               )}
 
-              {/* Direct Token Grant Form */}
               <div className="p-4 rounded-xl bg-canvas/60 border border-border space-y-3">
                 <span className="text-xs font-bold text-ink block">
-                  Toʻgʻridan-toʻgʻri telefon raqamga token berish:
+                  Toʻgʻridan-toʻgʻri emailga token berish:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
                   <input
-                    type="text"
-                    value={adminTargetPhone}
-                    onChange={(e) => setAdminTargetPhone(e.target.value)}
-                    placeholder="+998 90 123 45 67"
+                    type="email"
+                    value={adminTargetEmail}
+                    onChange={(e) => setAdminTargetEmail(e.target.value)}
+                    placeholder="user@example.com"
                     className="sm:col-span-6 px-3 py-2 text-xs rounded-lg border border-border bg-white"
                   />
                   <input
@@ -450,7 +440,7 @@ export function AskAdminModal({
                   />
                   <button
                     type="button"
-                    disabled={isLoading || !adminTargetPhone}
+                    disabled={isLoading || !adminTargetEmail}
                     onClick={() => handleAdminGrantToUser()}
                     className="sm:col-span-3 py-2 px-3 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold tactile-btn disabled:opacity-50"
                   >
@@ -459,7 +449,6 @@ export function AskAdminModal({
                 </div>
               </div>
 
-              {/* Pending Requests List */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-ink block">
                   Kutilayotgan foydalanuvchi soʻrovlari ({pendingRequests.length}):
@@ -478,7 +467,7 @@ export function AskAdminModal({
                         <div>
                           <div className="font-bold text-ink flex items-center gap-1.5">
                             <span>{req.userName || 'Mijoz'}</span>
-                            <span className="font-mono text-ink-muted font-normal">({req.userPhone})</span>
+                            <span className="font-mono text-ink-muted font-normal">({req.userEmail || req.userPhone || '—'})</span>
                           </div>
                           <div className="text-[11px] text-coral font-bold mt-0.5">
                             Soʻralmoqda: {req.requestedTokens} ta token
@@ -494,7 +483,7 @@ export function AskAdminModal({
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleAdminGrantToUser(req.userPhone, req.requestedTokens, req.requestId)}
+                              onClick={() => handleAdminGrantToUser(req.userEmail || req.userPhone, req.requestedTokens, req.requestId)}
                               className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] tactile-btn"
                             >
                               Tasdiqlash

@@ -59,7 +59,6 @@ export class ProductsController {
       imageUrl: string;
     },
   ) {
-    // Enforce object ownership: always bind the product to the authenticated user ID
     return this.productsService.createProduct({
       ...body,
       userId: currentUserId,

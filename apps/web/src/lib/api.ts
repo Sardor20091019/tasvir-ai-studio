@@ -262,12 +262,13 @@ export const api = {
     return {
       user: {
         id: 'user-' + Date.now(),
+        email: 'user@example.com',
         phone_number: phoneNumber,
         full_name: 'Tasvir Foydalanuvchisi',
         telegram_id: null,
         locale: 'uz',
         plan_tier: 'starter',
-        credits_balance: 3,
+        credits_balance: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -459,6 +460,7 @@ export const api = {
 
   async adminGrantTokens(dto: {
     targetUserId?: string;
+    targetEmail?: string;
     targetPhoneNumber?: string;
     tokensToAdd: number;
     reason?: string;
@@ -531,7 +533,6 @@ export const api = {
     planTier: string;
     phoneNumber?: string;
   }) {
-    // Top-up with payments removed: automatically routes to token request to admin
     const tokens = body.planTier === 'agency' ? 100 : body.planTier === 'shop_pro' ? 35 : 10;
     return this.requestTokens(tokens, `${body.planTier} tarifi uchun so'rov`);
   },
@@ -550,7 +551,6 @@ export const api = {
     return [];
   },
 
-  // Asynchronous Dramatic Product Video Generation (Google Veo 3.1 & Multi-Scene Concat)
   async generateVideoFromPrompt(params: {
     prompt: string;
     aspectRatio?: '9:16';
@@ -565,7 +565,7 @@ export const api = {
       },
       body: JSON.stringify({
         ...params,
-        aspectRatio: '9:16', // Enforced 9:16 vertical ratio
+        aspectRatio: '9:16', 
       }),
     });
 

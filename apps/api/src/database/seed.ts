@@ -20,10 +20,11 @@ async function seed() {
 
   try {
     console.log('Seeding demo user, avatars and products...');
-    const existing = await db.selectFrom('users').selectAll().where('phone_number', 'in', ['+998990991112', '+998901234567']).executeTakeFirst();
+    const existing = await db.selectFrom('users').selectAll().where('email', '=', 'sardor@tasvir.ai').executeTakeFirst();
     let userId = existing?.id;
     if (!userId) {
       const u = await db.insertInto('users').values({
+        email: 'sardor@tasvir.ai',
         phone_number: '+998990991112',
         full_name: 'Sardor Sunatullayev',
         telegram_id: null,
@@ -35,8 +36,8 @@ async function seed() {
       userId = u.id;
     } else {
       await db.updateTable('users').set({
+        email: 'sardor@tasvir.ai',
         full_name: 'Sardor Sunatullayev',
-        phone_number: '+998990991112',
         role: 'admin',
         credits_balance: 100,
       }).where('id', '=', userId).execute();

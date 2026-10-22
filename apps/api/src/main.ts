@@ -4,7 +4,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as express from 'express';
 
-// Load environment variables from apps/api/.env or root .env
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config();
@@ -18,7 +17,6 @@ async function bootstrap() {
   const logger = new Logger('TasvirAPI');
   const app = await NestFactory.create(AppModule);
 
-  // Security HTTP Headers with Helmet
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -35,7 +33,6 @@ async function bootstrap() {
     }),
   );
 
-  // Strict CORS policy
   const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -45,7 +42,6 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, webhooks)
       if (!origin) return callback(null, true);
 
       const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -65,7 +61,6 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization,X-Requested-With,x-user-id,x-admin-key',
   });
 
-  // Global Input Validation & Transformation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

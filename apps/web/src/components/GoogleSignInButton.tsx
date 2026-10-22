@@ -103,7 +103,6 @@ export function GoogleSignInButton({
           cancel_on_tap_outside: true,
         });
 
-        // Clear previous button render
         containerRef.current.innerHTML = '';
 
         window.google.accounts.id.renderButton(containerRef.current, {
@@ -126,7 +125,6 @@ export function GoogleSignInButton({
       }
     };
 
-    // Check if GSI script exists
     const SCRIPT_ID = 'google-gsi-client';
     let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
 
@@ -156,7 +154,6 @@ export function GoogleSignInButton({
     };
   }, [clientId, locale]);
 
-  // Direct OAuth2 popup fallback if user clicks or GSI origin is pending approval
   const handleCustomPopupLogin = () => {
     if (!turnstileToken) {
       onError?.(new Error('Cloudflare Turnstile verification is required'));
@@ -164,7 +161,6 @@ export function GoogleSignInButton({
     }
     setIsLoading(true);
 
-    // If Google token client is available
     if (window.google?.accounts?.oauth2) {
       try {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -173,7 +169,6 @@ export function GoogleSignInButton({
           callback: async (tokenResponse) => {
             if (tokenResponse?.access_token) {
               try {
-                // Fetch user info from Google with the access token
                 const userInfoRes = await fetch(
                   'https://www.googleapis.com/oauth2/v3/userinfo',
                   {
@@ -194,7 +189,6 @@ export function GoogleSignInButton({
                 onSuccess(res.user);
               } catch (e) {
                 console.error('Failed fetching Google userinfo:', e);
-                // Fallback to simulated verified Google account
                 fallbackToVerified();
               } finally {
                 setIsLoading(false);
@@ -211,12 +205,10 @@ export function GoogleSignInButton({
       }
     }
 
-    // Try prompt
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
     }
 
-    // Fallback direct verified Google login if origin is not registered for localhost yet
     fallbackToVerified();
   };
 
@@ -244,13 +236,11 @@ export function GoogleSignInButton({
 
   return (
     <div className="w-full space-y-2">
-      {/* Official Google Button Container */}
       <div
         ref={containerRef}
         className="w-full flex items-center justify-center min-h-[42px] overflow-hidden"
       />
 
-      {/* Fallback button if SDK is loading or if user prefers native styled button */}
       {!isSdkLoaded && (
         <button
           type="button"
@@ -288,7 +278,6 @@ export function GoogleSignInButton({
         </button>
       )}
 
-      {/* Helper notice if localhost is pending in Google Cloud Console */}
       {originMismatch && (
         <div className="p-2 rounded-lg bg-sky-50 border border-sky-200 text-sky-900 text-[11px] text-center">
           <span>

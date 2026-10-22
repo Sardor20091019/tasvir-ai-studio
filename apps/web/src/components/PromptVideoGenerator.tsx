@@ -252,13 +252,11 @@ export function PromptVideoGenerator({
 
   const suggestions = DRAMA_PROMPT_SUGGESTIONS[locale] || DRAMA_PROMPT_SUGGESTIONS.uz;
 
-  // User input states
   const [prompt, setPrompt] = useState(suggestions[0].prompt);
   const [includeBackgroundMusic, setIncludeBackgroundMusic] = useState<boolean>(true);
   const [isPlayingAudioPreview, setIsPlayingAudioPreview] = useState(false);
   const [subtitleMode, setSubtitleMode] = useState<'dom' | 'canvas'>('dom');
 
-  // Job progress & playback states
   const [isLoading, setIsLoading] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -276,13 +274,11 @@ export function PromptVideoGenerator({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // References
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Audio Preview toggle handler
   const handleToggleAudioPreview = () => {
     if (!audioPreviewRef.current) {
       audioPreviewRef.current = new Audio('/audio/kamin-emin-jony.mp3');
@@ -302,7 +298,6 @@ export function PromptVideoGenerator({
     }
   };
 
-  // Video time synchronization loop for high-precision karaoke highlighting
   const syncPlaybackTime = useCallback(() => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
@@ -328,7 +323,6 @@ export function PromptVideoGenerator({
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -344,7 +338,6 @@ export function PromptVideoGenerator({
     if (e) e.preventDefault();
     if (!prompt.trim()) return;
 
-    // Check: user MUST have an account before generating videos
     if (!user) {
       const authMsg =
         locale === 'en'
@@ -357,7 +350,6 @@ export function PromptVideoGenerator({
       return;
     }
 
-    // Pause audio preview if active
     if (audioPreviewRef.current && isPlayingAudioPreview) {
       audioPreviewRef.current.pause();
       setIsPlayingAudioPreview(false);
@@ -379,8 +371,8 @@ export function PromptVideoGenerator({
     try {
       const res = await api.generateVideoFromPrompt({
         prompt: prompt.trim(),
-        aspectRatio: '9:16', // Enforce 9:16 vertical
-        includeBackgroundMusic, // User ON/OFF choice
+        aspectRatio: '9:16', 
+        includeBackgroundMusic, 
       });
 
       if (!res?.jobId) {
@@ -398,7 +390,6 @@ export function PromptVideoGenerator({
 
       startPolling(res.jobId);
     } catch (err: any) {
-      // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED INSTEAD OF DOING NOTHING
       console.error('Video generation start error:', err);
       setIsLoading(false);
       setError(err?.message || t.errorOccurred);
@@ -412,7 +403,7 @@ export function PromptVideoGenerator({
     pollIntervalRef.current = setInterval(async () => {
       try {
         const jobData: DramaVideoJob = await api.getPromptVideoStatus(targetJobId);
-        pollFailures = 0; // reset on success
+        pollFailures = 0; 
         setProgress(jobData.progress || 25);
         setStatusMessage(
           jobData.currentStepMessage ||
@@ -436,7 +427,6 @@ export function PromptVideoGenerator({
           });
           onVideoCreated?.(jobData.videoUrl);
         } else if (jobData.status === 'failed') {
-          // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setIsLoading(false);
           setError(jobData.error || t.errorOccurred);
@@ -465,7 +455,6 @@ export function PromptVideoGenerator({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8">
-      {/* Top Banner Header */}
       <div className="text-center space-y-2.5">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-mono font-bold tracking-wide uppercase shadow-xs">
           <Flame className="h-4 w-4 text-amber-600 animate-pulse" />
@@ -480,10 +469,8 @@ export function PromptVideoGenerator({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Form & Dramatic Settings */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-border shadow-sm space-y-6">
           <form onSubmit={handleStartGeneration} className="space-y-6">
-            {/* Prompt Textarea */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
@@ -506,7 +493,6 @@ export function PromptVideoGenerator({
               />
             </div>
 
-            {/* Drama Prompt Suggestions */}
             <div className="space-y-2">
               <span className="text-[11px] font-semibold text-ink-muted block">
                 {t.suggestionsLabel}
@@ -526,7 +512,6 @@ export function PromptVideoGenerator({
               </div>
             </div>
 
-            {/* Veo 3.1 Aspect Ratio Lock: 9:16 Vertical */}
             <div className="space-y-2 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
@@ -550,7 +535,6 @@ export function PromptVideoGenerator({
               </div>
             </div>
 
-            {/* Background Music Toggle & Audio Preview */}
             <div className="space-y-3 p-4 rounded-2xl bg-canvas border border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -565,7 +549,6 @@ export function PromptVideoGenerator({
                   </div>
                 </div>
 
-                {/* USER ON / OFF SWITCH */}
                 <button
                   type="button"
                   disabled={isLoading}
@@ -606,7 +589,6 @@ export function PromptVideoGenerator({
                   )}
                 </span>
 
-                {/* Live Preview Button */}
                 <button
                   type="button"
                   onClick={handleToggleAudioPreview}
@@ -627,7 +609,6 @@ export function PromptVideoGenerator({
               </div>
             </div>
 
-            {/* Error Message in Form */}
             {error && (
               <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-2 min-w-0">
@@ -644,7 +625,6 @@ export function PromptVideoGenerator({
               </div>
             )}
 
-            {/* Submit / Auth Gate Button */}
             {!user ? (
               <button
                 type="button"
@@ -673,9 +653,7 @@ export function PromptVideoGenerator({
           </form>
         </div>
 
-        {/* Right Column: Processing State or HTML5 Video Preview */}
         <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-border shadow-sm flex flex-col justify-center min-h-[500px]">
-          {/* STATE 1: Empty Initial Placeholder */}
           {!isLoading && !resultVideo && !error && (
             <div className="text-center py-14 px-4 space-y-4">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-canvas border border-border flex items-center justify-center text-ink-muted shadow-xs">
@@ -692,7 +670,6 @@ export function PromptVideoGenerator({
             </div>
           )}
 
-          {/* STATE 1.5: Explicit Error Display Card (Instead of Doing Nothing) */}
           {error && !isLoading && !resultVideo && (
             <div className="text-center py-12 px-4 space-y-4 animate-in fade-in duration-200">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-500 shadow-xs">
@@ -717,7 +694,6 @@ export function PromptVideoGenerator({
             </div>
           )}
 
-          {/* STATE 2: Processing Loader State */}
           {isLoading && (
             <div className="py-8 px-4 text-center space-y-6 animate-in fade-in duration-200">
               <div className="relative mx-auto h-20 w-20 flex items-center justify-center">
@@ -736,7 +712,6 @@ export function PromptVideoGenerator({
                 </p>
               </div>
 
-              {/* Progress Bar */}
               <div className="space-y-2 max-w-xs mx-auto">
                 <div className="w-full h-2.5 rounded-full bg-canvas border border-border overflow-hidden">
                   <div
@@ -750,7 +725,6 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              {/* 3 Drama Acts Pipeline Indicator */}
               <div className="p-3.5 rounded-2xl bg-canvas border border-border text-[11px] text-ink-muted text-left space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-ink flex items-center gap-1.5">
@@ -773,7 +747,6 @@ export function PromptVideoGenerator({
             </div>
           )}
 
-          {/* STATE 3: Completed HTML5 Video Preview Card With Karaoke Subtitles */}
           {resultVideo && (
             <div className="space-y-5 animate-in fade-in duration-300">
               <div className="flex items-center justify-between">
@@ -786,7 +759,6 @@ export function PromptVideoGenerator({
                 </span>
               </div>
 
-              {/* Subtitle Rendering Mode Selector */}
               <div className="flex items-center justify-between px-2 text-xs">
                 <span className="text-[11px] font-semibold text-ink-muted flex items-center gap-1">
                   <Type className="h-3 w-3 text-coral" />
@@ -818,7 +790,6 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              {/* Vertical 9:16 Video Player Card with Dynamic Karaoke Subtitles */}
               <div className="relative mx-auto rounded-3xl overflow-hidden bg-black shadow-xl border border-border/80 w-[240px] sm:w-[260px] aspect-[9/16] flex items-center justify-center group">
                 <video
                   ref={videoRef}
@@ -834,7 +805,6 @@ export function PromptVideoGenerator({
                   className="w-full h-full object-cover"
                 />
 
-                {/* Subtitle Overlay Layer (White by default, active word Vivid Yellow #FFD700) */}
                 <div className="absolute inset-0 pointer-events-none flex flex-col justify-end">
                   <KaraokeSubtitles
                     currentTime={currentTime}
@@ -845,7 +815,6 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              {/* Audio Track Tag & Duration */}
               <div className="flex items-center justify-between text-[11px] text-ink-muted px-1">
                 <span className="flex items-center gap-1 text-ink font-medium truncate max-w-[200px]">
                   <Music className="h-3.5 w-3.5 shrink-0 text-coral" />
@@ -860,7 +829,6 @@ export function PromptVideoGenerator({
                 </span>
               </div>
 
-              {/* Action Buttons: Open, Download MP4 & Restart */}
               <div className="space-y-2 pt-1">
                 <div className="grid grid-cols-2 gap-2">
                   <a
@@ -895,7 +863,6 @@ export function PromptVideoGenerator({
                 </button>
               </div>
 
-              {/* Drama Acts Storyboard Cards */}
               {Array.isArray(resultVideo.scenes) && resultVideo.scenes.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-border/70">
                   <span className="font-heading font-bold text-ink block text-xs">

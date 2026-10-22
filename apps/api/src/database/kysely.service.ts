@@ -16,7 +16,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
     return this._db;
   }
 
-  // Delegated query builders for convenience
   selectFrom<TB extends keyof Database>(table: TB) {
     return this._db.selectFrom(table);
   }
@@ -66,7 +65,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
           idleTimeoutMillis: 30000,
         });
 
-        // Test connection
         const client = await this.pool.connect();
         client.release();
 
@@ -82,13 +80,11 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    // Zero-config in-memory PostgreSQL engine
     this.logger.log(`Initializing zero-config Postgres engine (pg-mem) with pgcrypto extensions...`);
     const mem = newDb({
       autoCreateForeignKeyIndices: true,
     });
 
-    // Register pgcrypto extension & gen_random_uuid
     mem.registerExtension('pgcrypto', (schema) => {
       schema.registerFunction({
         name: 'gen_random_uuid',
@@ -122,7 +118,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       await initialMigration.up(this._db);
       this.logger.log(`Schema migration completed successfully.`);
     } catch (err: any) {
-      // Ignore if table already exists
       if (err.message && (err.message.includes('already exists') || err.message.includes('duplicate'))) {
         this.logger.log(`Tables already initialized.`);
       } else {
@@ -131,7 +126,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      // Add role, email, avatar_url columns and token_requests table
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) DEFAULT 'user'`.execute(this._db);
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email varchar(120)`.execute(this._db);
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`.execute(this._db);
@@ -139,7 +133,7 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         CREATE TABLE IF NOT EXISTS token_requests (
           id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
           user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          phone_number varchar(20) NOT NULL,
+          phone_number varchar(20),
           requested_tokens integer NOT NULL,
           note text,
           status varchar(20) NOT NULL DEFAULT 'pending',
@@ -155,11 +149,10 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
 
   private async seedInitialData() {
     try {
-      // 1. Seed or find default demo user
       const existingUser = await this._db
         .selectFrom('users')
         .selectAll()
-        .where('phone_number', 'in', ['+998990991112', '+998901234567'])
+        .where('email', '=', 'sardor@tasvir.ai')
         .executeTakeFirst();
 
       let defaultUserId: string;
@@ -168,7 +161,7 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         const newUser = await this._db
           .insertInto('users')
           .values({
-            phone_number: '+998990991112',
+            email: 'sardor@tasvir.ai',
             full_name: 'Sardor Sunatullayev',
             telegram_id: null,
             locale: 'uz',
@@ -182,20 +175,18 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Seeded default admin user (Sardor Sunatullayev, id: ${defaultUserId}) with 100 credits.`);
       } else {
         defaultUserId = existingUser.id;
-        // Ensure default user has admin role, new name, and new phone number
         await this._db
           .updateTable('users')
           .set({
             role: 'admin',
             full_name: 'Sardor Sunatullayev',
-            phone_number: '+998990991112',
+            email: 'sardor@tasvir.ai',
             credits_balance: 100,
           })
           .where('id', '=', defaultUserId)
           .execute();
       }
 
-      // 2. Seed 4 Central Asian AI Avatars
       const avatarsCount = await this._db
         .selectFrom('ai_avatars')
         .select(sql`count(*)`.as('count'))
@@ -247,7 +238,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Seeded 4 Central Asian AI presenter avatars.`);
       }
 
-      // 3. Seed demo products if empty
       const productsCount = await this._db
         .selectFrom('products')
         .select(sql`count(*)`.as('count'))

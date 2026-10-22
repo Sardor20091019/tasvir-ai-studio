@@ -67,7 +67,6 @@ export class VideoJobsController {
       scriptText: string;
     },
   ) {
-    // Prevent IDOR: force job owner to be the authenticated user
     return this.videoJobsService.createRenderJob({
       ...body,
       userId: currentUserId,
@@ -77,7 +76,6 @@ export class VideoJobsController {
   @Get()
   @UseGuards(AuthGuard)
   async listUserJobs(@CurrentUser('id') currentUserId: string) {
-    // Strictly isolate jobs to the calling user
     return this.videoJobsService.listUserJobs(currentUserId);
   }
 
@@ -93,39 +91,33 @@ export class VideoJobsController {
     return this.videoJobsService.getJobById(id, currentUserId);
   }
 
-  // Audio mock wav endpoint
   @Get('audio-mock/:avatarId')
   async getAudioMock(@Param('avatarId') avatarId: string, @Res() res: Response) {
     if (!UUID_REGEX.test(avatarId)) {
       throw new BadRequestException('Yaroqsiz avatar ID');
     }
 
-    // Generate a minimal valid 1-second 44.1kHz mono WAV file in memory
     const sampleRate = 44100;
     const durationSec = 1.2;
     const numSamples = Math.floor(sampleRate * durationSec);
     const buffer = Buffer.alloc(44 + numSamples * 2);
 
-    // RIFF chunk
     buffer.write('RIFF', 0);
     buffer.writeUInt32LE(36 + numSamples * 2, 4);
     buffer.write('WAVE', 8);
 
-    // fmt subchunk
     buffer.write('fmt ', 12);
     buffer.writeUInt32LE(16, 16);
-    buffer.writeUInt16LE(1, 20); // PCM
-    buffer.writeUInt16LE(1, 22); // mono
+    buffer.writeUInt16LE(1, 20); 
+    buffer.writeUInt16LE(1, 22); 
     buffer.writeUInt32LE(sampleRate, 24);
     buffer.writeUInt32LE(sampleRate * 2, 28);
     buffer.writeUInt16LE(2, 32);
     buffer.writeUInt16LE(16, 34);
 
-    // data subchunk
     buffer.write('data', 36);
     buffer.writeUInt32LE(numSamples * 2, 40);
 
-    // Generate gentle chime/voice frequency (440Hz modulated)
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
       const freq = 320 + Math.sin(t * 12) * 80;

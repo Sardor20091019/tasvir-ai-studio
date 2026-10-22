@@ -33,16 +33,13 @@ export default function HomePage() {
   const [locale, setLocale] = useState<LocaleType>('uz');
   const [activeTab, setActiveTab] = useState<NavTabType>('studio');
 
-  // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutPlanId, setCheckoutPlanId] = useState('shop_pro');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Selected template to load in Studio
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
 
-  // Video Jobs history
   const [jobs, setJobs] = useState<VideoJob[]>([
     {
       id: 'job-demo-1',
@@ -63,7 +60,6 @@ export default function HomePage() {
     },
   ]);
 
-  // Load user profile on mount
   useEffect(() => {
     api.getMe().then((u) => {
       if (u) setUser(u);
@@ -93,7 +89,6 @@ export default function HomePage() {
     setJobs((prev) => [newJob, ...prev]);
   };
 
-  // Localized hero texts & features
   const heroContent = {
     uz: {
       badge: '🔥 Google Veo 3.1 & Mahalliy AI Diktorlar • 9:16 Vertikal Format',
@@ -223,18 +218,14 @@ export default function HomePage() {
     adminSupport: 'Admin Support: Sardor Sunatullayev',
   };
 
-  // Main Studio Content
   const mainContent = (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-10 pb-24 md:pb-12">
-      {/* Hero Section */}
       <section className="relative text-center space-y-6 pt-2 pb-4">
-        {/* Ambient Top Glow */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-48 bg-gradient-to-b from-orange-400/10 via-amber-200/5 to-transparent blur-3xl -z-10"
         />
 
-        {/* Feature Announcement Pill */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-border text-xs font-mono font-bold tracking-tight shadow-2xs hover:border-coral/40 transition-colors">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -243,7 +234,6 @@ export default function HomePage() {
           <span className="text-ink">{heroContent.badge}</span>
         </div>
 
-        {/* Hero Headline */}
         <div className="space-y-2 max-w-4xl mx-auto">
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-black text-ink tracking-tight leading-[1.12]">
             {heroContent.titlePart1}
@@ -256,7 +246,6 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* 4 Bento Trust / Value Badges */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto pt-2">
           {heroContent.features.map((feat, idx) => (
             <div
@@ -274,7 +263,6 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Segmented Mode Switcher (Tab Selector) */}
         <div className="pt-3 max-w-2xl mx-auto">
           <div className="inline-flex p-1.5 rounded-2xl bg-white border border-border shadow-xs w-full sm:w-auto justify-center flex-wrap gap-1">
             <button
@@ -365,7 +353,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tab 1: Studio (Avatar + Audio) */}
       {activeTab === 'studio' && (
         <div className="space-y-12 animate-in fade-in duration-200">
           <Studio
@@ -393,7 +380,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab 2: AI Video Prompt Generator (Google Veo 3.1 Drama Engine) */}
       {activeTab === 'prompt' && (
         <div className="animate-in fade-in duration-200">
           <PromptVideoGenerator
@@ -424,7 +410,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab 3: Shablonlar (Templates) */}
       {activeTab === 'templates' && (
         <div className="animate-in fade-in duration-200">
           <TemplatesGallery
@@ -434,7 +419,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab 4: Narxlar (Pricing) */}
       {activeTab === 'pricing' && (
         <div className="animate-in fade-in duration-200">
           <PricingSection
@@ -444,7 +428,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab 5: Videolarim (Library) */}
       {activeTab === 'library' && (
         <div className="animate-in fade-in duration-200">
           <VideoLibraryModal
@@ -455,17 +438,14 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Tab 6: Admin Panel (role === 'admin') */}
       {activeTab === 'admin' && (
         <div className="animate-in fade-in duration-200">
           <AdminPanel user={user} locale={locale} />
         </div>
       )}
 
-      {/* Modern High-Conversion Footer */}
       <footer className="pt-12 pb-8 border-t border-border space-y-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Left: Brand & Tagline */}
           <div className="space-y-1.5 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2.5">
               <div className="h-7 w-7 rounded-lg bg-coral text-white font-heading font-black text-sm flex items-center justify-center shadow-xs">
@@ -483,7 +463,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Center: Security & Infrastructure Badges */}
           <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-ink-muted">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-border">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
@@ -499,7 +478,6 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* Right: Direct Admin Telegram Support */}
           <div className="text-center md:text-right">
             <a
               href="https://t.me/astro_spectrum"
@@ -526,7 +504,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      {/* Top Navbar */}
       <Navbar
         user={user}
         locale={locale}
@@ -542,7 +519,6 @@ export default function HomePage() {
 
       {mainContent}
 
-      {/* Profile & DB Tokens Settings Modal */}
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -552,7 +528,6 @@ export default function HomePage() {
         onOpenCheckout={() => setIsCheckoutOpen(true)}
       />
 
-      {/* Ask Admin / Token Request Modal (Payments removed) */}
       <AskAdminModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
@@ -562,7 +537,6 @@ export default function HomePage() {
         initialPlanId={checkoutPlanId}
       />
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}

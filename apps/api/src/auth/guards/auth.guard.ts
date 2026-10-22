@@ -17,7 +17,6 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // In development, if a valid demo user header is passed, allow fallback for smooth local testing
       if (process.env.NODE_ENV !== 'production' && request.headers['x-user-id']) {
         const fallbackUserId = request.headers['x-user-id'];
         const user = await this.db

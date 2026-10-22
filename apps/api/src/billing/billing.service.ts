@@ -66,7 +66,6 @@ export class BillingService {
     return Object.values(TOKEN_PLANS);
   }
 
-  // 1. User submits a request for tokens to the admin
   async requestTokens(params: {
     userId: string;
     requestedTokens: number;
@@ -89,7 +88,7 @@ export class BillingService {
       .insertInto('token_requests')
       .values({
         user_id: user.id,
-        phone_number: user.phone_number,
+        phone_number: user.phone_number || '',
         requested_tokens: tokens,
         note: safeNote || null,
         status: 'pending',
@@ -97,7 +96,7 @@ export class BillingService {
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    this.logger.log(`User ${user.phone_number} requested ${tokens} tokens (Req ID: ${request.id})`);
+    this.logger.log(`User ${user.email || user.phone_number || user.id} requested ${tokens} tokens (Req ID: ${request.id})`);
 
     return {
       success: true,
@@ -106,7 +105,6 @@ export class BillingService {
     };
   }
 
-  // 2. User views their own token request history
   async getUserRequests(userId: string): Promise<TokenRequest[]> {
     return await this.db
       .selectFrom('token_requests')
@@ -116,7 +114,6 @@ export class BillingService {
       .execute();
   }
 
-  // 3. User views past token grants / transactions
   async listUserTransactions(userId: string): Promise<PaymentTransaction[]> {
     return await this.db
       .selectFrom('payment_transactions')
@@ -126,10 +123,10 @@ export class BillingService {
       .execute();
   }
 
-  // 4. ADMIN ONLY: Grant tokens directly to user with atomic transaction
   async grantTokensByAdmin(params: {
     adminId?: string;
     targetUserId?: string;
+    targetEmail?: string;
     targetPhoneNumber?: string;
     tokensToAdd: number;
     reason?: string;
@@ -145,6 +142,8 @@ export class BillingService {
 
       if (params.targetUserId) {
         targetUserQuery = targetUserQuery.where('id', '=', params.targetUserId);
+      } else if (params.targetEmail) {
+        targetUserQuery = targetUserQuery.where('email', '=', params.targetEmail.trim().toLowerCase());
       } else if (params.targetPhoneNumber) {
         let cleanPhone = params.targetPhoneNumber.replace(/[^\d+]/g, '');
         if (!cleanPhone.startsWith('+998') && cleanPhone.length === 9) {
@@ -152,7 +151,7 @@ export class BillingService {
         }
         targetUserQuery = targetUserQuery.where('phone_number', '=', cleanPhone);
       } else {
-        throw new BadRequestException('Foydalanuvchi ID yoki telefon raqami kiritilishi shart');
+        throw new BadRequestException('Foydalanuvchi ID yoki email kiritilishi shart');
       }
 
       const targetUser = await targetUserQuery.forUpdate().executeTakeFirst();
@@ -160,7 +159,6 @@ export class BillingService {
         throw new NotFoundException('Token berilishi kerak boʻlgan foydalanuvchi topilmadi');
       }
 
-      // Add tokens atomically
       const updatedUser = await trx
         .updateTable('users')
         .set({
@@ -171,7 +169,6 @@ export class BillingService {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      // If an existing token request was fulfilled, mark it approved
       if (params.requestId) {
         await trx
           .updateTable('token_requests')
@@ -184,7 +181,6 @@ export class BillingService {
           .execute();
       }
 
-      // Record immutable audit transaction
       await trx
         .insertInto('payment_transactions')
         .values({
@@ -193,26 +189,25 @@ export class BillingService {
           plan_tier: targetUser.plan_tier,
           amount_uzs: 0,
           credits_added: tokens,
-          phone_number: targetUser.phone_number,
+          phone_number: targetUser.phone_number || '',
           external_tx_id: `admin_${params.adminId || 'key'}_${Date.now()}`,
           status: 'completed',
         })
         .execute();
 
       this.logger.log(
-        `[ADMIN AUDIT] Granted ${tokens} tokens to user ${targetUser.id} (${targetUser.phone_number}) by admin ${params.adminId || 'API_KEY'}. Reason: ${params.reason || 'None'}`
+        `[ADMIN AUDIT] Granted ${tokens} tokens to user ${targetUser.id} (${targetUser.email || targetUser.phone_number}) by admin ${params.adminId || 'API_KEY'}. Reason: ${params.reason || 'None'}`
       );
 
       return {
         success: true,
-        message: `${targetUser.full_name} (${targetUser.phone_number}) ga ${tokens} ta token muvaffaqiyatli taqdim etildi. Yangi balans: ${updatedUser.credits_balance}`,
+        message: `${targetUser.full_name} (${targetUser.email || targetUser.phone_number || ''}) ga ${tokens} ta token muvaffaqiyatli taqdim etildi. Yangi balans: ${updatedUser.credits_balance}`,
         newBalance: updatedUser.credits_balance,
         user: updatedUser,
       };
     });
   }
 
-  // 5. ADMIN ONLY: List pending token requests
   async listPendingRequests(): Promise<any[]> {
     return await this.db
       .selectFrom('token_requests')
@@ -226,6 +221,7 @@ export class BillingService {
         'token_requests.resolved_at as resolvedAt',
         'users.id as userId',
         'users.full_name as userName',
+        'users.email as userEmail',
         'users.phone_number as userPhone',
         'users.credits_balance as currentBalance',
       ])
@@ -233,7 +229,6 @@ export class BillingService {
       .execute();
   }
 
-  // 6. ADMIN ONLY: Reject token request
   async rejectRequest(requestId: string, adminId?: string): Promise<{ success: boolean; message: string }> {
     await this.db
       .updateTable('token_requests')
@@ -251,11 +246,10 @@ export class BillingService {
     };
   }
 
-  // 7. ADMIN ONLY: List all users to grant tokens
   async listUsersForAdmin(): Promise<any[]> {
     return await this.db
       .selectFrom('users')
-      .select(['id', 'full_name', 'phone_number', 'role', 'plan_tier', 'credits_balance', 'created_at'])
+      .select(['id', 'full_name', 'email', 'phone_number', 'role', 'plan_tier', 'credits_balance', 'created_at'])
       .orderBy('created_at', 'desc')
       .limit(100)
       .execute();

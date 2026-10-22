@@ -20,7 +20,6 @@ export class BillingController {
     return this.billingService.getPlans();
   }
 
-  // User submits request for tokens to the platform admin
   @Post('request-tokens')
   @UseGuards(AuthGuard)
   async requestTokens(
@@ -56,13 +55,13 @@ export class BillingController {
 export class AdminController {
   constructor(@Inject(BillingService) private readonly billingService: BillingService) {}
 
-  // Securely grant tokens to any user (Admin only)
   @Post('grant-tokens')
   async grantTokens(
     @CurrentUser('id') adminId: string,
     @Body()
     body: {
       targetUserId?: string;
+      targetEmail?: string;
       targetPhoneNumber?: string;
       tokensToAdd: number;
       reason?: string;
@@ -72,6 +71,7 @@ export class AdminController {
     return this.billingService.grantTokensByAdmin({
       adminId,
       targetUserId: body.targetUserId,
+      targetEmail: body.targetEmail,
       targetPhoneNumber: body.targetPhoneNumber,
       tokensToAdd: body.tokensToAdd,
       reason: body.reason,
@@ -79,13 +79,11 @@ export class AdminController {
     });
   }
 
-  // View all user token requests
   @Get('requests')
   async listRequests() {
     return this.billingService.listPendingRequests();
   }
 
-  // Reject a token request
   @Post('reject-request')
   async rejectRequest(
     @CurrentUser('id') adminId: string,
@@ -94,7 +92,6 @@ export class AdminController {
     return this.billingService.rejectRequest(body.requestId, adminId);
   }
 
-  // List all users for token distribution
   @Get('users')
   async listUsers() {
     return this.billingService.listUsersForAdmin();

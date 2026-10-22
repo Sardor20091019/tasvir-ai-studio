@@ -9,14 +9,9 @@ export class InMemoryRateLimiter {
   private static store = new Map<string, RateLimitRecord>();
   private static MAX_STORE_SIZE = 10000;
 
-  /**
-   * Enforces max `limit` requests within `windowMs` seconds.
-   * Throws HTTP 429 Too Many Requests if exceeded.
-   */
   static check(key: string, limit: number, windowMs: number, errorMessage?: string): void {
     const now = Date.now();
 
-    // Prevent memory exhaustion: prune expired entries when store grows large
     if (this.store.size > this.MAX_STORE_SIZE) {
       this.cleanup(now);
     }

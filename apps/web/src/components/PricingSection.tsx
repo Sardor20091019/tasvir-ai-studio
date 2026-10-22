@@ -125,7 +125,6 @@ export function PricingSection({
                   {p.description}
                 </p>
 
-                {/* Features List */}
                 <ul className="space-y-2.5 text-xs text-ink mb-6 pt-4 border-t border-border">
                   {p.features.map((feat, idx) => (
                     <li key={idx} className="flex items-start gap-2">
@@ -155,7 +154,6 @@ export function PricingSection({
         })}
       </div>
 
-      {/* Security info banner */}
       <div className="max-w-3xl mx-auto rounded-2xl bg-canvas border border-border p-4 sm:p-5 flex items-start gap-3.5 shadow-xs">
         <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
           <Lock className="h-5 w-5" />

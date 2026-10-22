@@ -79,7 +79,6 @@ export function AuthModal({
         </div>
 
         <div className="space-y-4">
-          {/* Cloudflare Turnstile Bot Protection - MANDATORY FOR GOOGLE LOGIN */}
           <div className="py-1">
             <Turnstile
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
@@ -92,7 +91,6 @@ export function AuthModal({
             />
           </div>
 
-          {/* Error Message if auth or turnstile fails */}
           {authError && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
@@ -100,7 +98,6 @@ export function AuthModal({
             </div>
           )}
 
-          {/* Conditional Google Login: STRICTLY BLOCKED WITHOUT CLOUDFLARE CONFIRMATION */}
           {!turnstileToken ? (
             <div className="p-3.5 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-600 text-xs flex items-center justify-center gap-2 select-none text-center">
               <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
@@ -127,7 +124,6 @@ export function AuthModal({
             </div>
           )}
 
-          {/* Security Badge */}
           <div className="pt-3 border-t border-border flex items-center justify-center gap-1.5 text-[11px] text-emerald-700 font-medium">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             <span>{t.securityBadge}</span>

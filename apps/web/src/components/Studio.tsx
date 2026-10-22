@@ -61,7 +61,6 @@ export function Studio({
   onJobCreated,
   initialTemplate,
 }: StudioProps) {
-  // Translations
   const t = {
     uz: {
       step1Title: '1. Mahsulot maʼlumotlari',
@@ -240,7 +239,6 @@ export function Studio({
     tryAgain: 'Try again',
   };
 
-  // State
   const [avatars, setAvatars] = useState<AiAvatar[]>(fallbackAvatars);
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>(fallbackAvatars[0].id);
 
@@ -260,14 +258,12 @@ export function Studio({
 
   const [platformPreset, setPlatformPreset] = useState<'uzum_9_16' | 'instagram_reels' | 'telegram_ad'>('uzum_9_16');
 
-  // Preview & Audio State
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [waveformBars, setWaveformBars] = useState<number[]>([30, 45, 60, 35, 75, 50, 40, 65, 80, 55, 30, 70, 45, 60, 35, 25]);
   const [showPip, setShowPip] = useState(true);
   const [isPlayingPreview, setIsPlayingPreview] = useState(true);
   const [karaokeIndex, setKaraokeIndex] = useState(0);
 
-  // Render Job State
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderStage, setRenderStage] = useState<1 | 2 | 3 | 4>(1);
@@ -277,7 +273,6 @@ export function Studio({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const synthPlayerRef = useRef<SpeechSynthPlayer>(new SpeechSynthPlayer());
 
-  // Load avatars on mount
   useEffect(() => {
     api.getAvatars().then((res) => {
       if (res && res.length > 0) {
@@ -289,7 +284,6 @@ export function Studio({
     });
   }, []);
 
-  // Handle template selection if provided
   useEffect(() => {
     if (initialTemplate) {
       setProductTitle(initialTemplate.productTitle);
@@ -306,7 +300,6 @@ export function Studio({
     }
   }, [initialTemplate]);
 
-  // Karaoke animated subtitle progression
   const scriptWords = scriptText.split(' ').filter(Boolean);
   useEffect(() => {
     if (!isPlayingPreview) return;
@@ -318,7 +311,6 @@ export function Studio({
 
   const selectedAvatar = avatars.find((a) => a.id === selectedAvatarId) || avatars[0];
 
-  // Demo product pill click
   const handleSelectDemoProduct = (p: Product) => {
     setProductTitle(p.title);
     setProductCategory(p.category);
@@ -328,7 +320,6 @@ export function Studio({
     handleRewriteScript(scriptTone, p.title, Number(p.price_uzs));
   };
 
-  // Image Upload handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -342,7 +333,6 @@ export function Studio({
     }
   };
 
-  // Rewrite script with AI
   const handleRewriteScript = async (
     tone: 'discount_hook' | 'quality_review' | 'short_reels',
     title = productTitle,
@@ -366,7 +356,6 @@ export function Studio({
     }
   };
 
-  // Listen to TTS Voice
   const handleToggleVoicePreview = () => {
     if (isPlayingAudio) {
       synthPlayerRef.current.stop();
@@ -382,9 +371,7 @@ export function Studio({
     }
   };
 
-  // Trigger Render Job
   const handleStartRender = async () => {
-    // Check: user MUST have an account before generating videos
     if (!user) {
       const authMsg =
         locale === 'en'
@@ -408,7 +395,6 @@ export function Studio({
     setRenderStage(1);
     setRenderedVideoUrl(null);
 
-    // Optimistically deduct 1 credit in UI
     const updatedUser = {
       ...user,
       credits_balance: Math.max(0, user.credits_balance - 1),
@@ -416,7 +402,6 @@ export function Studio({
     onUpdateUser(updatedUser);
 
     try {
-      // Call backend API
       const job = await api.renderVideoJob({
         userId: user.id,
         productId: 'demo-prod',
@@ -430,7 +415,6 @@ export function Studio({
         onJobCreated(job);
       }
 
-      // Progress animation
       setTimeout(() => {
         setRenderProgress(35);
         setRenderStage(2);
@@ -449,7 +433,6 @@ export function Studio({
           'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
         );
 
-        // Confetti celebration
         try {
           confetti({
             particleCount: 80,
@@ -459,11 +442,9 @@ export function Studio({
         } catch (e) {}
       }, 5200);
     } catch (e: any) {
-      // IF THERE IS ERROR WHILE CREATING VIDEO, SAY ERROR OCCURED INSTEAD OF DOING NOTHING
       console.error('Studio render video error:', e);
       setIsRendering(false);
       setRenderError(e?.message || t.errorOccurred || 'Error occurred while creating video. Please try again.');
-      // Restore credit on failure
       if (user) {
         onUpdateUser(user);
       }
@@ -472,9 +453,7 @@ export function Studio({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* LEFT COLUMN: 4-Step Interactive Studio Controls (7 cols) */}
       <div className="lg:col-span-7 space-y-6">
-        {/* STEP 1: PRODUCT INFO */}
         <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
@@ -493,7 +472,6 @@ export function Studio({
             </span>
           </div>
 
-          {/* Quick Demo Product Pills */}
           <div className="mb-4">
             <span className="text-xs font-semibold text-ink-muted mb-2 block">
               {t.demoProducts}
@@ -523,7 +501,6 @@ export function Studio({
             </div>
           </div>
 
-          {/* Drag & Drop Upload + Preview Row */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -547,7 +524,6 @@ export function Studio({
               </span>
             </div>
 
-            {/* Product Fields */}
             <div className="sm:col-span-8 space-y-3">
               <div>
                 <label className="text-xs font-semibold text-ink-muted block mb-1">
@@ -589,7 +565,6 @@ export function Studio({
           </div>
         </section>
 
-        {/* STEP 2: CENTRAL ASIAN AI AVATARS */}
         <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
@@ -621,7 +596,6 @@ export function Studio({
                       : 'border-border bg-white hover:border-ink/20 hover:bg-canvas'
                   }`}
                 >
-                  {/* Avatar Portrait */}
                   <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-canvas mb-2">
                     <img
                       src={av.avatar_image_url}
@@ -638,7 +612,6 @@ export function Studio({
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-xs font-bold text-ink">
@@ -655,7 +628,6 @@ export function Studio({
           </div>
         </section>
 
-        {/* STEP 3: AI SCRIPT & VOICE */}
         <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
@@ -670,7 +642,6 @@ export function Studio({
               </div>
             </div>
 
-            {/* Audio Waveform Preview Button */}
             <button
               onClick={handleToggleVoicePreview}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all tactile-btn ${
@@ -691,7 +662,6 @@ export function Studio({
                 </>
               )}
 
-              {/* Animated Waveform mini bars */}
               <div className="flex items-end gap-0.5 h-3 ml-1">
                 {waveformBars.slice(0, 5).map((height, idx) => (
                   <span
@@ -708,7 +678,6 @@ export function Studio({
             </button>
           </div>
 
-          {/* 3 Tone Rewrite Buttons */}
           <div className="flex flex-wrap gap-2 mb-3">
             <button
               onClick={() => handleRewriteScript('discount_hook')}
@@ -748,7 +717,6 @@ export function Studio({
             </button>
           </div>
 
-          {/* Editable Script Textarea */}
           <div className="relative">
             <textarea
               rows={4}
@@ -765,7 +733,6 @@ export function Studio({
             )}
           </div>
 
-          {/* Script Word & Char Counters */}
           <div className="flex items-center justify-between text-[11px] font-mono text-ink-muted mt-2">
             <div className="flex items-center gap-3">
               <span>{scriptText.length} {t.characters}</span>
@@ -780,7 +747,6 @@ export function Studio({
           </div>
         </section>
 
-        {/* STEP 4: PLATFORM PRESETS & RENDER CTA */}
         <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
@@ -798,7 +764,6 @@ export function Studio({
             </div>
           </div>
 
-          {/* Platform Presets */}
           <div className="grid grid-cols-3 gap-3 mb-5">
             {[
               { id: 'uzum_9_16', label: t.platformUzum, icon: ShoppingBag, color: 'text-purple-600' },
@@ -829,7 +794,6 @@ export function Studio({
             })}
           </div>
 
-          {/* Render Error Alert */}
           {renderError && (
             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2 shadow-xs animate-in fade-in">
               <div className="flex items-center gap-2 min-w-0">
@@ -846,7 +810,6 @@ export function Studio({
             </div>
           )}
 
-          {/* Large Render Button */}
           {!user ? (
             <button
               type="button"
@@ -888,10 +851,8 @@ export function Studio({
         </section>
       </div>
 
-      {/* RIGHT COLUMN: Live 9:16 Smartphone Preview (5 cols) */}
       <div className="lg:col-span-5 sticky top-20 space-y-4">
         <div className="bg-white rounded-studio border border-border p-4 sm:p-5 shadow-tactile">
-          {/* Header Controls */}
           <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-border/60">
             <div>
               <h3 className="text-sm font-bold text-ink">
@@ -901,7 +862,6 @@ export function Studio({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* PiP Avatar Toggle */}
               <button
                 onClick={() => setShowPip(!showPip)}
                 className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-all ${
@@ -914,7 +874,6 @@ export function Studio({
                 PiP {showPip ? 'ON' : 'OFF'}
               </button>
 
-              {/* Play / Pause Preview */}
               <button
                 onClick={() => setIsPlayingPreview(!isPlayingPreview)}
                 className="h-7 w-7 rounded-lg border border-border bg-canvas hover:bg-white flex items-center justify-center text-ink"
@@ -928,15 +887,12 @@ export function Studio({
             </div>
           </div>
 
-          {/* 9:16 SMARTPHONE FRAME (iPhone 16 Pro Style) */}
           <div className="relative mx-auto w-[290px] sm:w-[320px] aspect-[9/16] rounded-[38px] p-3 bg-ink shadow-2xl border-4 border-[#302F2D] overflow-hidden select-none">
-            {/* Dynamic Island / Speaker Notch */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 h-5 w-24 bg-black rounded-full flex items-center justify-between px-2.5 shadow-sm">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <div className="h-2.5 w-2.5 rounded-full bg-[#181817] border border-white/20" />
             </div>
 
-            {/* Status bar */}
             <div className="absolute top-4 left-7 z-20 text-[10px] font-mono font-bold text-white/90">
               09:41
             </div>
@@ -945,9 +901,7 @@ export function Studio({
               <span>100%</span>
             </div>
 
-            {/* Screen Inner Container */}
             <div className="relative w-full h-full rounded-[30px] overflow-hidden bg-neutral-900 flex flex-col justify-between">
-              {/* Product Background Visual with Motion */}
               <div className="absolute inset-0 z-0 overflow-hidden">
                 <img
                   src={productImage}
@@ -956,11 +910,9 @@ export function Studio({
                     isPlayingPreview ? 'scale-105 animate-product-float' : 'scale-100'
                   }`}
                 />
-                {/* Vignette Gradients */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40" />
               </div>
 
-              {/* Top Overlay: Platform Badge */}
               <div className="relative z-10 p-4 pt-10 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white text-[11px] font-medium">
                   {platformPreset === 'uzum_9_16' && (
@@ -988,7 +940,6 @@ export function Studio({
                 </div>
               </div>
 
-              {/* Middle Floating Picture-in-Picture Avatar Presenter */}
               {showPip && (
                 <div className="relative z-10 px-4 flex justify-end">
                   <div className="relative group">
@@ -1001,7 +952,6 @@ export function Studio({
                         }`}
                       />
                     </div>
-                    {/* Speaking mouth audio pulse ring */}
                     {isPlayingPreview && (
                       <span className="absolute -bottom-1 -right-1 flex h-6 w-6">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span>
@@ -1017,9 +967,7 @@ export function Studio({
                 </div>
               )}
 
-              {/* Bottom Overlay: Synced Karaoke Captions & Product Price Tag */}
               <div className="relative z-10 p-4 space-y-3 pb-6">
-                {/* Karaoke Dynamic Subtitles */}
                 <div className="min-h-[44px] bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-2.5 text-center">
                   <p className="text-xs leading-snug font-semibold text-white drop-shadow">
                     {scriptWords.map((word, index) => {
@@ -1040,7 +988,6 @@ export function Studio({
                   </p>
                 </div>
 
-                {/* Uzum-style Product Banner */}
                 <div className="bg-white/95 backdrop-blur-md rounded-xl p-2.5 shadow-lg border border-white/40 flex items-center justify-between text-ink">
                   <div>
                     <h4 className="text-xs font-bold truncate max-w-[170px] line-clamp-1">
@@ -1063,7 +1010,6 @@ export function Studio({
                 </div>
               </div>
 
-              {/* 4-STAGE RENDER PROGRESS OVERLAY (Appears during render) */}
               {isRendering && (
                 <div className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
                   <div className="h-16 w-16 rounded-2xl bg-coral/20 border border-coral text-coral flex items-center justify-center mb-4">
@@ -1080,7 +1026,6 @@ export function Studio({
                     Progress: {renderProgress}%
                   </p>
 
-                  {/* 4-Stage Step Tracker */}
                   <div className="w-full space-y-2 mb-4">
                     {[
                       { step: 1, label: t.stage1 },
@@ -1108,7 +1053,6 @@ export function Studio({
                     })}
                   </div>
 
-                  {/* Progress Bar */}
                   <div className="w-full h-2 rounded-full bg-white/20 overflow-hidden">
                     <div
                       className="h-full bg-coral transition-all duration-300 rounded-full"
@@ -1120,7 +1064,6 @@ export function Studio({
             </div>
           </div>
 
-          {/* Video Finished Download Actions */}
           {renderedVideoUrl && (
             <div className="mt-4 p-3.5 rounded-xl bg-bento-mint border border-emerald-500/30 flex flex-col gap-2.5">
               <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold">

@@ -90,7 +90,6 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Left: Brand Logo & Tag */}
         <div className="flex items-center gap-6">
           <button
             onClick={() => setActiveTab('studio')}
@@ -114,7 +113,6 @@ export function Navbar({
             </div>
           </button>
 
-          {/* Navigation Links (Desktop) */}
           <nav className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setActiveTab('studio')}
@@ -179,9 +177,7 @@ export function Navbar({
           </nav>
         </div>
 
-        {/* Right: Actions, Credits & Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Library Button */}
           <button
             onClick={() => setActiveTab('library')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-xl border border-border flex items-center gap-1.5 transition-colors tactile-btn ${
@@ -199,7 +195,6 @@ export function Navbar({
             )}
           </button>
 
-          {/* Credits Balance Pill */}
           {user && (
             <div className="hidden sm:flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl bg-canvas border border-border text-xs">
               <div className="flex items-center gap-1.5 font-mono">
@@ -220,7 +215,6 @@ export function Navbar({
             </div>
           )}
 
-          {/* Ask Admin / Recharge Button */}
           <button
             onClick={onOpenCheckout}
             className="px-3 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white font-heading font-bold text-xs shadow-xs transition-colors tactile-btn flex items-center gap-1.5"
@@ -229,7 +223,6 @@ export function Navbar({
             <span className="hidden sm:inline">{t.recharge}</span>
           </button>
 
-          {/* Language Switcher: 3-way Segmented Control */}
           <div className="border-l border-border pl-2 sm:pl-3 flex items-center">
             <div className="flex items-center p-0.5 rounded-lg bg-canvas border border-border">
               {(['uz', 'en', 'ru'] as LocaleType[]).map((lang) => (
@@ -256,7 +249,6 @@ export function Navbar({
             </div>
           </div>
 
-          {/* User Account / Profile & Tokens */}
           <button
             onClick={() => {
               if (user && onOpenProfile) {
@@ -283,7 +275,6 @@ export function Navbar({
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation Bar (Persistent for Mobile Screens) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-lg px-2 py-1.5 flex items-center justify-around">
         <button
           type="button"

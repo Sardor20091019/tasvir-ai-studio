@@ -128,7 +128,6 @@ export function VideoLibraryModal({
                 className="rounded-xl border border-border bg-canvas overflow-hidden flex flex-col justify-between hover:shadow-tactile transition-all"
               >
                 <div className="relative aspect-[9/12] w-full bg-black/90 overflow-hidden group">
-                  {/* Video or Thumbnail preview */}
                   <video
                     src={videoSrc}
                     playsInline

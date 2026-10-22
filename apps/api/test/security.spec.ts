@@ -8,12 +8,10 @@ import { UploadThingService } from '../src/storage/uploadthing.service';
 describe('Security Regression & Remediation Tests', () => {
 
   test('VULN-01: Google Login must strictly reject missing or unverified credentials', async () => {
-    // Dynamic import to test AuthService Google login input contract
     const { AuthService } = await import('../src/auth/auth.service');
     const mockDb: any = {};
     const authService = new AuthService(mockDb);
 
-    // Attempting to call googleLogin with raw email and no credential
     await assert.rejects(
       async () => {
         await authService.googleLogin({} as any);
@@ -43,6 +41,46 @@ describe('Security Regression & Remediation Tests', () => {
     );
   });
 
+  test('Google Login: Initial tokens must be 0, email saved as in Google, phone number is null', async () => {
+    const { AuthService } = await import('../src/auth/auth.service');
+    let insertedUserValues: any = null;
+    const mockDb: any = {
+      selectFrom: () => ({
+        selectAll: () => ({
+          where: () => ({
+            executeTakeFirst: async () => null,
+          }),
+        }),
+      }),
+      insertInto: () => ({
+        values: (val: any) => {
+          insertedUserValues = val;
+          return {
+            returningAll: () => ({
+              executeTakeFirstOrThrow: async () => ({
+                id: 'usr_new_google',
+                ...val,
+              }),
+            }),
+          };
+        },
+      }),
+    };
+
+    const authService = new AuthService(mockDb);
+    authService.verifyTurnstile = async () => true;
+
+    const result = await authService.googleLogin({
+      credential: 'mock_demo_credential_test',
+      turnstileToken: 'valid_test_token',
+    });
+
+    assert.equal(insertedUserValues.credits_balance, 0, 'New user tokens must start at 0');
+    assert.equal(insertedUserValues.email, 'test.user@tasvir.ai', 'Email must match Google credential');
+    assert.equal(insertedUserValues.phone_number, null, 'Phone number must be null - only email is needed');
+    assert.equal(result.user.credits_balance, 0);
+  });
+
   test('VULN-02: Auth Service getCurrentUser must reject unauthenticated requests without leaking admin', async () => {
     const { AuthService } = await import('../src/auth/auth.service');
     const mockDb: any = {};
@@ -61,7 +99,6 @@ describe('Security Regression & Remediation Tests', () => {
   });
 
   test('VULN-04: OTP Generation uses cryptographically secure random integers (CWE-330)', () => {
-    // Verify randomInt range
     for (let i = 0; i < 50; i++) {
       const code = crypto.randomInt(1000, 10000).toString();
       assert.equal(code.length, 4);
@@ -89,12 +126,10 @@ describe('Security Regression & Remediation Tests', () => {
     InMemoryRateLimiter.clearAll();
 
     const testKey = 'test_ip_192_168_1_1';
-    // Allow max 3 attempts per 10 seconds
     InMemoryRateLimiter.check(testKey, 3, 10000);
     InMemoryRateLimiter.check(testKey, 3, 10000);
     InMemoryRateLimiter.check(testKey, 3, 10000);
 
-    // 4th attempt must throw 429
     assert.throws(
       () => {
         InMemoryRateLimiter.check(testKey, 3, 10000);
@@ -126,12 +161,10 @@ describe('Security Regression & Remediation Tests', () => {
     const parts = token.split('.');
     assert.equal(parts.length, 3);
 
-    // Verify valid token
     const decoded = JwtUtil.verify(token);
     assert.equal(decoded.sub, 'user_123');
     assert.equal(decoded.role, 'user');
 
-    // Tampered payload with role changed to admin
     const tamperedPayload = Buffer.from(JSON.stringify({ sub: 'user_123', role: 'admin', exp: decoded.exp })).toString('base64url');
     const forgedToken = `${parts[0]}.${tamperedPayload}.${parts[2]}`;
 
@@ -159,7 +192,6 @@ describe('Security Regression & Remediation Tests', () => {
     };
     const authGuard = new AuthGuard(mockDb);
 
-    // Mock ExecutionContext without Authorization header
     const mockContext: any = {
       switchToHttp: () => ({
         getRequest: () => ({

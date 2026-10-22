@@ -172,7 +172,6 @@ export function TemplatesGallery({
             className="group rounded-2xl bg-white border border-border overflow-hidden shadow-tactile hover:shadow-tactile-md transition-all flex flex-col justify-between"
           >
             <div>
-              {/* Thumbnail */}
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-canvas">
                 <img
                   src={tmpl.imageUrl}
@@ -187,7 +186,6 @@ export function TemplatesGallery({
                 </div>
               </div>
 
-              {/* Body */}
               <div className="p-4 space-y-2">
                 <h3 className="font-bold text-sm text-ink line-clamp-1">
                   {locale === 'ru' ? tmpl.titleRu : tmpl.titleUz}
@@ -201,7 +199,6 @@ export function TemplatesGallery({
               </div>
             </div>
 
-            {/* Footer action */}
             <div className="p-4 pt-0">
               <button
                 onClick={() => onSelectTemplate(tmpl)}

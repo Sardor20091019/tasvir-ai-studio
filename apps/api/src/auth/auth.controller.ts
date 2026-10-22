@@ -55,7 +55,6 @@ export class AuthController {
       return this.authService.getCurrentUser(payload.sub);
     }
 
-    // Only permit explicit fallback user in non-production development environments if specifically passed
     if (process.env.NODE_ENV === 'development' && fallbackUserId) {
       return this.authService.getCurrentUser(fallbackUserId);
     }

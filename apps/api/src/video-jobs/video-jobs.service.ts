@@ -61,7 +61,6 @@ export class VideoJobsService {
     const platformPreset = ALLOWED_PRESETS.has(dto.platformPreset) ? dto.platformPreset : 'uzum_9_16';
     const scriptTone = ALLOWED_TONES.has(dto.scriptTone) ? dto.scriptTone : 'discount_hook';
 
-    // Verify avatar exists and is active
     const avatar = await this.db
       .selectFrom('ai_avatars')
       .select(['id', 'is_active'])
@@ -73,7 +72,6 @@ export class VideoJobsService {
     }
 
     const job = await this.db.transaction().execute(async (trx) => {
-      // 1. Lock user row and verify available credits (prevents race conditions)
       const user = await trx
         .selectFrom('users')
         .select(['id', 'credits_balance'])
@@ -89,7 +87,6 @@ export class VideoJobsService {
         throw new BadRequestException('Kreditlar yetarli emas. Iltimos, hisobingizni toʻldiring.');
       }
 
-      // 2. Deduct 1 credit atomically
       await trx
         .updateTable('users')
         .set({
@@ -99,7 +96,6 @@ export class VideoJobsService {
         .where('id', '=', dto.userId)
         .execute();
 
-      // 3. Insert the video generation job
       const createdJob = await trx
         .insertInto('video_jobs')
         .values({
@@ -120,7 +116,6 @@ export class VideoJobsService {
       return createdJob;
     });
 
-    // Asynchronously kick off rendering state machine simulation
     this.processJobAsync(job.id).catch((err) => {
       this.logger.error(`Error processing job ${job.id}: ${err.message}`);
     });
@@ -168,7 +163,6 @@ export class VideoJobsService {
       throw new NotFoundException(`Video vazifasi topilmadi: ${jobId}`);
     }
 
-    // Access control: only the job owner may inspect job details
     if (currentUserId && job.user_id !== currentUserId) {
       throw new ForbiddenException('Ushbu video vazifasiga kirish huquqingiz yoʻq');
     }
@@ -201,7 +195,6 @@ export class VideoJobsService {
     const tone = ALLOWED_TONES.has(params.tone) ? params.tone : 'discount_hook';
     const gemini = this.getGeminiClient();
 
-    // Try Google Gemini 2.5 Flash if available
     if (gemini) {
       try {
         const toneDesc =
@@ -250,7 +243,6 @@ Javobni FAQAT toza JSON formatida bering:
       }
     }
 
-    // High fidelity fallback templates
     let script = '';
     let hooks: string[] = [];
 

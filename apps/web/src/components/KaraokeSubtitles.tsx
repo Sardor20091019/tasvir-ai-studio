@@ -11,12 +11,6 @@ interface KaraokeSubtitlesProps {
   renderMode?: 'canvas' | 'dom';
 }
 
-/**
- * Dynamic Karaoke-Style Subtitle Overlay:
- * - Default font styling: Solid White (#FFFFFF) with high-contrast cinematic drop-shadow
- * - Active word: Vivid Yellow (#FFD700) with a warm glow matching the video playback head
- * - Supports both HTML5 Canvas rendering layer and high-impact Reels/TikTok DOM overlay
- */
 export function KaraokeSubtitles({
   currentTime,
   subtitles,
@@ -26,7 +20,6 @@ export function KaraokeSubtitles({
 }: KaraokeSubtitlesProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Group words into lines/sentences based on punctuation or ~5 words per line
   const wordGroups = useMemo(() => {
     if (!subtitles || subtitles.length === 0) return [];
 
@@ -64,17 +57,14 @@ export function KaraokeSubtitles({
     return groups;
   }, [subtitles]);
 
-  // Find the currently active group for this playback timestamp
   const activeGroup = useMemo(() => {
     if (wordGroups.length === 0) return null;
 
-    // Find direct hit
     const directHit = wordGroups.find(
       (g) => currentTime >= g.startSec - 0.1 && currentTime <= g.endSec + 0.3,
     );
     if (directHit) return directHit;
 
-    // If between groups or slightly before/after, find closest
     if (currentTime < wordGroups[0].startSec) {
       return wordGroups[0];
     }
@@ -82,7 +72,6 @@ export function KaraokeSubtitles({
     return pastGroups.length > 0 ? pastGroups[pastGroups.length - 1] : wordGroups[0];
   }, [wordGroups, currentTime]);
 
-  // Identify active drama scene for context badge
   const activeScene = useMemo(() => {
     if (!scenes || scenes.length === 0) return null;
     let accumulated = 0;
@@ -95,7 +84,6 @@ export function KaraokeSubtitles({
     return scenes[scenes.length - 1];
   }, [scenes, currentTime]);
 
-  // Canvas-based word-by-word timed rendering
   useEffect(() => {
     if (renderMode !== 'canvas' || !canvasRef.current || !activeGroup) return;
 
@@ -113,7 +101,6 @@ export function KaraokeSubtitles({
 
     ctx.clearRect(0, 0, width, height);
 
-    // Measure and render words horizontally centered
     const fontSize = Math.min(22, Math.max(16, Math.floor(width / 18)));
     ctx.font = `900 ${fontSize}px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif`;
     ctx.textBaseline = 'middle';
@@ -131,23 +118,19 @@ export function KaraokeSubtitles({
       const isWordActive = currentTime >= w.startSec && currentTime <= w.endSec;
       const isWordPast = currentTime > w.endSec;
 
-      // Text stroke for contrast
       ctx.lineWidth = 4;
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
       ctx.strokeText(w.word, startX, centerY);
 
       if (isWordActive) {
-        // Active word: Vivid Yellow (#FFD700) with golden glow
         ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
         ctx.shadowBlur = 14;
         ctx.fillStyle = '#FFD700';
       } else if (isWordPast) {
-        // Past word: Solid White
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#FFFFFF';
       } else {
-        // Upcoming word: Crisp White (subtle opacity)
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
@@ -167,7 +150,6 @@ export function KaraokeSubtitles({
       className={`pointer-events-none select-none flex flex-col items-center justify-end px-4 pb-14 sm:pb-16 text-center ${className}`}
       aria-live="polite"
     >
-      {/* Dynamic Dramatic Emotion / Act Indicator */}
       {activeScene && (
         <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[10px] font-mono font-bold text-white tracking-wider uppercase animate-in fade-in duration-200">
           <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
@@ -175,7 +157,6 @@ export function KaraokeSubtitles({
         </div>
       )}
 
-      {/* RENDER MODE A: Canvas Layer */}
       {renderMode === 'canvas' ? (
         <canvas
           ref={canvasRef}
@@ -183,7 +164,6 @@ export function KaraokeSubtitles({
           style={{ width: '100%', height: '96px' }}
         />
       ) : (
-        /* RENDER MODE B: High-Impact Reels/TikTok DOM Layer */
         <div className="relative max-w-[92%] px-3 py-2 rounded-2xl bg-black/45 backdrop-blur-sm border border-white/10 shadow-2xl">
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
             {activeGroup?.words.map((w, idx) => {

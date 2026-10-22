@@ -21,7 +21,6 @@ export async function GET(
     }
   } catch (err) {}
 
-  // Fallback simulator for smooth frontend polling when standalone
   return NextResponse.json({
     jobId,
     prompt: 'AI video generation task',

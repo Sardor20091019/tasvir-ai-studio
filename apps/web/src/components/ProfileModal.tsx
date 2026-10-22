@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Mail,
-  Phone,
   Sparkles,
   Database,
 } from 'lucide-react';
@@ -36,7 +35,6 @@ export function ProfileModal({
   onOpenCheckout,
 }: ProfileModalProps) {
   const [fullName, setFullName] = useState(user?.full_name || '');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number || '');
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,7 +42,6 @@ export function ProfileModal({
   useEffect(() => {
     if (user) {
       setFullName(user.full_name || '');
-      setPhoneNumber(user.phone_number || '');
       setSuccessMessage(null);
       setErrorMessage(null);
     }
@@ -135,7 +132,6 @@ export function ProfileModal({
     try {
       const updated = await api.updateProfile({
         fullName: fullName.trim(),
-        phoneNumber: phoneNumber.trim(),
       });
       onUpdateUser(updated);
       setSuccessMessage(t.successSaved);
@@ -158,7 +154,6 @@ export function ProfileModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg bg-white rounded-3xl border border-border shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-start justify-between pb-4 border-b border-border">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -181,7 +176,6 @@ export function ProfileModal({
           </button>
         </div>
 
-        {/* Tokens Saved on DB Bento Card */}
         <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/30 flex items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-heading font-bold text-amber-900">
@@ -215,7 +209,6 @@ export function ProfileModal({
           </button>
         </div>
 
-        {/* Success / Error Banners */}
         {successMessage && (
           <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
@@ -229,9 +222,7 @@ export function ProfileModal({
           </div>
         )}
 
-        {/* Profile Edit Form */}
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Full Name */}
           <div className="space-y-1.5">
             <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
               <UserIcon className="h-3.5 w-3.5 text-coral" />
@@ -247,39 +238,20 @@ export function ProfileModal({
             />
           </div>
 
-          {/* Phone Number */}
           <div className="space-y-1.5">
             <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-coral" />
-              <span>{t.phoneLabel}</span>
+              <Mail className="h-3.5 w-3.5 text-emerald-600" />
+              <span>{t.emailLabel}</span>
             </label>
-            <input
-              type="text"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder={t.phonePlaceholder}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-xl border border-border bg-canvas/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all"
-            />
+            <div className="px-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-xl border border-border bg-neutral-100 text-ink flex items-center justify-between">
+              <span>{user.email || 'Email mavjud emas'}</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                <span>Google Verified</span>
+              </span>
+            </div>
           </div>
 
-          {/* Google Email (Readonly Verified) */}
-          {user.email && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-emerald-600" />
-                <span>{t.emailLabel}</span>
-              </label>
-              <div className="px-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-xl border border-border bg-neutral-100 text-ink flex items-center justify-between">
-                <span>{user.email}</span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" />
-                  <span>Google Verified</span>
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Role & Plan Information */}
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="p-3 rounded-xl bg-canvas border border-border">
               <span className="text-[10px] font-mono uppercase text-ink-muted block">
@@ -299,7 +271,6 @@ export function ProfileModal({
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
             <button
               type="submit"

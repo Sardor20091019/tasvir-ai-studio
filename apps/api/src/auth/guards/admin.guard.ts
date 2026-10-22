@@ -19,7 +19,6 @@ export class AdminGuard implements CanActivate {
     const adminKeyHeader = request.headers['x-admin-key'];
     const configuredAdminKey = process.env.ADMIN_SECRET_KEY;
 
-    // 1. Direct secure API Key authentication for Admin operations
     if (adminKeyHeader && configuredAdminKey) {
       const headerBuf = Buffer.from(String(adminKeyHeader));
       const keyBuf = Buffer.from(String(configuredAdminKey));
@@ -28,10 +27,8 @@ export class AdminGuard implements CanActivate {
       }
     }
 
-    // 2. JWT-based Role Verification
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // In non-production, check x-user-id header
       if (process.env.NODE_ENV !== 'production' && request.headers['x-user-id']) {
         const fallbackUserId = request.headers['x-user-id'];
         const user = await this.db

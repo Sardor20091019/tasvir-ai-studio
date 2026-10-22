@@ -8,13 +8,11 @@ import { InMemoryRateLimiter } from './rate-limiter';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  // In-memory verification codes cache with attempt counter
   private otpCache = new Map<string, { code: string; expiresAt: number; attempts: number }>();
 
   constructor(@Inject(KyselyService) private readonly db: KyselyService) {}
 
   async verifyTurnstile(token?: string, remoteip?: string): Promise<boolean> {
-    // Without token, Turnstile verification always fails
     if (!token) return false;
 
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
@@ -23,11 +21,9 @@ export class AuthService {
         this.logger.error('TURNSTILE_SECRET_KEY is not configured in production!');
         return false;
       }
-      // In local dev without secretKey, accept token if provided
       return true;
     }
 
-    // Local dev bypass token strictly prohibited in production
     if (token.startsWith('cf_test_pass_') || token === 'test_dev_bypass_token') {
       if (process.env.NODE_ENV === 'production') {
         this.logger.warn('Turnstile test bypass token rejected in production environment.');
@@ -64,7 +60,6 @@ export class AuthService {
       throw new BadRequestException('Faqat Oʻzbekiston raqamlari qabul qilinadi (+998XXXXXXXXX)');
     }
 
-    // Anti-SMS Pumping Rate Limit: Max 5 OTP requests per phone in 10 minutes
     InMemoryRateLimiter.check(
       `send_otp:${cleanPhone}`,
       5,
@@ -77,7 +72,6 @@ export class AuthService {
       throw new BadRequestException('Botlardan himoya (Turnstile) tekshiruvidan oʻtmadi. Qaytadan urinib koʻring.');
     }
 
-    // Cryptographically secure 4-digit OTP generation (CWE-330 fix)
     const code = crypto.randomInt(1000, 10000).toString();
     this.otpCache.set(cleanPhone, {
       code,
@@ -92,7 +86,6 @@ export class AuthService {
     return {
       success: true,
       message: `Tasdiqlash kodi ${cleanPhone} raqamiga yuborildi`,
-      // NEVER leak OTP in production responses
       demoCode: isDev ? code : undefined,
     };
   }
@@ -105,7 +98,6 @@ export class AuthService {
       throw new BadRequestException('Tasdiqlash kodi muddati oʻtgan yoki mavjud emas. Yangi kod soʻrang.');
     }
 
-    // Increment failed attempt counter to prevent brute-forcing
     cached.attempts += 1;
     if (cached.attempts > 5) {
       this.otpCache.delete(cleanPhone);
@@ -121,11 +113,9 @@ export class AuthService {
       throw new BadRequestException(`Tasdiqlash kodi notoʻgʻri. ${remainingAttempts} ta urinish qoldi.`);
     }
 
-    // Clear OTP after successful use
     this.otpCache.delete(cleanPhone);
     InMemoryRateLimiter.reset(`send_otp:${cleanPhone}`);
 
-    // Find or create user
     let user = await this.db
       .selectFrom('users')
       .selectAll()
@@ -142,14 +132,13 @@ export class AuthService {
           locale: 'uz',
           role: 'user',
           plan_tier: 'starter',
-          credits_balance: 3,
+          credits_balance: 0,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
     }
 
-    // Generate cryptographically signed HMAC-SHA256 JWT
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
+    const token = JwtUtil.sign({ sub: user.id, email: user.email || undefined, phone: user.phone_number || undefined, role: user.role });
     return { user, token };
   }
 
@@ -161,7 +150,6 @@ export class AuthService {
       throw new BadRequestException('Google ID tokeni (credential) kiritilishi shart');
     }
 
-    // Mandatory Cloudflare Turnstile confirmation
     const isHuman = await this.verifyTurnstile(params.turnstileToken);
     if (!isHuman) {
       throw new BadRequestException('Cloudflare Turnstile tekshiruvidan oʻtish shart (Botlardan himoya)');
@@ -171,7 +159,6 @@ export class AuthService {
     let name: string = 'Google Merchant';
     let picture: string | null = null;
 
-    // Allow mock credential in development for test suites
     if (process.env.NODE_ENV !== 'production' && params.credential.startsWith('mock_demo_credential')) {
       email = 'test.user@tasvir.ai';
       name = 'Test User';
@@ -194,7 +181,7 @@ export class AuthService {
           throw new BadRequestException('Google tokenida email mavjud emas');
         }
 
-        email = gInfo.email;
+        email = gInfo.email.trim().toLowerCase();
         name = gInfo.name || gInfo.email.split('@')[0] || 'Google User';
         picture = gInfo.picture || null;
       } catch (err: any) {
@@ -203,51 +190,44 @@ export class AuthService {
       }
     }
 
-    const syntheticPhone = `+998${Math.abs(this.hashCode(email)).toString().slice(0, 9).padStart(9, '9')}`;
-
     let user = await this.db
       .selectFrom('users')
       .selectAll()
-      .where((eb) =>
-        eb.or([
-          eb('phone_number', '=', syntheticPhone),
-          eb('email', '=', email),
-        ]),
-      )
+      .where('email', '=', email)
       .executeTakeFirst();
 
     if (!user) {
       user = await this.db
         .insertInto('users')
         .values({
-          phone_number: syntheticPhone,
           email,
           full_name: name,
           avatar_url: picture,
+          phone_number: null,
           telegram_id: null,
           locale: 'uz',
           role: 'user',
           plan_tier: 'starter',
-          credits_balance: 5,
+          credits_balance: 0,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
-      this.logger.log(`Created new verified Google user saved to DB: ${name} (${syntheticPhone}, tokens=${user.credits_balance})`);
+      this.logger.log(`Created new verified Google user saved to DB: ${name} (${email}, tokens=0)`);
     } else {
       user = (await this.db
         .updateTable('users')
         .set({
-          email: user.email || email,
+          full_name: user.full_name || name,
           avatar_url: user.avatar_url || picture,
           updated_at: new Date().toISOString(),
         })
         .where('id', '=', user.id)
         .returningAll()
         .executeTakeFirst()) || user;
-      this.logger.log(`Loaded existing user from DB: ${user.full_name} (tokens=${user.credits_balance})`);
+      this.logger.log(`Loaded existing user from DB: ${user.full_name} (${email}, tokens=${user.credits_balance})`);
     }
 
-    const token = JwtUtil.sign({ sub: user.id, phone: user.phone_number, role: user.role });
+    const token = JwtUtil.sign({ sub: user.id, email: user.email || undefined, role: user.role });
     return { user, token };
   }
 

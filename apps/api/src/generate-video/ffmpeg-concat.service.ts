@@ -4,8 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-// Path to static ffmpeg binary installed in node_modules
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const ffmpegPath: string = require('ffmpeg-static') || 'ffmpeg';
 
 export interface ConcatOptions {
@@ -24,10 +22,6 @@ export class FfmpegConcatService {
     return ffmpegPath;
   }
 
-  /**
-   * Concat multiple 9:16 scene clips sequentially into one continuous master video file
-   * using FFmpeg concat demuxer (-f concat -safe 0) and optional audio mix with EMIN & JONY - Kamin.
-   */
   async concatScenes(options: ConcatOptions): Promise<string> {
     const {
       sceneClipPaths,
@@ -41,13 +35,11 @@ export class FfmpegConcatService {
       throw new Error('Hech qanday video sahnalari taqdim etilmadi');
     }
 
-    // Ensure output directory exists
     const outDir = path.dirname(outputPath);
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
     }
 
-    // Create temporary concat demuxer manifest file
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tasvir-concat-'));
     const concatListPath = path.join(tempDir, 'concat_list.txt');
 
@@ -58,12 +50,11 @@ export class FfmpegConcatService {
     fs.writeFileSync(concatListPath, concatContent, 'utf8');
     this.logger.log(`Created FFmpeg concat manifest with ${sceneClipPaths.length} scenes at ${concatListPath}`);
 
-    // Determine background music overlay settings
     const musicExists = backgroundMusicPath && fs.existsSync(backgroundMusicPath);
     const shouldMixMusic = includeBackgroundMusic && musicExists;
 
     const ffmpegArgs: string[] = [
-      '-y', // Overwrite output
+      '-y', 
       '-f',
       'concat',
       '-safe',
@@ -76,7 +67,6 @@ export class FfmpegConcatService {
       this.logger.log(
         `Overlaying background music: "Kamin" by EMIN & JONY from ${backgroundMusicPath} (duration: ${totalDurationSeconds}s)`,
       );
-      // Stream loop music to cover total scene duration perfectly
       ffmpegArgs.push(
         '-stream_loop',
         '-1',
@@ -94,7 +84,6 @@ export class FfmpegConcatService {
       ffmpegArgs.push('-map', '0:v', '-map', '0:a?');
     }
 
-    // Vertical 9:16 HD encoding parameters (1080x1920)
     ffmpegArgs.push(
       '-vf',
       'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1',
@@ -143,20 +132,14 @@ export class FfmpegConcatService {
     });
   }
 
-  /**
-   * Synthesize an individual vertical 9:16 high-intensity drama clip
-   * with Ken Burns slow cinematic camera motion, mood lighting, and audio chime.
-   * Duration is strictly clamped between 4 and 8 seconds.
-   */
   async synthesizeDramaSceneClip(params: {
     outputPath: string;
-    durationSeconds: number; // strictly 4 to 8 seconds
+    durationSeconds: number; 
     sceneIndex: number;
     tensionLevel: number;
     caption: string;
   }): Promise<string> {
     const { outputPath, sceneIndex, caption } = params;
-    // Constraint: clip duration strictly between 4 and 8 seconds
     const duration = Math.max(4, Math.min(params.durationSeconds || 5, 8));
 
     const outDir = path.dirname(outputPath);
@@ -164,28 +147,20 @@ export class FfmpegConcatService {
       fs.mkdirSync(outDir, { recursive: true });
     }
 
-    // Color tones for dramatic acts:
-    // Act 1: Cold dramatic dark blue/slate (#0B1120)
-    // Act 2: High stakes crimson tension (#1F0A10)
-    // Act 3: Golden redemption / triumphant resolution (#1C1405)
     const bgColors = ['0x0B1120', '0x1F0A10', '0x1C1405'];
     const color = bgColors[(sceneIndex - 1) % bgColors.length];
 
-    // Audio chime frequencies for emotional tension
     const toneFreqs = [220, 293.66, 329.63];
     const freq = toneFreqs[(sceneIndex - 1) % toneFreqs.length];
 
-    // Escape caption for FFmpeg drawtext
     const safeCaption = caption.replace(/['":\\]/g, ' ').slice(0, 50);
 
     const ffmpegArgs: string[] = [
       '-y',
-      // Generate vertical 9:16 solid color canvas
       '-f',
       'lavfi',
       '-i',
       `color=c=${color}:s=1080x1920:d=${duration}:r=30`,
-      // Generate dramatic synthesized mood tone audio
       '-f',
       'lavfi',
       '-i',
