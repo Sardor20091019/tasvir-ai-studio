@@ -337,7 +337,7 @@ export function Studio({
         setRenderStage(4);
         setIsRendering(false);
         setRenderedVideoUrl(
-          '/videos/tasvir-vertical.mp4',
+          'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
         );
 
         // Confetti celebration

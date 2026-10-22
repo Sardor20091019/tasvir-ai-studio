@@ -25,8 +25,8 @@ export class GenerateVideoController {
     body: {
       prompt: string;
       aspectRatio?: AspectRatioType;
-      durationSeconds?: number;
-      style?: string;
+      includeBackgroundMusic?: boolean;
+      dramaLevel?: string;
     },
   ) {
     // Prevent unauthenticated API abuse & resource exhaustion (OWASP A04)
@@ -47,13 +47,11 @@ export class GenerateVideoController {
       throw new BadRequestException('Prompt uzunligi 2000 belgidan oshmasligi kerak');
     }
 
-    const durationSeconds = Math.max(5, Math.min(Number(body?.durationSeconds) || 15, 60));
-
     return this.generateVideoService.startGeneration({
       prompt,
-      aspectRatio: body.aspectRatio,
-      durationSeconds,
-      style: body.style,
+      aspectRatio: '9:16',
+      includeBackgroundMusic: body.includeBackgroundMusic,
+      dramaLevel: body.dramaLevel,
     });
   }
 

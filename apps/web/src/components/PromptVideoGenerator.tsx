@@ -1,42 +1,81 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles,
   Video,
   Download,
   Play,
+  Pause,
   RotateCcw,
   CheckCircle2,
   AlertCircle,
   Smartphone,
-  Monitor,
-  Square,
   Clock,
   Layers,
-  Send,
   Zap,
   ExternalLink,
+  Music,
+  Volume2,
+  VolumeX,
+  Flame,
+  Film,
+  Type,
+  Radio,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { KaraokeWord, DramaScene, DramaVideoJob } from '../types';
+import { KaraokeSubtitles } from './KaraokeSubtitles';
 
 interface PromptVideoGeneratorProps {
   locale?: 'uz' | 'ru';
   onVideoCreated?: (videoUrl: string) => void;
 }
 
-const PROMPT_SUGGESTIONS = {
+const DRAMA_PROMPT_SUGGESTIONS = {
   uz: [
-    { label: '🎧 Naushniklar', prompt: "Uzum Marketda yangi AirPods Max uchun yoshlarbop, 30% chegirmali 9:16 Reels reklamasi." },
-    { label: '👟 Krossovka', prompt: "Nike Air Zoom Pegasus 40 krossovkalari haqida tezkor va baquvvat xarid videosi." },
-    { label: '👗 Xonatlas', prompt: "Samarqand ipak xonatlas milliy liboslari haqida estetik va nafis video sharh." },
-    { label: '⌚ Smart Soat', prompt: "Smart Watch Ultra 8 erkaklar sovg'asi uchun 1+1 aksiyasi haqida video rolik." },
+    {
+      label: '💔 Xiyonat va Koʻz Yosh (AirPods Max)',
+      prompt:
+        "Dramatik xiyonat va koʻz yoshlar: Doʻstim meni arzon soxta naushnik bilan aldadi, lekin asl AirPods Max faqat Uzum Marketda 30% chegirma bilan sotilmoqda! Keskin burilish va qahramonona gʻalaba.",
+    },
+    {
+      label: '😢 Rashk va Oltin Soat (Smart Watch)',
+      prompt:
+        "Yuqori emotsional ziddiyat: U mening sevgimga ishonmadi va sovgʻani rad etdi. Lekin Smart Watch Ultra soatini koʻrgach, barcha shubhalar koʻz yosh bilan yuvilib ketdi. 1+1 aksiyasi!",
+    },
+    {
+      label: '🔥 Oʻch olish va Krossovka (Nike Pegasus)',
+      prompt:
+        "Dramatik poyga va ogʻriqli sinov: Yolgʻonlar tufayli yiqilgan qahramon yangi Nike Pegasus 40 krossovkasida oyoqqa turadi va qasoskorona marraga yetib keladi. Uzum Marketda tezkor yetkazish.",
+    },
+    {
+      label: '✨ Samarqand Ipak Libosi (Xonatlas)',
+      prompt:
+        "Kelinlik koʻz yoshlari va ajdodlar anʼanasi: Toʻydan oldingi keskin dramatik daqiqa, Samarqand ipak xonatlasining goʻzalligi barcha xafagarchiliklarni unutdiradi.",
+    },
   ],
   ru: [
-    { label: '🎧 Наушники', prompt: "Молодежная реклама AirPods Max для Uzum Market со скидкой 30% в формате 9:16 Reels." },
-    { label: '👟 Кроссовки', prompt: "Динамичный видеоролик о кроссовках Nike Air Zoom Pegasus 40 с быстрой доставкой." },
-    { label: '👗 Хан-атлас', prompt: "Эстетичный обзор традиционных платьев из шелкового хан-атласа ручной работы." },
-    { label: '⌚ Смарт-часы', prompt: "Акция 1+1 на умные часы Smart Watch Ultra в подарок мужчине к празднику." },
+    {
+      label: '💔 Предательство и Слёзы (AirPods Max)',
+      prompt:
+        "Драматическое предательство и слезы: меня обманули с дешевой подделкой, но настоящие AirPods Max только на Uzum Market со скидкой 30%! Неожиданный финал и триумф.",
+    },
+    {
+      label: '😢 Ревность и Золотые Часы (Smart Watch)',
+      prompt:
+        "Высокое эмоциональное напряжение: она отвергла мой подарок из-за недоверия. Но увидев Smart Watch Ultra, слезы раскаяния изменили всё. Акция 1+1!",
+    },
+    {
+      label: '🔥 Месть и Восхождение (Nike Pegasus)',
+      prompt:
+        "Драматическое падение и триумфальный подъем: преданный герой встает на ноги в кроссовках Nike Pegasus 40 и первым пересекает финишную черту.",
+    },
+    {
+      label: '✨ Шёлковый Хан-атлас (Традиции)',
+      prompt:
+        "Слёзы невесты перед свадьбой и прощание с отчим домом: эстетичный шёлковый хан-атлас ручной работы исцеляет все душевные сомнения.",
+    },
   ],
 };
 
@@ -46,83 +85,152 @@ export function PromptVideoGenerator({
 }: PromptVideoGeneratorProps) {
   const t = {
     uz: {
-      badge: 'GOOGLE GEMINI AI & REMOTION',
-      title: 'Prompt orqali AI Video Generatsiyasi',
-      subtitle: 'Istalgan mahsulot yoki reklama gʻoyasini yozing — sunʼiy intellekt uni toʻliq video rolikka aylantirib beradi.',
-      promptLabel: 'Video tavsifi (Prompt)',
-      promptPlaceholder: 'Masalan: Uzum Market uchun yangi AirPods Max naushniklari boʻyicha yoshlarbop, trenddagi 15 soniyali Reels video reklama yarating...',
-      suggestionsLabel: '⚡ Tezkor gʻoyalar:',
-      aspectRatioLabel: 'Video formati (Aspect Ratio):',
-      ratio916: '9:16 Vertikal (Reels, TikTok, Uzum)',
-      ratio169: '16:9 Gorizontal (YouTube, Web)',
-      ratio11: '1:1 Kvadrat (Instagram, Telegram)',
-      durationLabel: 'Davomiyligi:',
-      sec10: '10 soniya',
-      sec15: '15 soniya',
-      sec30: '30 soniya',
-      generateBtn: '✨ AI Video Yaratish',
-      generatingBtn: 'Video tayyorlanmoqda...',
-      progressTitle: 'AI Video Generatsiyasi Davom Etmoqda',
-      completedTitle: 'Video Muvaffaqiyatli Tayyorlandi!',
-      downloadBtn: 'MP4 Yuklab Olish',
-      createAnother: 'Yangi video yaratish',
-      scriptTitle: 'AI tomonidan yaratilgan ssenariy:',
-      storyboardTitle: 'Kadrlar ketma-ketligi (Storyboard):',
+      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
+      title: 'Dramatik AI Mahsulot Reklamasi (Veo 3.1)',
+      subtitle:
+        'Google Veo 3.1 ("veo-3.1-lite-generate") orqali yuqori emotsional ziddiyat, xiyonat motivlari va koʻz yoshlar bilan toʻyingan 9:16 vertikal master video yarating.',
+      promptLabel: 'Dramatik reklama gʻoyasi (Prompt)',
+      promptPlaceholder:
+        'Masalan: Xiyonat tufayli yigʻlayotgan qahramon va uning hayotini oʻzgartirgan kutilmagan sovgʻa...',
+      suggestionsLabel: '🎭 Dramatik ssenariy gʻoyalari:',
+      aspectRatioLabel: 'Video formati (Majburiy 9:16 Vertikal):',
+      ratioLockedNote: 'Google Veo 3.1 vertikal 9:16 (1080x1920) formati Reels/TikTok/Uzum uchun mustahkamlangan.',
+      musicLabel: 'Fon musiqasi (Muxing Audio):',
+      musicTrackName: 'EMIN & JONY — «Камин» (Fireplace)',
+      musicToggleOn: 'Musiqa yoqilgan (Kamin ovozi balandligi muvozanatlangan)',
+      musicToggleOff: 'Musiqa oʻchirilgan (Faqat nutq va dramatik ovoz)',
+      musicPreviewBtn: 'Treknı tinglash',
+      musicPreviewStop: 'Toʻxtatish',
+      durationBadge: '3 ta drama sahna • 15–18 soniya (har biri 4–8s)',
+      generateBtn: '🎬 Veo 3.1 Dramatik Video Yaratish',
+      generatingBtn: 'Veo 3.1 sahnalari generatsiya qilinmoqda...',
+      progressTitle: 'Google Veo 3.1 Dramatik Video Ishlab Chiqarilmoqda',
+      completedTitle: 'Dramatik Master Video Tayyorlandi!',
+      downloadBtn: 'MP4 Master Yuklab Olish',
+      createAnother: 'Yangi dramatik video yaratish',
+      karaokeTitle: 'Karaoke Subtitr Rejimi:',
+      karaokeDomMode: 'Dinamik Reels Matni',
+      karaokeCanvasMode: 'Canvas Qatlami',
+      actsTitle: 'Dramatik Sahnalar Ketma-ketligi (FFmpeg Concat):',
     },
     ru: {
-      badge: 'GOOGLE GEMINI AI & REMOTION',
-      title: 'Генерация AI Видео по Промпту',
-      subtitle: 'Опишите товар или рекламную идею — искусственный интеллект создаст готовый видеоролик.',
-      promptLabel: 'Описание видео (Промпт)',
-      promptPlaceholder: 'Например: Создайте динамичный 15-секундный Reels для Uzum Market про наушники AirPods Max со скидкой 30%...',
-      suggestionsLabel: '⚡ Быстрые идеи:',
-      aspectRatioLabel: 'Формат видео (Aspect Ratio):',
-      ratio916: '9:16 Вертикальный (Reels, TikTok, Uzum)',
-      ratio169: '16:9 Горизонтальный (YouTube, Web)',
-      ratio11: '1:1 Квадратный (Instagram, Telegram)',
-      durationLabel: 'Длительность:',
-      sec10: '10 секунд',
-      sec15: '15 секунд',
-      sec30: '30 секунд',
-      generateBtn: '✨ Создать AI Видео',
-      generatingBtn: 'Идет генерация видео...',
-      progressTitle: 'Идет генерация видео с помощью AI',
-      completedTitle: 'Видео успешно создано!',
-      downloadBtn: 'Скачать MP4',
-      createAnother: 'Создать еще видео',
-      scriptTitle: 'Сценарий, созданный AI:',
-      storyboardTitle: 'Раскадровка (Storyboard):',
+      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
+      title: 'Драматическая AI Реклама Товаров (Veo 3.1)',
+      subtitle:
+        'Создайте вертикальный 9:16 мастер-ролик через Google Veo 3.1 ("veo-3.1-lite-generate") с высоким накалом страстей, слезами и тропом предательства.',
+      promptLabel: 'Драматическая идея рекламы (Промпт)',
+      promptPlaceholder:
+        'Например: Герой плачет из-за предательства партнера, но спасение приходит в виде неожиданного товара...',
+      suggestionsLabel: '🎭 Идеи драматических сюжетов:',
+      aspectRatioLabel: 'Формат видео (Строго 9:16 Вертикальный):',
+      ratioLockedNote: 'Формат Google Veo 3.1 9:16 (1080x1920) закреплен для Reels/TikTok/Uzum.',
+      musicLabel: 'Фоновая музыка (Аудио-микширование):',
+      musicTrackName: 'EMIN & JONY — «Камин» (Fireplace)',
+      musicToggleOn: 'Музыка включена (Баланс громкости «Камин» и речи)',
+      musicToggleOff: 'Музыка выключена (Только чистая речь и окружение)',
+      musicPreviewBtn: 'Слушать трек',
+      musicPreviewStop: 'Остановить',
+      durationBadge: '3 акта драмы • 15–18 сек (каждый от 4 до 8с)',
+      generateBtn: '🎬 Создать Veo 3.1 Драматическое Видео',
+      generatingBtn: 'Генерация сцен через Veo 3.1...',
+      progressTitle: 'Идет создание драматического видео в Google Veo 3.1',
+      completedTitle: 'Драматический Мастер-Ролик Готов!',
+      downloadBtn: 'Скачать Мастер MP4',
+      createAnother: 'Создать новый ролик',
+      karaokeTitle: 'Режим Караоке Субтитров:',
+      karaokeDomMode: 'Динамичный Reels Текст',
+      karaokeCanvasMode: 'Слой Canvas',
+      actsTitle: 'Сцены драмы (Объединение через FFmpeg Concat):',
     },
   }[locale];
 
+  // User input states
   const [prompt, setPrompt] = useState(
-    locale === 'uz'
-      ? "Uzum Marketda yangi AirPods Max uchun yoshlarbop, 30% chegirmali 9:16 Reels reklamasi."
-      : "Молодежная реклама AirPods Max для Uzum Market со скидкой 30% в формате 9:16 Reels."
+    DRAMA_PROMPT_SUGGESTIONS[locale][0].prompt,
   );
-  const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9' | '1:1'>('9:16');
-  const [duration, setDuration] = useState<number>(15);
+  const [includeBackgroundMusic, setIncludeBackgroundMusic] = useState<boolean>(true);
+  const [isPlayingAudioPreview, setIsPlayingAudioPreview] = useState(false);
+  const [subtitleMode, setSubtitleMode] = useState<'dom' | 'canvas'>('dom');
 
-  // Job execution state
+  // Job progress & playback states
   const [isLoading, setIsLoading] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
+  const [currentTime, setCurrentTime] = useState<number>(0);
   const [resultVideo, setResultVideo] = useState<{
     videoUrl: string;
     downloadUrl: string;
-    script?: { hook: string; body: string; cta: string };
-    storyboard?: Array<{ frameNumber: number; timestampSec: number; sceneDescription: string; caption: string; visualLayerUrl: string }>;
+    scenes: DramaScene[];
+    karaokeTimeline: KaraokeWord[];
+    totalDurationSeconds: number;
+    includeBackgroundMusic: boolean;
+    bgMusicTrack: string;
+    modelTier: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // References
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  // Cleanup polling on unmount
+  // Audio Preview toggle handler
+  const handleToggleAudioPreview = () => {
+    if (!audioPreviewRef.current) {
+      audioPreviewRef.current = new Audio('/audio/kamin-emin-jony.mp3');
+      audioPreviewRef.current.volume = 0.5;
+      audioPreviewRef.current.onended = () => setIsPlayingAudioPreview(false);
+    }
+
+    if (isPlayingAudioPreview) {
+      audioPreviewRef.current.pause();
+      setIsPlayingAudioPreview(false);
+    } else {
+      audioPreviewRef.current.play().then(() => {
+        setIsPlayingAudioPreview(true);
+      }).catch((err) => {
+        console.warn('Audio preview error:', err);
+      });
+    }
+  };
+
+  // Video time synchronization loop for high-precision karaoke highlighting
+  const syncPlaybackTime = useCallback(() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+      if (!videoRef.current.paused && !videoRef.current.ended) {
+        rafRef.current = requestAnimationFrame(syncPlaybackTime);
+      }
+    }
+  }, []);
+
+  const handleVideoPlay = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(syncPlaybackTime);
+  };
+
+  const handleVideoPause = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+        audioPreviewRef.current = null;
+      }
     };
   }, []);
 
@@ -130,24 +238,30 @@ export function PromptVideoGenerator({
     e.preventDefault();
     if (!prompt.trim()) return;
 
+    // Pause audio preview if active
+    if (audioPreviewRef.current && isPlayingAudioPreview) {
+      audioPreviewRef.current.pause();
+      setIsPlayingAudioPreview(false);
+    }
+
     setIsLoading(true);
     setError(null);
-    setProgress(5);
-    setStatusMessage('AI video vazifasi ishga tushirilmoqda...');
+    setProgress(10);
+    setStatusMessage('Google Veo 3.1 va dramatik ssenariy tizimi ishga tushirilmoqda...');
     setResultVideo(null);
+    setCurrentTime(0);
 
     try {
       const res = await api.generateVideoFromPrompt({
         prompt: prompt.trim(),
-        aspectRatio,
-        durationSeconds: duration,
+        aspectRatio: '9:16', // Enforce 9:16 vertical
+        includeBackgroundMusic, // User ON/OFF choice
       });
 
       setJobId(res.jobId);
       setProgress(res.progress || 15);
-      setStatusMessage(res.message || 'Google Gemini AI ishga tushdi...');
+      setStatusMessage(res.message || 'Google Veo 3.1 sahnalari tayyorlanmoqda...');
 
-      // Start background polling
       startPolling(res.jobId);
     } catch (err: any) {
       setError(err?.message || 'Video yaratishda xatolik yuz berdi');
@@ -160,27 +274,36 @@ export function PromptVideoGenerator({
 
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const statusData = await api.getPromptVideoStatus(targetJobId);
-        setProgress(statusData.progress || 20);
-        setStatusMessage(statusData.currentStepMessage || 'Video qayta ishlanmoqda...');
+        const jobData: DramaVideoJob = await api.getPromptVideoStatus(targetJobId);
+        setProgress(jobData.progress || 25);
+        setStatusMessage(
+          jobData.currentStepMessage || 'Google Veo 3.1 dramatik video qayta ishlanmoqda...',
+        );
 
-        if (statusData.status === 'completed' && statusData.videoUrl) {
+        if (jobData.status === 'completed' && jobData.videoUrl) {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setIsLoading(false);
           setResultVideo({
-            videoUrl: statusData.videoUrl,
-            downloadUrl: statusData.downloadUrl || statusData.videoUrl,
-            script: statusData.script,
-            storyboard: statusData.storyboard,
+            videoUrl: jobData.videoUrl,
+            downloadUrl: jobData.downloadUrl || jobData.videoUrl,
+            scenes: jobData.scenes || [],
+            karaokeTimeline: jobData.karaokeTimeline || [],
+            totalDurationSeconds: jobData.totalDurationSeconds || 16,
+            includeBackgroundMusic: jobData.includeBackgroundMusic ?? true,
+            bgMusicTrack: jobData.bgMusicTrack || 'EMIN & JONY — «Камин»',
+            modelTier: jobData.modelTier || 'veo-3.1-lite-generate',
           });
-          onVideoCreated?.(statusData.videoUrl);
-        } else if (statusData.status === 'failed') {
+          onVideoCreated?.(jobData.videoUrl);
+        } else if (jobData.status === 'failed') {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setIsLoading(false);
-          setError('Video generatsiyasida xatolik yuz berdi. Qayta urinib koʻring.');
+          setError(
+            jobData.error ||
+              'Video generatsiyasida xatolik yuz berdi. Qayta urinib koʻring.',
+          );
         }
       } catch (pollErr) {
-        console.warn('Polling error, retrying...');
+        console.warn('Polling check error, retrying...');
       }
     }, 1500);
   };
@@ -191,33 +314,36 @@ export function PromptVideoGenerator({
     setProgress(0);
     setIsLoading(false);
     setError(null);
+    setCurrentTime(0);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8">
-      {/* Header Banner */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-coral/10 border border-coral/20 text-coral text-xs font-mono font-bold tracking-wide uppercase">
-          <Sparkles className="h-3.5 w-3.5" />
+      {/* Top Banner Header */}
+      <div className="text-center space-y-2.5">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-mono font-bold tracking-wide uppercase shadow-xs">
+          <Flame className="h-4 w-4 text-amber-600 animate-pulse" />
           <span>{t.badge}</span>
         </div>
         <h2 className="font-heading font-black text-2xl sm:text-3xl text-ink tracking-tight">
           {t.title}
         </h2>
-        <p className="text-sm text-ink-muted max-w-2xl mx-auto">
+        <p className="text-sm text-ink-muted max-w-2xl mx-auto leading-relaxed">
           {t.subtitle}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Prompt Input & Options */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-border shadow-sm space-y-6">
+        {/* Left Column: Form & Dramatic Settings */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-border shadow-sm space-y-6">
           <form onSubmit={handleStartGeneration} className="space-y-6">
             {/* Prompt Textarea */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-heading font-bold text-ink">
-                  {t.promptLabel}
+                <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
+                  <Film className="h-3.5 w-3.5 text-coral" />
+                  <span>{t.promptLabel}</span>
                 </label>
                 <span className="text-[11px] font-mono text-ink-muted">
                   {prompt.length}/2000
@@ -231,23 +357,23 @@ export function PromptVideoGenerator({
                 required
                 disabled={isLoading}
                 placeholder={t.promptPlaceholder}
-                className="w-full px-4 py-3 text-sm rounded-xl border border-border bg-canvas/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all resize-none leading-relaxed"
+                className="w-full px-4 py-3 text-sm rounded-2xl border border-border bg-canvas/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all resize-none leading-relaxed"
               />
             </div>
 
-            {/* Quick Prompt Suggestion Chips */}
+            {/* Drama Prompt Suggestions */}
             <div className="space-y-2">
               <span className="text-[11px] font-semibold text-ink-muted block">
                 {t.suggestionsLabel}
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {PROMPT_SUGGESTIONS[locale].map((sug, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {DRAMA_PROMPT_SUGGESTIONS[locale].map((sug, i) => (
                   <button
                     key={i}
                     type="button"
                     disabled={isLoading}
                     onClick={() => setPrompt(sug.prompt)}
-                    className="px-2.5 py-1 rounded-lg text-xs bg-canvas hover:bg-neutral-200 border border-border text-ink transition-colors tactile-btn"
+                    className="p-2.5 text-left rounded-xl text-xs bg-canvas/60 hover:bg-neutral-200/80 border border-border text-ink transition-colors tactile-btn line-clamp-2 leading-snug"
                   >
                     {sug.label}
                   </button>
@@ -255,68 +381,104 @@ export function PromptVideoGenerator({
               </div>
             </div>
 
-            {/* Aspect Ratio Selector */}
-            <div className="space-y-2.5">
-              <label className="text-xs font-heading font-bold text-ink block">
-                {t.aspectRatioLabel}
-              </label>
-              <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { id: '9:16', label: '9:16', sub: 'Vertikal (Reels/Uzum)', icon: Smartphone },
-                  { id: '16:9', label: '16:9', sub: 'Gorizontal (YouTube)', icon: Monitor },
-                  { id: '1:1', label: '1:1', sub: 'Kvadrat (Post/TG)', icon: Square },
-                ].map((ratio) => {
-                  const Icon = ratio.icon;
-                  const isSelected = aspectRatio === ratio.id;
-                  return (
-                    <button
-                      key={ratio.id}
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => setAspectRatio(ratio.id as any)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5 tactile-btn ${
-                        isSelected
-                          ? 'border-coral bg-coral/5 text-coral ring-2 ring-coral/20 font-bold'
-                          : 'border-border bg-canvas/40 hover:bg-canvas text-ink'
-                      }`}
-                    >
-                      <Icon className={`h-5 w-5 ${isSelected ? 'text-coral' : 'text-ink-muted'}`} />
-                      <span className="text-xs font-heading">{ratio.label}</span>
-                      <span className="text-[10px] text-ink-muted leading-tight hidden sm:block">
-                        {ratio.sub}
-                      </span>
-                    </button>
-                  );
-                })}
+            {/* Veo 3.1 Aspect Ratio Lock: 9:16 Vertical */}
+            <div className="space-y-2 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
+                  <Smartphone className="h-4 w-4 text-amber-600" />
+                  <span>{t.aspectRatioLabel}</span>
+                </label>
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-800 text-[10px] font-mono font-bold uppercase">
+                  Google Veo 3.1 • 9:16 (1080x1920)
+                </span>
+              </div>
+              <p className="text-[11px] text-ink-muted">
+                {t.ratioLockedNote}
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-ink text-xs font-bold shadow-2xs">
+                  📱 9:16 Vertikal format
+                </span>
+                <span className="text-xs text-ink-muted">
+                  • {t.durationBadge}
+                </span>
               </div>
             </div>
 
-            {/* Duration Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-coral" />
-                <span>{t.durationLabel}</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { sec: 10, label: t.sec10 },
-                  { sec: 15, label: t.sec15 },
-                  { sec: 30, label: t.sec30 },
-                ].map((item) => (
-                  <button
-                    key={item.sec}
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => setDuration(item.sec)}
-                    className={`py-2 rounded-lg border text-xs font-medium transition-colors tactile-btn ${
-                      duration === item.sec
-                        ? 'border-coral bg-coral text-white font-bold'
-                        : 'border-border bg-canvas/40 text-ink hover:bg-canvas'
+            {/* Background Music Toggle & Audio Preview */}
+            <div className="space-y-3 p-4 rounded-2xl bg-canvas border border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Music className="h-4 w-4 text-coral" />
+                  <div>
+                    <span className="text-xs font-heading font-bold text-ink block">
+                      {t.musicLabel}
+                    </span>
+                    <span className="text-[11px] text-ink font-semibold">
+                      {t.musicTrackName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* USER ON / OFF SWITCH */}
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => setIncludeBackgroundMusic(!includeBackgroundMusic)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    includeBackgroundMusic ? 'bg-coral' : 'bg-neutral-300'
+                  }`}
+                  role="switch"
+                  aria-checked={includeBackgroundMusic}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      includeBackgroundMusic ? 'translate-x-5' : 'translate-x-0'
                     }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-[11px]">
+                <span
+                  className={
+                    includeBackgroundMusic
+                      ? 'text-emerald-700 font-semibold flex items-center gap-1'
+                      : 'text-neutral-500 font-medium flex items-center gap-1'
+                  }
+                >
+                  {includeBackgroundMusic ? (
+                    <>
+                      <Volume2 className="h-3.5 w-3.5" />
+                      <span>{t.musicToggleOn}</span>
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="h-3.5 w-3.5" />
+                      <span>{t.musicToggleOff}</span>
+                    </>
+                  )}
+                </span>
+
+                {/* Live Preview Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleAudioPreview}
+                  className="px-2.5 py-1 rounded-lg border border-border bg-white hover:bg-neutral-100 text-ink text-[11px] font-semibold transition-colors flex items-center gap-1.5 shadow-2xs"
+                >
+                  {isPlayingAudioPreview ? (
+                    <>
+                      <Pause className="h-3 w-3 text-coral" />
+                      <span>{t.musicPreviewStop}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3 w-3 text-coral" />
+                      <span>{t.musicPreviewBtn}</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -332,7 +494,7 @@ export function PromptVideoGenerator({
             <button
               type="submit"
               disabled={isLoading || !prompt.trim()}
-              className="w-full py-3.5 px-6 rounded-xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
             >
               <Sparkles className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span>{isLoading ? t.generatingBtn : t.generateBtn}</span>
@@ -341,19 +503,19 @@ export function PromptVideoGenerator({
         </div>
 
         {/* Right Column: Processing State or HTML5 Video Preview */}
-        <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-border shadow-sm flex flex-col justify-center min-h-[460px]">
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-border shadow-sm flex flex-col justify-center min-h-[500px]">
           {/* STATE 1: Empty Initial Placeholder */}
           {!isLoading && !resultVideo && (
-            <div className="text-center py-12 px-4 space-y-4">
+            <div className="text-center py-14 px-4 space-y-4">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-canvas border border-border flex items-center justify-center text-ink-muted shadow-xs">
                 <Video className="h-8 w-8 text-coral" />
               </div>
-              <div>
+              <div className="space-y-1">
                 <h4 className="font-heading font-bold text-ink text-base">
-                  Video koʻrinishi shu yerda chiqadi
+                  9:16 Dramatik Master Video koʻrinishi
                 </h4>
-                <p className="text-xs text-ink-muted mt-1 max-w-xs mx-auto">
-                  Chap tomondan prompt va formatni tanlang hamda &quot;AI Video Yaratish&quot; tugmasini bosing.
+                <p className="text-xs text-ink-muted max-w-xs mx-auto leading-relaxed">
+                  Dramatik prompt kiriting va Google Veo 3.1 ssenariysini yaratishni boshlang.
                 </p>
               </div>
             </div>
@@ -363,7 +525,7 @@ export function PromptVideoGenerator({
           {isLoading && (
             <div className="py-8 px-4 text-center space-y-6 animate-in fade-in duration-200">
               <div className="relative mx-auto h-20 w-20 flex items-center justify-center">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-20"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-25"></span>
                 <div className="h-16 w-16 rounded-2xl bg-coral text-white flex items-center justify-center shadow-lg">
                   <Sparkles className="h-8 w-8 animate-spin" />
                 </div>
@@ -373,12 +535,12 @@ export function PromptVideoGenerator({
                 <h4 className="font-heading font-bold text-ink text-base">
                   {t.progressTitle}
                 </h4>
-                <p className="text-xs text-ink-muted font-medium font-mono">
+                <p className="text-xs text-ink-muted font-medium font-mono leading-relaxed">
                   {statusMessage}
                 </p>
               </div>
 
-              {/* Progress Bar & Percentage */}
+              {/* Progress Bar */}
               <div className="space-y-2 max-w-xs mx-auto">
                 <div className="w-full h-2.5 rounded-full bg-canvas border border-border overflow-hidden">
                   <div
@@ -392,19 +554,30 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-canvas border border-border text-[11px] text-ink-muted text-left space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <Zap className="h-3 w-3 text-coral" />
-                  <span className="font-semibold text-ink">Pipeline:</span>
+              {/* 3 Drama Acts Pipeline Indicator */}
+              <div className="p-3.5 rounded-2xl bg-canvas border border-border text-[11px] text-ink-muted text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-ink flex items-center gap-1.5">
+                    <Zap className="h-3 w-3 text-coral" />
+                    <span>Veo 3.1 & FFmpeg Pipeline:</span>
+                  </span>
+                  <span className="font-mono text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded">
+                    9:16 Vertikal
+                  </span>
                 </div>
-                <p>• Google Gemini 2.5 Flash ssenariy tuzilishi</p>
-                <p>• Remotion canvas kadrlar sintezi ({aspectRatio})</p>
-                <p>• MP4 video montaj va audio sinxronizatsiya</p>
+                <div className="space-y-1 text-[11px] text-ink-muted">
+                  <p>• 1-Akt: Shubhali Koʻz Qarash & Xiyonat Alomati (4–8s)</p>
+                  <p>• 2-Akt: Koʻz Yoshlar & Keskin Kulminatsiya (4–8s)</p>
+                  <p>• 3-Akt: Gʻolibona Qahramonlik Kadri (4–8s)</p>
+                  <p>
+                    • FFmpeg Concat Demuxer + {includeBackgroundMusic ? 'EMIN & JONY «Камин» audio' : 'Tabiiy nutq'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* STATE 3: Completed HTML5 Video Preview Card */}
+          {/* STATE 3: Completed HTML5 Video Preview Card With Karaoke Subtitles */}
           {resultVideo && (
             <div className="space-y-5 animate-in fade-in duration-300">
               <div className="flex items-center justify-between">
@@ -413,44 +586,86 @@ export function PromptVideoGenerator({
                   <span>{t.completedTitle}</span>
                 </div>
                 <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">
-                  {aspectRatio} • {duration}s
+                  9:16 • {resultVideo.totalDurationSeconds}s
                 </span>
               </div>
 
-              {/* HTML5 Video Element */}
-              <div
-                className={`relative mx-auto rounded-2xl overflow-hidden bg-black shadow-lg border border-border flex items-center justify-center ${
-                  aspectRatio === '9:16'
-                    ? 'w-[230px] aspect-[9/16]'
-                    : aspectRatio === '16:9'
-                    ? 'w-full aspect-video'
-                    : 'w-[280px] aspect-square'
-                }`}
-              >
+              {/* Subtitle Rendering Mode Selector */}
+              <div className="flex items-center justify-between px-2 text-xs">
+                <span className="text-[11px] font-semibold text-ink-muted flex items-center gap-1">
+                  <Type className="h-3 w-3 text-coral" />
+                  <span>{t.karaokeTitle}</span>
+                </span>
+                <div className="flex items-center gap-1 bg-canvas p-0.5 rounded-lg border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setSubtitleMode('dom')}
+                    className={`px-2 py-0.5 text-[10px] font-bold rounded ${
+                      subtitleMode === 'dom'
+                        ? 'bg-white text-ink shadow-2xs'
+                        : 'text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    Reels (HTML)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubtitleMode('canvas')}
+                    className={`px-2 py-0.5 text-[10px] font-bold rounded ${
+                      subtitleMode === 'canvas'
+                        ? 'bg-white text-ink shadow-2xs'
+                        : 'text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    Canvas
+                  </button>
+                </div>
+              </div>
+
+              {/* Vertical 9:16 Video Player Card with Dynamic Karaoke Subtitles */}
+              <div className="relative mx-auto rounded-3xl overflow-hidden bg-black shadow-xl border border-border/80 w-[240px] sm:w-[260px] aspect-[9/16] flex items-center justify-center group">
                 <video
                   ref={videoRef}
                   key={resultVideo.videoUrl}
                   src={resultVideo.videoUrl}
                   controls
                   autoPlay
-                  muted
-                  loop
                   playsInline
-                  preload="auto"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.src.includes('/videos/tasvir-vertical.mp4')) {
-                      target.src = '/videos/tasvir-vertical.mp4';
-                      target.load();
-                      target.play().catch(() => {});
-                    }
-                  }}
+                  loop
+                  onPlay={handleVideoPlay}
+                  onPause={handleVideoPause}
+                  onTimeUpdate={handleVideoTimeUpdate}
                   className="w-full h-full object-cover"
                 />
+
+                {/* Subtitle Overlay Layer (White by default, active word Vivid Yellow #FFD700) */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end">
+                  <KaraokeSubtitles
+                    currentTime={currentTime}
+                    subtitles={resultVideo.karaokeTimeline}
+                    scenes={resultVideo.scenes}
+                    renderMode={subtitleMode}
+                  />
+                </div>
               </div>
 
-              {/* Action Buttons: Download MP4 & Restart */}
-              <div className="space-y-2 pt-2">
+              {/* Audio Track Tag & Duration */}
+              <div className="flex items-center justify-between text-[11px] text-ink-muted px-1">
+                <span className="flex items-center gap-1 text-ink font-medium">
+                  <Music className="h-3.5 w-3.5 text-coral" />
+                  <span>
+                    {resultVideo.includeBackgroundMusic
+                      ? resultVideo.bgMusicTrack
+                      : 'Ovoz: Tabiiy nutq (Musiqasiz)'}
+                  </span>
+                </span>
+                <span className="font-mono text-[10px] bg-canvas border border-border px-1.5 py-0.5 rounded">
+                  {currentTime.toFixed(1)}s / {resultVideo.totalDurationSeconds}s
+                </span>
+              </div>
+
+              {/* Action Buttons: Open, Download MP4 & Restart */}
+              <div className="space-y-2 pt-1">
                 <div className="grid grid-cols-2 gap-2">
                   <a
                     href={resultVideo.videoUrl}
@@ -464,7 +679,7 @@ export function PromptVideoGenerator({
 
                   <a
                     href={resultVideo.downloadUrl}
-                    download="tasvir-ai-generated-video.mp4"
+                    download="veo-3.1-dramatic-product-ad.mp4"
                     target="_blank"
                     rel="noreferrer"
                     className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
@@ -484,56 +699,32 @@ export function PromptVideoGenerator({
                 </button>
               </div>
 
-              {/* Generated Script Summary */}
-              {resultVideo.script && (
-                <div className="p-3.5 rounded-xl bg-canvas border border-border text-xs space-y-1.5">
-                  <span className="font-heading font-bold text-ink block text-[11px]">
-                    {t.scriptTitle}
-                  </span>
-                  <p className="text-ink-muted leading-relaxed">
-                    <strong className="text-ink">Hook:</strong> {resultVideo.script.hook}
-                  </p>
-                  <p className="text-ink-muted leading-relaxed">
-                    <strong className="text-ink">Matn:</strong> {resultVideo.script.body}
-                  </p>
-                  <p className="text-ink-muted leading-relaxed">
-                    <strong className="text-coral font-bold">CTA:</strong> {resultVideo.script.cta}
-                  </p>
-                </div>
-              )}
-
-              {/* Generated Storyboard Frames */}
-              {Array.isArray(resultVideo.storyboard) && resultVideo.storyboard.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-border/60">
+              {/* Drama Acts Storyboard Cards */}
+              {Array.isArray(resultVideo.scenes) && resultVideo.scenes.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/70">
                   <span className="font-heading font-bold text-ink block text-xs">
-                    {t.storyboardTitle}
+                    {t.actsTitle}
                   </span>
                   <div className="space-y-2">
-                    {resultVideo.storyboard.map((frame, idx) => (
+                    {resultVideo.scenes.map((scene) => (
                       <div
-                        key={idx}
-                        className="flex items-start gap-2.5 p-2.5 rounded-xl bg-canvas border border-border text-xs"
+                        key={scene.sceneIndex}
+                        className="p-3 rounded-xl bg-canvas border border-border text-xs space-y-1"
                       >
-                        {frame.visualLayerUrl && (
-                          <img
-                            src={frame.visualLayerUrl}
-                            alt={`Frame ${frame.frameNumber}`}
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-border shadow-2xs"
-                          />
-                        )}
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono font-bold bg-coral/10 text-coral px-1.5 py-0.5 rounded">
-                              {frame.timestampSec}s
-                            </span>
-                            <span className="font-semibold text-ink text-[11px] truncate">
-                              {frame.caption || `Kadr ${frame.frameNumber}`}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-ink-muted line-clamp-2">
-                            {frame.sceneDescription}
-                          </p>
+                        <div className="flex items-center justify-between">
+                          <span className="font-heading font-bold text-ink text-[11px]">
+                            {scene.actTitle}
+                          </span>
+                          <span className="font-mono text-[10px] bg-amber-500/10 text-amber-800 font-bold px-1.5 py-0.5 rounded">
+                            {scene.durationSeconds}s • Ziddiyat: {scene.tensionLevel}/10
+                          </span>
                         </div>
+                        <p className="text-[11px] text-ink-muted">
+                          <strong className="text-ink">Emotsiya:</strong> {scene.emotion}
+                        </p>
+                        <p className="text-[11px] text-ink-muted italic">
+                          &quot;{scene.dialogueScript}&quot;
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -546,4 +737,3 @@ export function PromptVideoGenerator({
     </div>
   );
 }
-

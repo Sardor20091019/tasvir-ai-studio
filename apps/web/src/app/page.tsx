@@ -39,7 +39,7 @@ export default function HomePage() {
       status: 'completed',
       progress_percent: 100,
       audio_preview_url: null,
-      output_video_url: '/videos/tasvir-vertical.mp4',
+      output_video_url: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
       credits_charged: 1,
       error_message: null,
       created_at: new Date(Date.now() - 3600000).toISOString(),

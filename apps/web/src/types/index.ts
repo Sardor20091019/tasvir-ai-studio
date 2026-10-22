@@ -73,3 +73,42 @@ export interface TokenRequest {
   created_at: string;
   resolved_at: string | null;
 }
+
+export interface KaraokeWord {
+  word: string;
+  startSec: number;
+  endSec: number;
+}
+
+export interface DramaScene {
+  sceneIndex: number;
+  actTitle: string;
+  emotion: string;
+  tensionLevel: number;
+  durationSeconds: number;
+  cinematicPrompt: string;
+  dialogueScript: string;
+  caption: string;
+  karaokeSubtitles: KaraokeWord[];
+  clipVideoUrl?: string;
+}
+
+export interface DramaVideoJob {
+  jobId: string;
+  prompt: string;
+  aspectRatio: '9:16';
+  modelTier: 'veo-3.1-lite-generate';
+  includeBackgroundMusic: boolean;
+  bgMusicTrack: string;
+  status: string;
+  progress: number;
+  currentStepMessage: string;
+  scenes: DramaScene[];
+  totalDurationSeconds: number;
+  karaokeTimeline?: KaraokeWord[];
+  videoUrl?: string;
+  downloadUrl?: string;
+  createdAt?: string;
+  completedAt?: string;
+  error?: string;
+}

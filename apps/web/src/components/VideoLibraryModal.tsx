@@ -97,7 +97,7 @@ export function VideoLibraryModal({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => {
             const isCompleted = job.status === 'completed';
-            const videoSrc = job.output_video_url || '/videos/tasvir-vertical.mp4';
+            const videoSrc = job.output_video_url || 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4';
 
             return (
               <div
