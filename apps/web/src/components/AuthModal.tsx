@@ -1,16 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  X,
-  ShieldCheck,
-  Sparkles,
-  Lock,
-  ArrowRight,
-  CheckCircle2,
-} from 'lucide-react';
+import { X, ShieldCheck, Lock } from 'lucide-react';
 import { User } from '../types';
-import { api } from '../lib/api';
 import { Turnstile } from './Turnstile';
 import { GoogleSignInButton } from './GoogleSignInButton';
 
@@ -28,7 +20,6 @@ export function AuthModal({
   locale,
 }: AuthModalProps) {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -37,42 +28,15 @@ export function AuthModal({
       title: 'Google orqali tizimga kirish',
       sub: 'Tasvir AI studiyasidan toʻliq foydalanish va video yaratish uchun Google hisobingiz orqali kiring.',
       googleNote: 'Bir bosishda xavfsiz autentifikatsiya',
-      quickLogin: 'Sardor Sunatullayev sifatida tezkor kirish',
       securityBadge: 'Google OAuth 2.0 & Cloudflare Turnstile bilan himoyalangan',
     },
     ru: {
       title: 'Вход через Google',
       sub: 'Войдите с помощью учетной записи Google для генерации видео в студии Tasvir AI.',
       googleNote: 'Безопасная авторизация в один клик',
-      quickLogin: 'Быстрый вход как Сардор Сунатуллаев',
       securityBadge: 'Защищено Google OAuth 2.0 & Cloudflare Turnstile',
     },
   }[locale];
-
-  const handleQuickDemoLogin = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.googleLogin({
-        credential: 'mock_demo_credential_sardor',
-        email: 'sardor.sunatullayev@tasvir.ai',
-        name: 'Sardor Sunatullayev',
-        googleId: 'google_oauth_sub_sardor_sunatullayev',
-      });
-      if (res?.user) {
-        onLoginSuccess({
-          ...res.user,
-          full_name: 'Sardor Sunatullayev',
-          phone_number: '+998-99-099-11-12',
-          role: 'admin',
-        });
-        onClose();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -118,30 +82,6 @@ export function AuthModal({
               locale={locale}
             />
           </div>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-border"></div>
-            <span className="flex-shrink mx-3 text-[11px] text-ink-muted font-mono">yoki</span>
-            <div className="flex-grow border-t border-border"></div>
-          </div>
-
-          {/* Quick 1-Click Login for Sardor Sunatullayev */}
-          <button
-            type="button"
-            onClick={handleQuickDemoLogin}
-            disabled={isLoading}
-            className="w-full py-3 px-4 rounded-xl bg-canvas hover:bg-ink hover:text-white border border-border text-ink text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all tactile-btn"
-          >
-            {isLoading ? (
-              <div className="h-4 w-4 border-2 border-coral border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 text-coral" />
-                <span>{t.quickLogin}</span>
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </>
-            )}
-          </button>
 
           {/* Security Badge */}
           <div className="pt-3 border-t border-border flex items-center justify-center gap-1.5 text-[11px] text-emerald-700 font-medium">

@@ -47,3 +47,4 @@ export interface DramaVideoGenerationJob {
   completedAt?: string;
   error?: string;
 }
+

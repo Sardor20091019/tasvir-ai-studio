@@ -158,7 +158,9 @@ export const api = {
     }
   },
 
-  async getMe(): Promise<User> {
+  async getMe(): Promise<User | null> {
+    const token = this.getToken();
+    if (!token) return null;
     try {
       const res = await fetch(`${API_BASE}/auth/me`, {
         headers: {
@@ -169,18 +171,7 @@ export const api = {
     } catch (e) {
       console.warn('API getMe fallback');
     }
-    return {
-      id: 'demo-user-1',
-      phone_number: '+998-99-099-11-12',
-      full_name: 'Sardor Sunatullayev',
-      telegram_id: null,
-      locale: 'uz',
-      role: 'admin',
-      plan_tier: 'agency',
-      credits_balance: 100,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    return null;
   },
 
   async sendOtp(phoneNumber: string, turnstileToken?: string): Promise<{ success: boolean; message: string; demoCode?: string }> {
@@ -217,13 +208,13 @@ export const api = {
     return {
       user: {
         id: 'google-user-' + Date.now(),
-        phone_number: '+998-99-099-11-12',
-        full_name: payload.name || 'Sardor Sunatullayev',
+        phone_number: '',
+        full_name: payload.name || 'Google Foydalanuvchisi',
         telegram_id: null,
         locale: 'uz',
-        role: 'admin',
-        plan_tier: 'agency',
-        credits_balance: 100,
+        role: 'user',
+        plan_tier: 'starter',
+        credits_balance: 3,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },

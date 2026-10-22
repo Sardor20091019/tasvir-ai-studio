@@ -162,8 +162,8 @@ export class AuthService {
 
     // Allow mock credential in development for test suites
     if (process.env.NODE_ENV !== 'production' && params.credential.startsWith('mock_demo_credential')) {
-      email = 'sardor.sunatullayev@tasvir.ai';
-      name = 'Sardor Sunatullayev';
+      email = 'test.user@tasvir.ai';
+      name = 'Test User';
     } else {
       try {
         const verifyRes = await fetch(

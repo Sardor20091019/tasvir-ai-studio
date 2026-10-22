@@ -210,9 +210,9 @@ export function GoogleSignInButton({
   const fallbackToVerified = async () => {
     try {
       const res = await api.googleLogin({
-        email: 'sardor091019@gmail.com',
-        name: 'Sardor Sunatullayev (Google)',
-        googleId: 'google_oauth_sub_210623201179',
+        email: 'user@google.com',
+        name: 'Google Foydalanuvchisi',
+        googleId: `google_oauth_sub_${Date.now()}`,
       });
       onSuccess(res.user);
     } catch (e) {

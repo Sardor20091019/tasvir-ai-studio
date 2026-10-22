@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Studio } from '../components/Studio';
-import { RoiCalculator } from '../components/RoiCalculator';
 import { TemplatesGallery, TemplateItem } from '../components/TemplatesGallery';
 import { PricingSection } from '../components/PricingSection';
 import { VideoLibraryModal } from '../components/VideoLibraryModal';
@@ -16,7 +15,7 @@ import { api } from '../lib/api';
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<'uz' | 'ru'>('uz');
-  const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'prompt' | 'templates' | 'pricing' | 'library'>('studio');
 
   // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -100,15 +99,6 @@ export default function HomePage() {
                 : null
             }
           />
-
-          {/* Quick Embedded ROI Calculator Section */}
-          <RoiCalculator
-            locale={locale}
-            onGetStarted={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenCheckout={() => setIsCheckoutOpen(true)}
-          />
         </div>
       )}
 
@@ -147,20 +137,6 @@ export default function HomePage() {
           <TemplatesGallery
             locale={locale}
             onSelectTemplate={handleSelectTemplate}
-          />
-        </div>
-      )}
-
-      {/* Tab: Kalkulyator (ROI) */}
-      {activeTab === 'calculator' && (
-        <div className="animate-in fade-in duration-200">
-          <RoiCalculator
-            locale={locale}
-            onGetStarted={() => {
-              setActiveTab('studio');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenCheckout={() => setIsCheckoutOpen(true)}
           />
         </div>
       )}

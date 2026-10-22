@@ -3,15 +3,13 @@
 import React from 'react';
 import {
   Sparkles,
-  Plus,
+  Layers,
+  CreditCard,
+  Video,
+  Globe,
   Coins,
   Film,
-  Zap,
-  Globe,
   User as UserIcon,
-  Layers,
-  Calculator,
-  CreditCard,
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -19,8 +17,8 @@ interface NavbarProps {
   user: User | null;
   locale: 'uz' | 'ru';
   onToggleLocale: () => void;
-  activeTab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library';
-  setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'calculator' | 'pricing' | 'library') => void;
+  activeTab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library';
+  setActiveTab: (tab: 'studio' | 'prompt' | 'templates' | 'pricing' | 'library') => void;
   onOpenCheckout: () => void;
   onOpenAuth: () => void;
   libraryCount: number;
@@ -42,7 +40,6 @@ export function Navbar({
       studio: 'Studiyo',
       prompt: 'AI Prompt Video',
       templates: 'Shablonlar',
-      calculator: 'Kalkulyator',
       pricing: 'Narxlar',
       library: 'Videolarim',
       credits: (count: number) => `${count} ta video qoldi`,
@@ -54,62 +51,67 @@ export function Navbar({
       studio: 'Студия',
       prompt: 'AI Промпт Видео',
       templates: 'Шаблоны',
-      calculator: 'Калькулятор',
       pricing: 'Тарифы',
       library: 'Мои видео',
       credits: (count: number) => `Осталось: ${count} видео`,
       recharge: 'Запросить токены',
-      login: 'Войти (Google)',
+      login: 'Вход (Google)',
     },
   }[locale];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-white/95 backdrop-blur-sm shadow-tactile">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left: Brand */}
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo & Tag */}
         <div className="flex items-center gap-6">
           <button
             onClick={() => setActiveTab('studio')}
             className="flex items-center gap-2.5 text-left group"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-coral text-white font-heading font-black text-lg shadow-sm transition-transform group-hover:scale-105">
+            <div className="h-9 w-9 rounded-xl bg-coral flex items-center justify-center text-white font-heading font-black text-lg shadow-sm group-hover:scale-105 transition-transform">
               T
             </div>
             <div>
-              <span className="font-heading font-extrabold text-xl tracking-tight text-ink flex items-center gap-1.5">
-                Tasvir
-                <span className="text-[10px] font-mono tracking-normal font-semibold px-1.5 py-0.5 rounded-md bg-coral-light text-coral border border-coral/20">
-                  UGC AI
+              <div className="flex items-center gap-1.5">
+                <span className="font-heading font-extrabold text-lg text-ink tracking-tight">
+                  tasvir<span className="text-coral">.ai</span>
                 </span>
+                <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-bento-peach text-coral">
+                  Beta
+                </span>
+              </div>
+              <span className="text-[10px] text-ink-muted hidden sm:block -mt-0.5">
+                {t.brandSub}
               </span>
-              <p className="text-[11px] text-ink-muted -mt-0.5 font-medium hidden sm:block">
-                {t.brandSub} (Uzum, Reels, TG)
-              </p>
             </div>
           </button>
 
-          {/* Navigation Links */}
+          {/* Navigation Links (Desktop) */}
           <nav className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setActiveTab('studio')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                 activeTab === 'studio'
                   ? 'bg-bento-peach text-coral font-semibold'
                   : 'text-ink-muted hover:text-ink hover:bg-canvas'
               }`}
             >
+              <Sparkles className="h-3.5 w-3.5" />
               {t.studio}
             </button>
             <button
               onClick={() => setActiveTab('prompt')}
               className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                 activeTab === 'prompt'
-                  ? 'bg-coral text-white font-semibold shadow-xs'
-                  : 'text-coral font-medium hover:bg-coral-light'
+                  ? 'bg-amber-100 text-amber-900 font-semibold'
+                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Film className="h-3.5 w-3.5 text-coral" />
               <span>{t.prompt}</span>
+              <span className="text-[9px] font-mono bg-coral text-white px-1 rounded-sm font-bold">
+                VEO 3.1
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('templates')}
@@ -123,17 +125,6 @@ export function Navbar({
               {t.templates}
             </button>
             <button
-              onClick={() => setActiveTab('calculator')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'calculator'
-                  ? 'bg-bento-sky text-cobalt font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Calculator className="h-3.5 w-3.5" />
-              {t.calculator}
-            </button>
-            <button
               onClick={() => setActiveTab('pricing')}
               className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                 activeTab === 'pricing'
@@ -144,69 +135,68 @@ export function Navbar({
               <CreditCard className="h-3.5 w-3.5" />
               {t.pricing}
             </button>
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'library'
-                  ? 'bg-ink text-white font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Film className="h-3.5 w-3.5" />
-              {t.library}
-              {libraryCount > 0 && (
-                <span className="font-mono text-xs px-1.5 py-0.2 rounded-full bg-coral text-white font-bold">
-                  {libraryCount}
-                </span>
-              )}
-            </button>
           </nav>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {/* Working Language Toggle */}
+        {/* Right: Actions, Credits & Profile */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Library Button */}
           <button
-            onClick={onToggleLocale}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-mono font-semibold rounded-lg border border-border bg-canvas text-ink hover:bg-white tactile-btn"
-            title="Tilni o'zgartirish"
+            onClick={() => setActiveTab('library')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-xl border border-border flex items-center gap-1.5 transition-colors tactile-btn ${
+              activeTab === 'library'
+                ? 'bg-ink text-white'
+                : 'bg-canvas hover:bg-white text-ink'
+            }`}
           >
-            <Globe className="h-3.5 w-3.5 text-ink-muted" />
-            <span className={locale === 'uz' ? 'font-bold text-coral' : 'text-ink-muted'}>
-              OʻZ
-            </span>
-            <span className="text-border">|</span>
-            <span className={locale === 'ru' ? 'font-bold text-cobalt' : 'text-ink-muted'}>
-              РУ
-            </span>
+            <Video className="h-3.5 w-3.5 text-coral" />
+            <span className="hidden sm:inline">{t.library}</span>
+            {libraryCount > 0 && (
+              <span className="h-4 min-w-[16px] px-1 rounded-full bg-coral text-white text-[10px] font-mono font-bold flex items-center justify-center">
+                {libraryCount}
+              </span>
+            )}
           </button>
 
-          {/* Live Credit Balance Pill */}
-          <div className="flex items-center bg-canvas border border-border rounded-xl p-1 shadow-inner">
-            <div
-              onClick={onOpenCheckout}
-              className="flex items-center gap-1.5 px-2.5 py-1 cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <div className="h-5 w-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
-                <Zap className="h-3 w-3 fill-amber-500 text-amber-600" />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="font-mono text-xs font-bold text-ink leading-none">
-                  {user?.credits_balance ?? 3}{' '}
-                  <span className="text-[10px] font-sans font-normal text-ink-muted">
-                    {locale === 'uz' ? 'ta video' : 'видео'}
-                  </span>
+          {/* Credits Balance Pill */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl bg-canvas border border-border text-xs">
+              <div className="flex items-center gap-1.5 font-mono">
+                <Coins className="h-3.5 w-3.5 text-coral" />
+                <span className="font-bold text-ink">
+                  {user.credits_balance}
+                </span>
+                <span className="text-ink-muted text-[11px] hidden lg:inline">
+                  {locale === 'uz' ? 'ta' : 'видео'}
                 </span>
               </div>
+              <button
+                onClick={onOpenCheckout}
+                className="px-2 py-0.5 rounded-lg bg-coral hover:bg-coral-dark text-white text-[11px] font-semibold transition-colors tactile-btn"
+              >
+                +
+              </button>
             </div>
+          )}
 
+          {/* Ask Admin / Recharge Button */}
+          <button
+            onClick={onOpenCheckout}
+            className="px-3 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white font-heading font-bold text-xs shadow-xs transition-colors tactile-btn flex items-center gap-1.5"
+          >
+            <Coins className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t.recharge}</span>
+          </button>
+
+          {/* Language Switcher */}
+          <div className="border-l border-border pl-2 sm:pl-3 flex items-center gap-1">
             <button
-              onClick={onOpenCheckout}
-              className="h-7 px-2 rounded-lg bg-coral hover:bg-coral-hover text-white text-xs font-semibold flex items-center gap-1 shadow-sm tactile-btn"
-              title="Hisobni to'ldirish"
+              onClick={onToggleLocale}
+              className="px-2 py-1 text-xs font-mono font-semibold rounded-lg text-ink-muted hover:text-ink hover:bg-canvas transition-colors flex items-center gap-1"
+              title="Tilni o'zgartirish"
             >
-              <Plus className="h-3 w-3" />
-              <span className="hidden md:inline">{t.recharge}</span>
+              <Globe className="h-3.5 w-3.5" />
+              <span className="uppercase">{locale}</span>
             </button>
           </div>
 
@@ -214,7 +204,7 @@ export function Navbar({
           <button
             onClick={onOpenAuth}
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-white text-ink hover:bg-canvas tactile-btn"
-            title="Profil"
+            title={user ? 'Mening profilim' : 'Google orqali kirish'}
           >
             <div className="h-7 w-7 rounded-lg bg-bento-peach text-coral font-bold flex items-center justify-center text-xs">
               {user?.full_name ? user.full_name[0] : <UserIcon className="h-3.5 w-3.5" />}
@@ -224,7 +214,7 @@ export function Navbar({
                 {user?.full_name || t.login}
               </span>
               <span className="text-[10px] font-mono text-ink-muted">
-                {user?.phone_number || '+998-99-099-11-12'}
+                {user?.phone_number || (user ? `${user.credits_balance} token` : 'Google hisob')}
               </span>
             </div>
           </button>
@@ -233,4 +223,3 @@ export function Navbar({
     </header>
   );
 }
-

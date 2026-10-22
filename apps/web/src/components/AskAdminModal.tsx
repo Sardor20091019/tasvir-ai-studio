@@ -376,7 +376,7 @@ export function AskAdminModal({
                   <span>{t.adminTitle}</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                  Admin: {user?.phone_number || '+998-99-099-11-12'}
+                  Admin: {user?.phone_number || user?.full_name || 'Admin'}
                 </span>
               </div>
 
@@ -397,7 +397,7 @@ export function AskAdminModal({
                     type="text"
                     value={adminTargetPhone}
                     onChange={(e) => setAdminTargetPhone(e.target.value)}
-                    placeholder="+998-99-099-11-12"
+                    placeholder="+998 90 123 45 67"
                     className="sm:col-span-6 px-3 py-2 text-xs rounded-lg border border-border bg-white"
                   />
                   <input
