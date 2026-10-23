@@ -41,7 +41,7 @@ export interface VideoJob {
   id: string;
   user_id: string;
   product_id: string;
-  avatar_id: string;
+  avatar_id?: string;
   platform_preset: string;
   script_tone: string;
   script_text: string;
@@ -81,6 +81,46 @@ export interface KaraokeWord {
   word: string;
   startSec: number;
   endSec: number;
+}
+
+export interface SubtitleCue {
+  id: string;
+  startSec: number;
+  endSec: number;
+  text: string;
+  words?: KaraokeWord[];
+}
+
+export type SubtitlePresetStyle =
+  | 'capcut_yellow'
+  | 'tiktok_green'
+  | 'reels_cyan'
+  | 'minimal_white'
+  | 'cinema_gold'
+  | 'uzum_coral';
+
+export interface SubtitleStyleConfig {
+  preset: SubtitlePresetStyle;
+  fontSize: number;
+  position: 'bottom' | 'center' | 'top';
+  textColor: string;
+  highlightColor: string;
+  bgColor: string;
+  bgOpacity: number;
+  fontFamily: 'sans' | 'heading' | 'serif' | 'mono';
+  animation: 'karaoke_active' | 'word_pop' | 'typewriter' | 'none';
+  textTransform: 'none' | 'uppercase';
+}
+
+export interface VideoEditorProject {
+  id: string;
+  title: string;
+  videoUrl: string;
+  duration: number;
+  subtitles: SubtitleCue[];
+  scenes?: DramaScene[];
+  style: SubtitleStyleConfig;
+  updatedAt?: string;
 }
 
 export interface DramaScene {

@@ -43,7 +43,7 @@ export class VideoJobsController {
   async ttsPreview(
     @Body()
     body: {
-      avatarId: string;
+      avatarId?: string;
       scriptText: string;
     },
   ) {

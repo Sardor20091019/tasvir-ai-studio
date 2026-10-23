@@ -28,8 +28,8 @@ import {
   Lock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { AiAvatar, Product, User, LocaleType, VideoJob } from '../types';
-import { api, fallbackAvatars, fallbackProducts } from '../lib/api';
+import { Product, User, LocaleType, VideoJob } from '../types';
+import { api, fallbackProducts } from '../lib/api';
 import { SpeechSynthPlayer } from '../lib/audio';
 
 interface StudioProps {
@@ -71,10 +71,8 @@ export function Studio({
       price: 'Narxi (soʻmda)',
       discount: 'Chegirma nishoni',
       demoProducts: '⚡ Tezkor namunalar (1-bosishda):',
-      step2Title: '2. Mahalliy AI Boshlovchi',
-      step2Sub: 'Markaziy Osiyo yuzlari va milliy shevalardagi professional diktorlar',
-      step3Title: '3. AI Ssenariy va Ovoz',
-      step3Sub: 'Uzum va Reels uchun xaridorgir reklama matnini avtomatik yozish',
+      step2Title: '2. AI Ssenariy va Ovoz',
+      step2Sub: 'Uzum va Reels uchun xaridorgir reklama matnini avtomatik yozish',
       scriptPlaceholder: 'Reklama matni shu yerda shakllanadi...',
       listenVoice: 'Ovozni eshitish',
       listening: 'Ovoz ijro etilmoqda...',
@@ -82,7 +80,7 @@ export function Studio({
       toneDiscount: '🔥 Chegirma urgʻusi',
       toneQuality: '✨ Sifat va sharh',
       toneReels: '⚡ Qisqa Reels',
-      step4Title: '4. Format va Render',
+      step3Title: '3. Format va Render',
       platformUzum: 'Uzum Market (9:16)',
       platformReels: 'Instagram Reels (9:16)',
       platformTelegram: 'Telegram Doʻkon (9:16)',
@@ -92,10 +90,9 @@ export function Studio({
       recharge: 'Admindan token soʻrash',
       previewTitle: 'Jonli 9:16 Smartfon Koʻrinishi',
       previewSub: 'Reklama roligi qanday koʻrinishda chiqishi',
-      pipToggle: 'Boshlovchi oynasi (PiP)',
-      stage1: '1. Rasm tahlili',
+      stage1: '1. Rasm va matn tahlili',
       stage2: '2. Ovoz sintezi',
-      stage3: '3. Lip-sync animatsiya',
+      stage3: '3. 9:16 Video render',
       stage4: '4. Video tayyor!',
       downloadVideo: 'Videoni yuklab olish (MP4)',
       shareTelegram: 'Telegramga yuborish',
@@ -115,10 +112,8 @@ export function Studio({
       price: 'Price (UZS)',
       discount: 'Discount badge',
       demoProducts: '⚡ Quick demo items (1-click):',
-      step2Title: '2. Local AI Presenter',
-      step2Sub: 'Central Asian faces and native dialect voice presenters',
-      step3Title: '3. AI Script & Voice',
-      step3Sub: 'Automatic high-converting sales copywriting for Uzum and Reels',
+      step2Title: '2. AI Script & Voice',
+      step2Sub: 'Automatic high-converting sales copywriting for Uzum and Reels',
       scriptPlaceholder: 'Generated ad copywriting will appear here...',
       listenVoice: 'Preview voice',
       listening: 'Playing voice...',
@@ -126,7 +121,7 @@ export function Studio({
       toneDiscount: '🔥 Discount Hook',
       toneQuality: '✨ Quality & Review',
       toneReels: '⚡ Short Reels',
-      step4Title: '4. Format & Render',
+      step3Title: '3. Format & Render',
       platformUzum: 'Uzum Market (9:16)',
       platformReels: 'Instagram Reels (9:16)',
       platformTelegram: 'Telegram Shop (9:16)',
@@ -136,10 +131,9 @@ export function Studio({
       recharge: 'Request tokens from admin',
       previewTitle: 'Live 9:16 Smartphone Preview',
       previewSub: 'Accurate preview of the finalized video advertisement',
-      pipToggle: 'Presenter overlay (PiP)',
       stage1: '1. Image analysis',
       stage2: '2. Voice synthesis',
-      stage3: '3. Lip-sync animation',
+      stage3: '3. 9:16 Video render',
       stage4: '4. Video ready!',
       downloadVideo: 'Download video (MP4)',
       shareTelegram: 'Share to Telegram',
@@ -159,10 +153,8 @@ export function Studio({
       price: 'Цена (в сумах)',
       discount: 'Бейдж скидки',
       demoProducts: '⚡ Быстрые образцы (в 1 клик):',
-      step2Title: '2. Локальный AI Ведущий',
-      step2Sub: 'Лица Центральной Азии и дикторы на родных диалектах',
-      step3Title: '3. AI Сценарий и Озвучка',
-      step3Sub: 'Автоматическое создание продающего текста для Uzum и Reels',
+      step2Title: '2. AI Сценарий и Озвучка',
+      step2Sub: 'Автоматическое создание продающего текста для Uzum и Reels',
       scriptPlaceholder: 'Текст рекламного ролика формируется здесь...',
       listenVoice: 'Прослушать голос',
       listening: 'Идет воспроизведение...',
@@ -170,7 +162,7 @@ export function Studio({
       toneDiscount: '🔥 Акцент на скидку',
       toneQuality: '✨ Качество и отзыв',
       toneReels: '⚡ Короткий Reels',
-      step4Title: '4. Формат и Рендер',
+      step3Title: '3. Формат и Рендер',
       platformUzum: 'Uzum Market (9:16)',
       platformReels: 'Instagram Reels (9:16)',
       platformTelegram: 'Telegram Магазин (9:16)',
@@ -180,11 +172,10 @@ export function Studio({
       recharge: 'Запросить токены',
       previewTitle: 'Живой 9:16 просмотр на смартфоне',
       previewSub: 'Точный вид готового рекламного видео',
-      pipToggle: 'Окно ведущего (PiP)',
-      stage1: '1. Анализ фото',
+      stage1: '1. Анализ фото и текста',
       stage2: '2. Синтез голоса',
-      stage3: '3. Lip-sync анимация',
-      stage4: '4. Видео готово!',
+      stage3: '3. Рендер 9:16 видео',
+      stage4: '4. Готово!',
       downloadVideo: 'Скачать видео (MP4)',
       shareTelegram: 'Отправить в Telegram',
       characters: 'симв.',
@@ -203,10 +194,8 @@ export function Studio({
     price: 'Price (UZS)',
     discount: 'Discount badge',
     demoProducts: '⚡ Quick demo items:',
-    step2Title: '2. Local AI Presenter',
-    step2Sub: 'Central Asian faces and native dialect voice presenters',
-    step3Title: '3. AI Script & Voice',
-    step3Sub: 'Automatic high-converting sales copywriting',
+    step2Title: '2. AI Script & Voice',
+    step2Sub: 'Automatic high-converting sales copywriting',
     scriptPlaceholder: 'Generated ad copywriting will appear here...',
     listenVoice: 'Preview voice',
     listening: 'Playing voice...',
@@ -214,7 +203,7 @@ export function Studio({
     toneDiscount: '🔥 Discount Hook',
     toneQuality: '✨ Quality & Review',
     toneReels: '⚡ Short Reels',
-    step4Title: '4. Format & Render',
+    step3Title: '3. Format & Render',
     platformUzum: 'Uzum Market (9:16)',
     platformReels: 'Instagram Reels (9:16)',
     platformTelegram: 'Telegram Shop (9:16)',
@@ -224,10 +213,9 @@ export function Studio({
     recharge: 'Request tokens from admin',
     previewTitle: 'Live 9:16 Smartphone Preview',
     previewSub: 'Accurate preview of the finalized video',
-    pipToggle: 'Presenter overlay (PiP)',
     stage1: '1. Image analysis',
     stage2: '2. Voice synthesis',
-    stage3: '3. Lip-sync animation',
+    stage3: '3. 9:16 Video render',
     stage4: '4. Video ready!',
     downloadVideo: 'Download video (MP4)',
     shareTelegram: 'Share to Telegram',
@@ -237,9 +225,6 @@ export function Studio({
     errorOccurred: 'An error occurred while creating the video. Please try again.',
     tryAgain: 'Try again',
   };
-
-  const [avatars, setAvatars] = useState<AiAvatar[]>(fallbackAvatars);
-  const [selectedAvatarId, setSelectedAvatarId] = useState<string>(fallbackAvatars[0].id);
 
   const [productTitle, setProductTitle] = useState('Nike Air Zoom Pegasus 40');
   const [productCategory, setProductCategory] = useState('Kiyim va Poyabzal');
@@ -259,7 +244,6 @@ export function Studio({
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [waveformBars, setWaveformBars] = useState<number[]>([30, 45, 60, 35, 75, 50, 40, 65, 80, 55, 30, 70, 45, 60, 35, 25]);
-  const [showPip, setShowPip] = useState(true);
   const [isPlayingPreview, setIsPlayingPreview] = useState(true);
   const [karaokeIndex, setKaraokeIndex] = useState(0);
 
@@ -273,17 +257,6 @@ export function Studio({
   const synthPlayerRef = useRef<SpeechSynthPlayer>(new SpeechSynthPlayer());
 
   useEffect(() => {
-    api.getAvatars().then((res) => {
-      if (res && res.length > 0) {
-        setAvatars(res);
-        if (!selectedAvatarId) {
-          setSelectedAvatarId(res[0].id);
-        }
-      }
-    });
-  }, []);
-
-  useEffect(() => {
     if (initialTemplate) {
       setProductTitle(initialTemplate.productTitle);
       setProductCategory(initialTemplate.category);
@@ -291,10 +264,6 @@ export function Studio({
       setProductDiscount(initialTemplate.discountBadge);
       setProductImage(initialTemplate.imageUrl);
       setScriptTone(initialTemplate.tone);
-      if (initialTemplate.avatarSlug) {
-        const found = avatars.find((a) => a.slug === initialTemplate.avatarSlug);
-        if (found) setSelectedAvatarId(found.id);
-      }
       handleRewriteScript(initialTemplate.tone, initialTemplate.productTitle, initialTemplate.priceUzs);
     }
   }, [initialTemplate]);
@@ -307,8 +276,6 @@ export function Studio({
     }, 450);
     return () => clearInterval(interval);
   }, [isPlayingPreview, scriptWords.length]);
-
-  const selectedAvatar = avatars.find((a) => a.id === selectedAvatarId) || avatars[0];
 
   const handleSelectDemoProduct = (p: Product) => {
     setProductTitle(p.title);
@@ -345,7 +312,7 @@ export function Studio({
         category: productCategory,
         priceUzs: price,
         tone,
-        dialect: selectedAvatar?.language_code,
+        dialect: 'Adabiy oʻzbek',
       });
       if (res?.scriptText) {
         setScriptText(res.scriptText);
@@ -363,7 +330,7 @@ export function Studio({
       setIsPlayingAudio(true);
       synthPlayerRef.current.playSyntheticVoice(
         scriptText,
-        selectedAvatar?.slug || 'malika',
+        'uz-UZ',
         (bars) => setWaveformBars(bars),
         () => setIsPlayingAudio(false),
       );
@@ -404,7 +371,7 @@ export function Studio({
       const job = await api.renderVideoJob({
         userId: user.id,
         productId: 'demo-prod',
-        avatarId: selectedAvatarId,
+        avatarId: 'ai-default',
         platformPreset,
         scriptTone,
         scriptText,
@@ -428,9 +395,7 @@ export function Studio({
         setRenderProgress(100);
         setRenderStage(4);
         setIsRendering(false);
-        setRenderedVideoUrl(
-          'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
-        );
+        setRenderedVideoUrl(job.output_video_url || null);
 
         try {
           confetti({
@@ -567,7 +532,7 @@ export function Studio({
         <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-mint text-emerald-700 font-bold text-sm">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-sky text-cobalt font-bold text-sm">
                 2
               </span>
               <div>
@@ -575,69 +540,6 @@ export function Studio({
                   {t.step2Title}
                 </h2>
                 <p className="text-xs text-ink-muted">{t.step2Sub}</p>
-              </div>
-            </div>
-            <span className="text-[11px] font-mono font-medium text-emerald-700 bg-bento-mint px-2 py-0.5 rounded-full">
-              4 ta presenter
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {avatars.map((av) => {
-              const isSelected = selectedAvatarId === av.id;
-              return (
-                <div
-                  key={av.id}
-                  onClick={() => setSelectedAvatarId(av.id)}
-                  className={`group relative rounded-xl border p-2.5 cursor-pointer transition-all tactile-btn ${
-                    isSelected
-                      ? 'border-coral bg-bento-peach ring-2 ring-coral/40 shadow-sm'
-                      : 'border-border bg-white hover:border-ink/20 hover:bg-canvas'
-                  }`}
-                >
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-canvas mb-2">
-                    <img
-                      src={av.avatar_image_url}
-                      alt={av.display_name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-coral text-white flex items-center justify-center shadow-sm">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-1 left-1 bg-ink/75 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.2 rounded">
-                      {av.language_code}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-ink">
-                        {av.display_name}
-                      </div>
-                      <div className="text-[10px] text-ink-muted font-medium line-clamp-1">
-                        {av.dialect_label}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-sky text-cobalt font-bold text-sm">
-                3
-              </span>
-              <div>
-                <h2 className="text-base font-bold text-ink tracking-tight">
-                  {t.step3Title}
-                </h2>
-                <p className="text-xs text-ink-muted">{t.step3Sub}</p>
               </div>
             </div>
 
@@ -741,7 +643,7 @@ export function Studio({
               <span className="text-coral font-semibold">{t.durationEst}</span>
             </div>
             <div className="text-[11px] font-sans text-ink-light">
-              Dialekt: <span className="font-semibold text-ink">{selectedAvatar?.dialect_label}</span>
+              Ovoz: <span className="font-semibold text-ink">AI Tabiiy Diktori (Oʻzbek)</span>
             </div>
           </div>
         </section>
@@ -750,11 +652,11 @@ export function Studio({
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-lavender text-purple-700 font-bold text-sm">
-                4
+                3
               </span>
               <div>
                 <h2 className="text-base font-bold text-ink tracking-tight">
-                  {t.step4Title}
+                  {t.step3Title}
                 </h2>
                 <p className="text-xs text-ink-muted">
                   Uzum Market, Instagram yoki Telegram uchun optimallashtirilgan
@@ -862,18 +764,6 @@ export function Studio({
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowPip(!showPip)}
-                className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-all ${
-                  showPip
-                    ? 'border-coral bg-bento-peach text-coral font-semibold'
-                    : 'border-border bg-canvas text-ink-muted'
-                }`}
-                title="Boshlovchi pufakchasini yoqish/o'chirish"
-              >
-                PiP {showPip ? 'ON' : 'OFF'}
-              </button>
-
-              <button
                 onClick={() => setIsPlayingPreview(!isPlayingPreview)}
                 className="h-7 w-7 rounded-lg border border-border bg-surface hover:bg-surface-raised flex items-center justify-center text-ink"
               >
@@ -938,33 +828,6 @@ export function Studio({
                   {productDiscount}
                 </div>
               </div>
-
-              {showPip && (
-                <div className="relative z-10 px-4 flex justify-end">
-                  <div className="relative group">
-                    <div className="h-20 w-20 rounded-full border-2 border-white shadow-xl overflow-hidden bg-neutral-800 ring-4 ring-coral/40">
-                      <img
-                        src={selectedAvatar?.avatar_image_url}
-                        alt={selectedAvatar?.display_name}
-                        className={`w-full h-full object-cover ${
-                          isPlayingPreview ? 'scale-110' : 'scale-100'
-                        }`}
-                      />
-                    </div>
-                    {isPlayingPreview && (
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-6 w-6 bg-coral text-white items-center justify-center text-[10px]">
-                          🎙️
-                        </span>
-                      </span>
-                    )}
-                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md text-white text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full whitespace-nowrap border border-white/20">
-                      {selectedAvatar?.display_name}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="relative z-10 p-4 space-y-3 pb-6">
                 <div className="min-h-[44px] bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-2.5 text-center">

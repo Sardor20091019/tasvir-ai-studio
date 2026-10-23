@@ -26,8 +26,9 @@ import { AuthModal } from '../components/AuthModal';
 import { ProfileModal } from '../components/ProfileModal';
 import { AdminPanel } from '../components/AdminPanel';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
+import { CapCutEditor } from '../components/CapCutEditor';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { User, VideoJob, LocaleType } from '../types';
+import { User, VideoJob, LocaleType, VideoEditorProject } from '../types';
 import { api } from '../lib/api';
 
 /* ──────────────────────────────────────────────────────────
@@ -45,34 +46,25 @@ export default function HomePage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
+  const [currentEditorProject, setCurrentEditorProject] = useState<VideoEditorProject | null>(null);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
 
-  const [jobs, setJobs] = useState<VideoJob[]>([
-    {
-      id: 'job-demo-1',
-      user_id: 'user-demo',
-      product_id: 'p1',
-      avatar_id: 'malika',
-      platform_preset: 'uzum_9_16',
-      script_tone: 'discount_hook',
-      script_text: "Professional cinematic video generated with Veo 3.1 engine...",
-      status: 'completed',
-      progress_percent: 100,
-      audio_preview_url: null,
-      output_video_url: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
-      credits_charged: 1,
-      error_message: null,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      completed_at: new Date(Date.now() - 3550000).toISOString(),
-    },
-  ]);
+  const [jobs, setJobs] = useState<VideoJob[]>([]);
 
   useEffect(() => {
     api.getMe().then((u) => {
       if (u) setUser(u);
     });
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as NavTabType | null;
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -143,19 +135,19 @@ export default function HomePage() {
   const features = {
     uz: [
       { label: 'Veo 3.1 Engine', desc: 'Google\u02BCning eng so\u02BBnggi generativ video modeli', num: '01' },
-      { label: 'AI Diktorlar', desc: 'O\u02BBzbek tilidagi tabiiy ovoz va yuz sinxronizatsiyasi', num: '02' },
+      { label: 'CapCut Video Studio', desc: 'Soniyama-soniya subtitrlarni professional tahrirlash', num: '02' },
       { label: 'Karaoke Subtitrlar', desc: 'Millisekund aniqlikdagi jonli matn animatsiyasi', num: '03' },
       { label: 'Professional Eksport', desc: '9:16 vertikal va 16:9 keng formatlar', num: '04' },
     ],
     en: [
       { label: 'Veo 3.1 Engine', desc: 'Google\u2019s latest generative video model with cinematic fidelity', num: '01' },
-      { label: 'AI Presenters', desc: 'Central Asian avatars with natural speech and lip-sync', num: '02' },
+      { label: 'CapCut Video Editor', desc: 'Frame-accurate subtitle editing and dynamic karaoke styles', num: '02' },
       { label: 'Karaoke Captions', desc: 'Millisecond-precise synchronized text animation', num: '03' },
       { label: 'Professional Export', desc: '9:16 vertical and 16:9 widescreen delivery formats', num: '04' },
     ],
     ru: [
       { label: 'Движок Veo 3.1', desc: 'Новейшая генеративная видеомодель Google', num: '01' },
-      { label: 'AI Дикторы', desc: 'Аватары Центральной Азии с натуральной речью', num: '02' },
+      { label: 'CapCut Видео Редактор', desc: 'Посекундное редактирование субтитров и стили караоке', num: '02' },
       { label: 'Караоке Субтитры', desc: 'Синхронизированная текстовая анимация с точностью до миллисекунд', num: '03' },
       { label: 'Профессиональный Экспорт', desc: 'Форматы 9:16 вертикальный и 16:9 широкоэкранный', num: '04' },
     ],
@@ -666,7 +658,6 @@ export default function HomePage() {
                     imageUrl: selectedTemplate.imageUrl,
                     tone: selectedTemplate.tone,
                     platform: selectedTemplate.platform,
-                    avatarSlug: selectedTemplate.avatarSlug,
                   }
                 : null
             }
@@ -680,12 +671,16 @@ export default function HomePage() {
             user={user}
             locale={locale}
             onRequireAuth={() => setIsAuthOpen(true)}
+            onEditInCapCut={(proj) => {
+              setCurrentEditorProject(proj);
+              setActiveTab('editor');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             onVideoCreated={(videoUrl) => {
               const newPromptJob: VideoJob = {
                 id: `job-prompt-${Date.now()}`,
                 user_id: user?.id || 'user-demo',
                 product_id: 'p-prompt',
-                avatar_id: 'malika',
                 platform_preset: 'uzum_9_16',
                 script_tone: 'discount_hook',
                 script_text: 'Google Veo 3.1 Dramatic Video Ad',
@@ -700,6 +695,18 @@ export default function HomePage() {
               };
               handleJobCreated(newPromptJob);
             }}
+          />
+        </div>
+      )}
+
+      {activeTab === 'editor' && (
+        <div className="animate-in fade-in duration-200">
+          <CapCutEditor
+            locale={locale}
+            user={user}
+            initialProject={currentEditorProject}
+            onBackToStudio={() => setActiveTab('studio')}
+            onSave={(p) => setCurrentEditorProject(p)}
           />
         </div>
       )}
@@ -728,6 +735,36 @@ export default function HomePage() {
             jobs={jobs}
             locale={locale}
             onOpenStudio={() => setActiveTab('studio')}
+            onEditJob={(job) => {
+              setCurrentEditorProject({
+                id: job.id,
+                title: job.script_text ? job.script_text.slice(0, 45) : 'AI Video Ad',
+                videoUrl: job.output_video_url || '',
+                duration: 16,
+                subtitles: [
+                  {
+                    id: `cue-${job.id}-1`,
+                    startSec: 0.5,
+                    endSec: 5.0,
+                    text: job.script_text ? job.script_text.slice(0, 60) : 'Tasvir AI video subtitri',
+                  },
+                ],
+                style: {
+                  preset: 'capcut_yellow',
+                  fontSize: 32,
+                  position: 'bottom',
+                  textColor: '#FFFFFF',
+                  highlightColor: '#FACC15',
+                  bgColor: 'rgba(0,0,0,0.4)',
+                  bgOpacity: 0.4,
+                  fontFamily: 'heading',
+                  animation: 'karaoke_active',
+                  textTransform: 'uppercase',
+                },
+              });
+              setActiveTab('editor');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         </div>
       )}

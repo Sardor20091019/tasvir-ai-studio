@@ -53,7 +53,7 @@ export interface VideoJobsTable {
   id: Generated<string>;
   user_id: string;
   product_id: string;
-  avatar_id: string;
+  avatar_id?: string | null;
   platform_preset: Generated<string>;
   script_tone: Generated<string>;
   script_text: string;

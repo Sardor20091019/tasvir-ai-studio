@@ -1,55 +1,10 @@
-import { User, AiAvatar, Product, VideoJob, PlanConfig } from '../types';
+import { User, AiAvatar, Product, VideoJob, PlanConfig, DramaScene } from '../types';
 
 const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   ? 'http://localhost:4000/api'
   : (process.env.NEXT_PUBLIC_API_URL || '/api');
 
-export const fallbackAvatars: AiAvatar[] = [
-  {
-    id: '163b8241-d469-48aa-8e8c-8b5ff2fe5586',
-    slug: 'malika',
-    display_name: 'Malika',
-    dialect_label: 'Toshkent shevasi',
-    language_code: 'uz-UZ',
-    avatar_image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
-    voice_model_id: 'uz-voice-malika-warm',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '070e7781-7213-4a07-9699-f9d557282878',
-    slug: 'javohir',
-    display_name: 'Javohir',
-    dialect_label: 'Adabiy oʻzbek',
-    language_code: 'uz-UZ',
-    avatar_image_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
-    voice_model_id: 'uz-voice-javohir-dynamic',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '9476b839-388b-4062-b035-612d539d4fde',
-    slug: 'dilnoza',
-    display_name: 'Dilnoza',
-    dialect_label: 'Samarqand / Vodiy',
-    language_code: 'uz-UZ',
-    avatar_image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
-    voice_model_id: 'uz-voice-dilnoza-friendly',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '21bce53d-9368-4a40-bd98-9a39691468a8',
-    slug: 'timur',
-    display_name: 'Timur',
-    dialect_label: 'Rus tili (Toshkent)',
-    language_code: 'ru-UZ',
-    avatar_image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-    voice_model_id: 'ru-voice-timur-energetic',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-];
+export const fallbackAvatars: AiAvatar[] = [];
 
 export const fallbackProducts: Product[] = [
   {
@@ -101,7 +56,7 @@ export const fallbackPlans: PlanConfig[] = [
     priceUzs: 99000,
     credits: 10,
     description: 'Yangi boshlagan Uzum va Telegram sotuvchilari uchun',
-    features: ['10 ta HD video', 'Barcha 4 ta AI boshlovchi', '9:16 formati', 'Subtitrlar bilan'],
+    features: ['10 ta HD video', 'CapCut professional muharrir', '9:16 formati', 'Subtitrlar bilan'],
   },
   {
     id: 'shop_pro',
@@ -466,33 +421,14 @@ export const api = {
   },
 
   async getJobStatus(jobId: string): Promise<VideoJob> {
-    try {
-      const res = await fetch(`${API_BASE}/video-jobs/${jobId}`, {
-        headers: {
-          ...getAuthHeaders(),
-        },
-      });
-      if (res.ok) return await res.json();
-    } catch (e) {
-      console.warn('API getJobStatus fallback');
-    }
-    return {
-      id: jobId,
-      user_id: 'user-1',
-      product_id: 'prod-1',
-      avatar_id: 'av-1',
-      platform_preset: 'uzum_9_16',
-      script_tone: 'discount_hook',
-      script_text: '',
-      status: 'completed',
-      progress_percent: 100,
-      credits_charged: 1,
-      audio_preview_url: null,
-      output_video_url: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
-      error_message: null,
-      created_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-    };
+    const res = await fetch(`${API_BASE}/video-jobs/${jobId}`, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+    if (res.ok) return await res.json();
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || `Video vazifasini yuklab boʻlmadi (HTTP ${res.status})`);
   },
 
   async getBillingPlans(): Promise<PlanConfig[]> {
@@ -633,8 +569,33 @@ export const api = {
     return [];
   },
 
+  async planScenesFromPrompt(params: {
+    prompt: string;
+    dramaLevel?: string;
+  }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
+    const res = await fetch(`${API_BASE}/generate-video/plan-scenes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+
+    const err = await res.json().catch(() => null);
+    if (res.status === 401) {
+      throw new Error(err?.message || 'Ssenariy yaratish uchun avval tizimga kiring (Google hisobingiz orqali)');
+    }
+    throw new Error(err?.message || 'AI ssenariy yaratishda xatolik yuz berdi');
+  },
+
   async generateVideoFromPrompt(params: {
     prompt: string;
+    scenes?: DramaScene[];
     aspectRatio?: '9:16';
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
@@ -647,7 +608,7 @@ export const api = {
       },
       body: JSON.stringify({
         ...params,
-        aspectRatio: '9:16', 
+        aspectRatio: '9:16',
       }),
     });
 
@@ -663,105 +624,14 @@ export const api = {
   },
 
   async getPromptVideoStatus(jobId: string): Promise<any> {
-    try {
-      const res = await fetch(`${API_BASE}/generate-video/${jobId}`, {
-        headers: {
-          ...getAuthHeaders(),
-        },
-      });
-      if (res.ok) return await res.json();
-    } catch (e) {
-      console.warn('API getPromptVideoStatus fallback');
-    }
-
-    return {
-      jobId,
-      prompt: 'Maxsus AI dramatik video reklama',
-      aspectRatio: '9:16',
-      modelTier: 'veo-3.1-lite-generate',
-      includeBackgroundMusic: false,
-      bgMusicTrack: '',
-      status: 'completed',
-      progress: 100,
-      currentStepMessage: 'Google Veo 3.1 video muvaffaqiyatli tayyorlandi!',
-      videoUrl: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
-      downloadUrl: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
-      totalDurationSeconds: 16,
-      scenes: [
-        {
-          sceneIndex: 1,
-          actTitle: '1-Sahna: Shubhali Koʻz Qarash (Xiyonat Alomati)',
-          emotion: 'Shubha, xiyonat alomati va keskin sukunat',
-          tensionLevel: 8,
-          durationSeconds: 5,
-          cinematicPrompt: 'Dramatic vertical 9:16 slow motion close-up, tears in eyes...',
-          dialogueScript: 'Sen meni aldayotgan eding... Yolgʻonmidi?',
-          caption: 'Har bir soʻzing yolgʻonmidi?',
-          karaokeSubtitles: [
-            { word: 'Sen', startSec: 0.2, endSec: 0.8 },
-            { word: 'meni', startSec: 0.9, endSec: 1.5 },
-            { word: 'aldayotgan', startSec: 1.6, endSec: 2.7 },
-            { word: 'eding...', startSec: 2.8, endSec: 3.5 },
-            { word: 'Yolgʻonmidi?', startSec: 3.6, endSec: 4.8 },
-          ],
-        },
-        {
-          sceneIndex: 2,
-          actTitle: '2-Sahna: Koʻz Yoshlar & Keskin Kulminatsiya',
-          emotion: 'Yurak ezilishi, yuzdagi koʻz yosh va dramatik burilish',
-          tensionLevel: 10,
-          durationSeconds: 6,
-          cinematicPrompt: 'Extreme emotional vertical 9:16 portrait, a single tear falling down a cheek...',
-          dialogueScript: 'Endi kech! Qaytish yoʻli yoʻq, kechirmayman!',
-          caption: 'Endi kech! Qaytish yoʻli yoʻq...',
-          karaokeSubtitles: [
-            { word: 'Endi', startSec: 0.2, endSec: 0.9 },
-            { word: 'kech!', startSec: 1.0, endSec: 1.7 },
-            { word: 'Qaytish', startSec: 1.8, endSec: 2.7 },
-            { word: 'yoʻli', startSec: 2.8, endSec: 3.4 },
-            { word: 'yoʻq,', startSec: 3.5, endSec: 4.3 },
-            { word: 'kechirmayman!', startSec: 4.4, endSec: 5.8 },
-          ],
-        },
-        {
-          sceneIndex: 3,
-          actTitle: '3-Sahna: Gʻolibona Najot & Mahsulotning Qahramonlik Kadri',
-          emotion: 'Gʻalaba, qatʼiyat va oliy darajadagi gʻoliblik',
-          tensionLevel: 9,
-          durationSeconds: 5,
-          cinematicPrompt: 'Cinematic vertical 9:16 golden hour lighting, wiping away the tear, triumphant resolution...',
-          dialogueScript: 'Men oʻzimga munosibini tanladim. Endi faqat eng yaxshisi!',
-          caption: 'Men oʻzimga munosibini tanladim!',
-          karaokeSubtitles: [
-            { word: 'Men', startSec: 0.2, endSec: 0.8 },
-            { word: 'oʻzimga', startSec: 0.9, endSec: 1.7 },
-            { word: 'munosibini', startSec: 1.8, endSec: 2.9 },
-            { word: 'tanladim.', startSec: 3.0, endSec: 3.8 },
-            { word: 'Eng', startSec: 3.9, endSec: 4.3 },
-            { word: 'yaxshisi!', startSec: 4.4, endSec: 4.9 },
-          ],
-        },
-      ],
-      karaokeTimeline: [
-        { word: 'Sen', startSec: 0.2, endSec: 0.8 },
-        { word: 'meni', startSec: 0.9, endSec: 1.5 },
-        { word: 'aldayotgan', startSec: 1.6, endSec: 2.7 },
-        { word: 'eding...', startSec: 2.8, endSec: 3.5 },
-        { word: 'Yolgʻonmidi?', startSec: 3.6, endSec: 4.8 },
-        { word: 'Endi', startSec: 5.2, endSec: 5.9 },
-        { word: 'kech!', startSec: 6.0, endSec: 6.7 },
-        { word: 'Qaytish', startSec: 6.8, endSec: 7.7 },
-        { word: 'yoʻli', startSec: 7.8, endSec: 8.4 },
-        { word: 'yoʻq,', startSec: 8.5, endSec: 9.3 },
-        { word: 'kechirmayman!', startSec: 9.4, endSec: 10.8 },
-        { word: 'Men', startSec: 11.2, endSec: 11.8 },
-        { word: 'oʻzimga', startSec: 11.9, endSec: 12.7 },
-        { word: 'munosibini', startSec: 12.8, endSec: 13.9 },
-        { word: 'tanladim.', startSec: 14.0, endSec: 14.8 },
-        { word: 'Eng', startSec: 14.9, endSec: 15.3 },
-        { word: 'yaxshisi!', startSec: 15.4, endSec: 15.9 },
-      ],
-    };
+    const res = await fetch(`${API_BASE}/generate-video/${jobId}`, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+      cache: 'no-store',
+    });
+    if (res.ok) return await res.json();
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || `Video holatini olishda xatolik yuz berdi (HTTP ${res.status})`);
   },
 };
-

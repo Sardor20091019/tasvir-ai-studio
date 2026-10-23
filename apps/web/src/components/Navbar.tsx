@@ -11,11 +11,13 @@ import {
   Menu,
   X,
   ChevronRight,
+  Sliders,
+  Scissors,
 } from 'lucide-react';
 import { User, LocaleType } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 
-export type NavTabType = 'studio' | 'prompt' | 'templates' | 'pricing' | 'library' | 'admin';
+export type NavTabType = 'studio' | 'prompt' | 'editor' | 'templates' | 'pricing' | 'library' | 'admin';
 
 interface NavbarProps {
   user: User | null;
@@ -48,6 +50,7 @@ export function Navbar({
     uz: {
       studio: 'STUDIYA',
       prompt: 'VEO ENGINE',
+      editor: 'CAPCUT MUHARRIR',
       templates: 'SHABLONLAR',
       pricing: 'TARIFLAR',
       library: 'ARXIV',
@@ -59,6 +62,7 @@ export function Navbar({
     en: {
       studio: 'STUDIO',
       prompt: 'VEO ENGINE',
+      editor: 'CAPCUT EDITOR',
       templates: 'TEMPLATES',
       pricing: 'PRICING',
       library: 'ARCHIVE',
@@ -70,6 +74,7 @@ export function Navbar({
     ru: {
       studio: 'СТУДИЯ',
       prompt: 'VEO ENGINE',
+      editor: 'CAPCUT РЕДАКТОР',
       templates: 'ШАБЛОНЫ',
       pricing: 'ТАРИФЫ',
       library: 'АРХИВ',
@@ -81,6 +86,7 @@ export function Navbar({
   }[locale] || {
     studio: 'STUDIO',
     prompt: 'VEO ENGINE',
+    editor: 'CAPCUT EDITOR',
     templates: 'TEMPLATES',
     pricing: 'PRICING',
     library: 'ARCHIVE',
@@ -90,9 +96,10 @@ export function Navbar({
     theme: 'Theme',
   };
 
-  const navItems: { key: NavTabType; label: string; accent?: boolean }[] = [
+  const navItems: { key: NavTabType; label: string; accent?: boolean; badge?: string }[] = [
     { key: 'studio', label: t.studio },
     { key: 'prompt', label: t.prompt, accent: true },
+    { key: 'editor', label: t.editor, badge: 'PRO' },
     { key: 'templates', label: t.templates },
     { key: 'pricing', label: t.pricing },
   ];
@@ -141,6 +148,11 @@ export function Navbar({
                   {item.accent && (
                     <span className="ml-1.5 text-[8px] font-mono font-bold tracking-wider text-accent-warm opacity-80">
                       3.1
+                    </span>
+                  )}
+                  {item.badge && (
+                    <span className="ml-1.5 px-1 py-0.5 rounded text-[8px] font-mono font-bold bg-accent-warm/20 text-accent-warm border border-accent-warm/40">
+                      {item.badge}
                     </span>
                   )}
                   {/* Active underline */}
@@ -354,8 +366,8 @@ export function Navbar({
           {[
             { key: 'studio' as NavTabType, label: t.studio, icon: Film },
             { key: 'prompt' as NavTabType, label: 'VEO', icon: Layers },
+            { key: 'editor' as NavTabType, label: 'CAPCUT', icon: Scissors },
             { key: 'templates' as NavTabType, label: t.templates, icon: Layers },
-            { key: 'pricing' as NavTabType, label: t.pricing, icon: CreditCard },
             { key: 'library' as NavTabType, label: t.library, icon: Video },
           ].map((item) => (
             <button

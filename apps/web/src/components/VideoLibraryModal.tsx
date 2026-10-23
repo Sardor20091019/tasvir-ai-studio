@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Scissors,
 } from 'lucide-react';
 import { VideoJob, LocaleType } from '../types';
 
@@ -19,6 +20,7 @@ interface VideoLibraryModalProps {
   locale: LocaleType;
   onClose?: () => void;
   onOpenStudio?: () => void;
+  onEditJob?: (job: VideoJob) => void;
 }
 
 export function VideoLibraryModal({
@@ -26,6 +28,7 @@ export function VideoLibraryModal({
   locale,
   onClose,
   onOpenStudio,
+  onEditJob,
 }: VideoLibraryModalProps) {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
@@ -120,7 +123,7 @@ export function VideoLibraryModal({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => {
             const isCompleted = job.status === 'completed';
-            const videoSrc = job.output_video_url || 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4';
+            const videoSrc = job.output_video_url || '';
 
             return (
               <div
@@ -164,15 +167,25 @@ export function VideoLibraryModal({
                 </div>
 
                 {isCompleted && (
-                  <div className="p-3 pt-0">
+                  <div className="p-3 pt-0 space-y-1.5">
+                    {onEditJob && (
+                      <button
+                        type="button"
+                        onClick={() => onEditJob(job)}
+                        className="w-full py-2 px-3 rounded-xl bg-accent-warm hover:bg-accent-warm-hover text-obsidian text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs"
+                      >
+                        <Scissors className="h-3.5 w-3.5" />
+                        <span>{locale === 'uz' ? 'CapCut da tahrirlash' : locale === 'en' ? 'Edit in CapCut' : 'Редактировать в CapCut'}</span>
+                      </button>
+                    )}
                     <a
                       href={videoSrc}
                       target="_blank"
                       rel="noreferrer"
                       download={`tasvir-${job.id}.mp4`}
-                      className="w-full py-2 px-3 rounded-xl bg-white border border-border hover:bg-canvas text-ink text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs"
+                      className="w-full py-2 px-3 rounded-xl bg-surface border border-border hover:bg-surface-raised text-ink text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs"
                     >
-                      <Download className="h-3.5 w-3.5 text-coral" />
+                      <Download className="h-3.5 w-3.5 text-accent-warm" />
                       <span>{t.download}</span>
                     </a>
                   </div>

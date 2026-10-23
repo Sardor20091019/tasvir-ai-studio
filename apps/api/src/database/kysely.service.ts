@@ -132,6 +132,9 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       await sql`ALTER TABLE users DROP COLUMN IF EXISTS phone_number CASCADE`.execute(this._db);
       await sql`ALTER TABLE users ALTER COLUMN credits_balance SET DEFAULT 0`.execute(this._db);
       await sql`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'`.execute(this._db);
+      await sql`ALTER TABLE video_jobs DROP CONSTRAINT IF EXISTS video_jobs_avatar_id_fkey`.execute(this._db);
+      await sql`ALTER TABLE video_jobs ALTER COLUMN avatar_id DROP NOT NULL`.execute(this._db);
+      await sql`DROP TABLE IF EXISTS ai_avatars CASCADE`.execute(this._db);
       await sql`
         CREATE TABLE IF NOT EXISTS token_requests (
           id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -171,57 +174,6 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
           })
           .execute();
         this.logger.log(`Seeded default admin user (sardor091019@gmail.com) with 100 credits.`);
-      }
-
-      const avatarsCount = await this._db
-        .selectFrom('ai_avatars')
-        .select(sql`count(*)`.as('count'))
-        .executeTakeFirst();
-
-      if (Number(avatarsCount?.count || 0) === 0) {
-        const avatars = [
-          {
-            slug: 'malika',
-            display_name: 'Malika',
-            dialect_label: 'Toshkent shevasi',
-            language_code: 'uz-UZ',
-            avatar_image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
-            voice_model_id: 'uz-voice-malika-warm',
-            is_active: true,
-          },
-          {
-            slug: 'javohir',
-            display_name: 'Javohir',
-            dialect_label: 'Adabiy oʻzbek',
-            language_code: 'uz-UZ',
-            avatar_image_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
-            voice_model_id: 'uz-voice-javohir-dynamic',
-            is_active: true,
-          },
-          {
-            slug: 'dilnoza',
-            display_name: 'Dilnoza',
-            dialect_label: 'Samarqand / Vodiy',
-            language_code: 'uz-UZ',
-            avatar_image_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
-            voice_model_id: 'uz-voice-dilnoza-friendly',
-            is_active: true,
-          },
-          {
-            slug: 'timur',
-            display_name: 'Timur',
-            dialect_label: 'Rus tili (Toshkent)',
-            language_code: 'ru-UZ',
-            avatar_image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-            voice_model_id: 'ru-voice-timur-energetic',
-            is_active: true,
-          },
-        ];
-
-        for (const av of avatars) {
-          await this._db.insertInto('ai_avatars').values(av).execute();
-        }
-        this.logger.log(`Seeded 4 Central Asian AI presenter avatars.`);
       }
 
       const firstUser = await this._db

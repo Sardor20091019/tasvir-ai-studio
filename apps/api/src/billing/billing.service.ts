@@ -25,7 +25,7 @@ export const TOKEN_PLANS: Record<string, PlanConfig> = {
     nameUz: 'Boshlangʻich Tokenlar',
     credits: 10,
     description: 'Yangi boshlagan Uzum va Telegram sotuvchilari uchun',
-    features: ['10 ta HD video', 'Barcha 4 ta AI boshlovchi', '9:16 formati', 'Subtitrlar bilan'],
+    features: ['10 ta HD video', 'CapCut professional muharrir', '9:16 formati', 'Subtitrlar bilan'],
   },
   shop_pro: {
     id: 'shop_pro',

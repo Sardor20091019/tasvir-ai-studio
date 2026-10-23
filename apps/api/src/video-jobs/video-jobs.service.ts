@@ -37,18 +37,13 @@ export class VideoJobsService {
   }
 
   async getAvatars(): Promise<AiAvatar[]> {
-    return await this.db
-      .selectFrom('ai_avatars')
-      .selectAll()
-      .where('is_active', '=', true)
-      .orderBy('display_name', 'asc')
-      .execute();
+    return [];
   }
 
   async createRenderJob(dto: {
     userId: string;
     productId: string;
-    avatarId: string;
+    avatarId?: string;
     platformPreset: string;
     scriptTone: string;
     scriptText: string;
@@ -60,16 +55,6 @@ export class VideoJobsService {
 
     const platformPreset = ALLOWED_PRESETS.has(dto.platformPreset) ? dto.platformPreset : 'uzum_9_16';
     const scriptTone = ALLOWED_TONES.has(dto.scriptTone) ? dto.scriptTone : 'discount_hook';
-
-    const avatar = await this.db
-      .selectFrom('ai_avatars')
-      .select(['id', 'is_active'])
-      .where('id', '=', dto.avatarId)
-      .executeTakeFirst();
-
-    if (!avatar || !avatar.is_active) {
-      throw new BadRequestException('Tanlangan AI boshlovchi mavjud emas yoki faol emas');
-    }
 
     const job = await this.db.transaction().execute(async (trx) => {
       const user = await trx
@@ -101,14 +86,14 @@ export class VideoJobsService {
         .values({
           user_id: dto.userId,
           product_id: dto.productId,
-          avatar_id: dto.avatarId,
+          avatar_id: dto.avatarId || null,
           platform_preset: platformPreset,
           script_tone: scriptTone,
           script_text: scriptText,
           status: 'queued',
           progress_percent: 0,
           credits_charged: 1,
-          audio_preview_url: `/api/video-jobs/audio-mock/${dto.avatarId}`,
+          audio_preview_url: null,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -126,7 +111,7 @@ export class VideoJobsService {
   private async processJobAsync(jobId: string) {
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    const steps = [
+    const steps: Array<{ status: string; progress: number; delay: number; outputUrl?: string | null }> = [
       { status: 'analyzing', progress: 25, delay: 1800 },
       { status: 'synthesizing_voice', progress: 55, delay: 2400 },
       { status: 'lip_syncing', progress: 85, delay: 2800 },
@@ -134,7 +119,7 @@ export class VideoJobsService {
         status: 'completed',
         progress: 100,
         delay: 1500,
-        outputUrl: 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4',
+        outputUrl: null,
       },
     ];
 

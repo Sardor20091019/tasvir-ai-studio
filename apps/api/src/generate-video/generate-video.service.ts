@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import * as crypto from 'crypto';
 import * as path from 'path';
@@ -45,8 +45,30 @@ export class GenerateVideoService {
     };
   }
 
+  async planScenes(params: {
+    prompt: string;
+    dramaLevel?: string;
+  }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
+    const { client, activeKey } = this.getGeminiClient();
+    if (!activeKey) {
+      throw new BadRequestException(
+        'Gemini API kaliti sozlanmagan. Haqiqiy AI ssenariy yaratish uchun serverda GEMINI_API_KEY oʻrnatilishi shart.',
+      );
+    }
+
+    const scenes = await this.generateDramaScenesWithLLM(client, activeKey, params.prompt);
+    const totalDurationSeconds = scenes.reduce((acc, s) => acc + s.durationSeconds, 0);
+
+    return {
+      prompt: params.prompt,
+      scenes,
+      totalDurationSeconds,
+    };
+  }
+
   async startGeneration(params: {
     prompt: string;
+    scenes?: DramaScene[];
     aspectRatio?: AspectRatioType;
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
@@ -54,6 +76,11 @@ export class GenerateVideoService {
     const jobId = `drama_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const aspectRatio: AspectRatioType = '9:16';
     const includeBackgroundMusic = params.includeBackgroundMusic === true;
+
+    const initialScenes = Array.isArray(params.scenes) && params.scenes.length > 0 ? params.scenes : [];
+    const totalDurationSeconds = initialScenes.length > 0
+      ? initialScenes.reduce((acc, s) => acc + s.durationSeconds, 0)
+      : 16;
 
     const job: DramaVideoGenerationJob = {
       jobId,
@@ -64,15 +91,15 @@ export class GenerateVideoService {
       bgMusicTrack: 'EMIN & JONY — «Камин» (Fireplace)',
       status: 'queued',
       progress: 5,
-      currentStepMessage: 'Google Veo 3.1 dramatik video ad loyihasi navbatga qoʻyildi...',
-      scenes: [],
-      totalDurationSeconds: 16,
+      currentStepMessage: 'Google Veo 3.1 dramatik video loyihasi navbatga qoʻyildi...',
+      scenes: initialScenes,
+      totalDurationSeconds,
       createdAt: new Date().toISOString(),
     };
 
     this.jobs.set(jobId, job);
     this.logger.log(
-      `Created Veo 3.1 drama ad job ${jobId} (Model: veo-3.1-lite-generate, 9:16, Music: ${includeBackgroundMusic ? 'ON (EMIN & JONY - Kamin)' : 'OFF'})`,
+      `Created Veo 3.1 drama job ${jobId} (Model: veo-3.1-lite-generate, 9:16, Music: ${includeBackgroundMusic ? 'ON (EMIN & JONY - Kamin)' : 'OFF'}, Pre-confirmed scenes: ${initialScenes.length})`,
     );
 
     this.processJobAsync(jobId).catch((err) => {
@@ -108,17 +135,26 @@ export class GenerateVideoService {
 
     const { client, activeKey } = this.getGeminiClient();
 
-    job.status = 'framing_drama_scenes';
-    job.progress = 20;
-    job.currentStepMessage = 'Dramatik LLM tizimi ssenariyni keskin emotsional sahnalarga ajratmoqda...';
+    let scenes = job.scenes;
+    if (!scenes || scenes.length === 0) {
+      job.status = 'framing_drama_scenes';
+      job.progress = 20;
+      job.currentStepMessage = 'Dramatik LLM tizimi ssenariyni keskin emotsional sahnalarga ajratmoqda...';
 
-    const scenes = await this.generateDramaScenesWithLLM(client, activeKey, job.prompt);
-    job.scenes = scenes;
+      scenes = await this.generateDramaScenesWithLLM(client, activeKey, job.prompt);
+      job.scenes = scenes;
+    }
 
     let accumulatedTime = 0;
     const masterKaraokeTimeline: KaraokeWord[] = [];
 
-    scenes.forEach((scene) => {
+    scenes.forEach((scene, idx) => {
+      if (!scene.karaokeSubtitles || scene.karaokeSubtitles.length === 0) {
+        scene.karaokeSubtitles = this.generateFallbackKaraoke(
+          scene.dialogueScript || scene.caption || `Sahna ${idx + 1}`,
+          scene.durationSeconds,
+        );
+      }
       scene.karaokeSubtitles.forEach((kw: KaraokeWord) => {
         masterKaraokeTimeline.push({
           word: kw.word,
@@ -147,7 +183,6 @@ export class GenerateVideoService {
       job.progress = 40 + Math.floor((i / scenes.length) * 30);
 
       const clipOutputPath = path.join(tempDir, `scene_${scene.sceneIndex}.mp4`);
-      let clipGenerated = false;
 
       if (activeKey) {
         try {
@@ -204,7 +239,6 @@ export class GenerateVideoService {
 
         scene.localClipPath = clipOutputPath;
         generatedClipPaths.push(clipOutputPath);
-        clipGenerated = true;
       } catch (synthErr: any) {
         this.logger.error(`Error synthesizing clip for scene ${scene.sceneIndex}: ${synthErr.message}`);
       }
@@ -233,7 +267,7 @@ export class GenerateVideoService {
 
     job.progress = 90;
     job.status = 'saving_to_cloud';
-    job.currentStepMessage = 'Master video UploadThing doimiy CDN xotirasiga yuklanmoqda...';
+    job.currentStepMessage = 'Master video CDN va doimiy xotiraga yuklanmoqda...';
 
     let finalCdnUrl: string | null = null;
     try {
@@ -242,13 +276,31 @@ export class GenerateVideoService {
         videoBuffer,
         `veo-3.1-drama-${jobId}.mp4`,
       );
-      this.logger.log(`Veo 3.1 master drama video uploaded to UploadThing CDN: ${finalCdnUrl}`);
+      if (finalCdnUrl) {
+        this.logger.log(`Veo 3.1 master drama video uploaded to UploadThing CDN: ${finalCdnUrl}`);
+      }
     } catch (uploadErr: any) {
       this.logger.warn(`UploadThing upload notice: ${uploadErr.message}`);
     }
 
     if (!finalCdnUrl) {
-      finalCdnUrl = 'https://n6ogfqlb21.ufs.sh/f/e4WrEcObdaG3xQRkL5D1FbQuz7SaXsDfAioc3JZvk59ORCG4';
+      try {
+        const publicDir = path.resolve(process.cwd(), 'apps/web/public/generated-videos');
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        const localFilename = `veo-3.1-drama-${jobId}.mp4`;
+        const localDestPath = path.join(publicDir, localFilename);
+        fs.copyFileSync(masterOutputPath, localDestPath);
+        finalCdnUrl = `/generated-videos/${localFilename}`;
+        this.logger.log(`Saved master video locally to public directory: ${finalCdnUrl}`);
+      } catch (localSaveErr: any) {
+        this.logger.error(`Failed to save video locally: ${localSaveErr.message}`);
+      }
+    }
+
+    if (!finalCdnUrl) {
+      throw new Error('Master videoni saqlashda xatolik yuz berdi');
     }
 
     job.status = 'completed';
@@ -266,127 +318,71 @@ export class GenerateVideoService {
     activeKey: string,
     userPrompt: string,
   ): Promise<DramaScene[]> {
+    if (!activeKey) {
+      throw new BadRequestException(
+        'Gemini API kaliti topilmadi. AI ssenariy yaratish uchun serverda GEMINI_API_KEY sozlanishi shart.',
+      );
+    }
+
     const cleanPrompt = userPrompt
       .replace(/[\r\n\t]+/g, ' ')
       .replace(/[<>{}\\]/g, '')
       .trim()
       .slice(0, 1000);
 
-    const fallbackDramaScenes: DramaScene[] = [
-      {
-        sceneIndex: 1,
-        actTitle: '1-Sahna: Shubhali Koʻz Qarash & Xiyonat Alomatlari',
-        emotion: 'Shubha, xiyonat alomati va keskin sukunat',
-        tensionLevel: 8,
-        durationSeconds: 5,
-        cinematicPrompt: `Dramatic slow motion close-up of a person looking heartbroken, dark cinematic shadow, vertical 9:16 ratio, tears forming in eyes, betrayal atmosphere for ${cleanPrompt}`,
-        dialogueScript: 'Sen meni aldayotgan eding... Har bir soʻzing yolgʻonmidi?',
-        caption: 'Har bir soʻzing yolgʻonmidi?',
-        karaokeSubtitles: [
-          { word: 'Sen', startSec: 0.2, endSec: 0.8 },
-          { word: 'meni', startSec: 0.9, endSec: 1.5 },
-          { word: 'aldayotgan', startSec: 1.6, endSec: 2.7 },
-          { word: 'eding...', startSec: 2.8, endSec: 3.5 },
-          { word: 'Yolgʻonmidi?', startSec: 3.6, endSec: 4.8 },
-        ],
-      },
-      {
-        sceneIndex: 2,
-        actTitle: '2-Sahna: Koʻz Yoshlar & Keskin Kulminatsiya',
-        emotion: 'Yurak ezilishi, yuzdagi koʻz yosh va dramatik burilish',
-        tensionLevel: 10,
-        durationSeconds: 6,
-        cinematicPrompt: `Extreme emotional close-up vertical 9:16 portrait, a single tear slowly falling down a cheek, cinematic rain reflections, intense heartbreak regarding ${cleanPrompt}`,
-        dialogueScript: 'Endi kech! Qaytish yoʻli yoʻq, koʻz yoshlarimni kechira olmaysan!',
-        caption: 'Endi kech! Qaytish yoʻli yoʻq...',
-        karaokeSubtitles: [
-          { word: 'Endi', startSec: 0.2, endSec: 0.9 },
-          { word: 'kech!', startSec: 1.0, endSec: 1.7 },
-          { word: 'Qaytish', startSec: 1.8, endSec: 2.7 },
-          { word: 'yoʻli', startSec: 2.8, endSec: 3.4 },
-          { word: 'yoʻq,', startSec: 3.5, endSec: 4.3 },
-          { word: 'kechirmayman!', startSec: 4.4, endSec: 5.8 },
-        ],
-      },
-      {
-        sceneIndex: 3,
-        actTitle: '3-Sahna: Gʻolibona Najot & Mahsulotning Qahramonlik Kadri',
-        emotion: 'Gʻalaba, qatʼiyat va oliy darajadagi gʻoliblik',
-        tensionLevel: 9,
-        durationSeconds: 5,
-        cinematicPrompt: `Cinematic vertical 9:16 golden hour lighting, wiping away the tear, holding up ${cleanPrompt} with powerful confident posture, cinematic triumph and redemption`,
-        dialogueScript: 'Men oʻzimga munosibini tanladim. Endi faqat eng yaxshisi!',
-        caption: 'Men oʻzimga munosibini tanladim!',
-        karaokeSubtitles: [
-          { word: 'Men', startSec: 0.2, endSec: 0.8 },
-          { word: 'oʻzimga', startSec: 0.9, endSec: 1.7 },
-          { word: 'munosibini', startSec: 1.8, endSec: 2.9 },
-          { word: 'tanladim.', startSec: 3.0, endSec: 3.8 },
-          { word: 'Eng', startSec: 3.9, endSec: 4.3 },
-          { word: 'yaxshisi!', startSec: 4.4, endSec: 4.9 },
-        ],
-      },
-    ];
-
-    if (!activeKey) {
-      return fallbackDramaScenes;
-    }
-
     try {
       this.logger.log(`Invoking Gemini LLM for Drama Framing Engine on "${cleanPrompt}"`);
       const response: any = await client.models.generateContent({
         model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-        contents: `You are an elite cinematic drama commercial director specializing in viral 9:16 Reels product ads.
-Structure an intense 3-scene drama commercial about this product topic: "${cleanPrompt}".
+        contents: `You are an elite cinematic drama commercial director specializing in viral 9:16 vertical product ads.
+Structure an intense 3-scene drama commercial directly based on this user product/topic: "${cleanPrompt}".
 Format instructions:
-1. Every scene must have high emotional stakes (e.g. betrayal tropes, confrontation, crying/tears, intense cinematic tension, and victorious turnaround).
+1. Every scene must have high emotional stakes tailored to this specific product (e.g. betrayal, rejection, intense dilemma, tears/crying, and cathartic triumphant resolution).
 2. The durationSeconds of each scene MUST be strictly between 4 and 8 seconds.
 3. Provide word-by-word timed karaoke subtitles for each scene, where startSec and endSec are within the scene duration.
-4. Provide cinematicPrompt tailored for Google Veo 3.1 ("veo-3.1-lite-generate") with 9:16 vertical composition.
+4. Provide cinematicPrompt tailored for Google Veo 3.1 with 9:16 vertical composition.
+5. All text (actTitle, emotion, dialogueScript, caption, karaoke words) should be natural Uzbek (or matching the prompt language).
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON in this exact structure:
 {
   "scenes": [
     {
       "sceneIndex": 1,
-      "actTitle": "Act 1: The Suspicion / Betrayal Hint",
-      "emotion": "Heartbroken suspicion and cold distance",
+      "actTitle": "1-Sahna: ...",
+      "emotion": "...",
       "tensionLevel": 8,
       "durationSeconds": 5,
-      "cinematicPrompt": "Vertical 9:16 close up, moody shadows, tears in eyes...",
-      "dialogueScript": "Sen meni aldayotgan eding...",
-      "caption": "Short caption 1",
+      "cinematicPrompt": "Vertical 9:16 close up...",
+      "dialogueScript": "...",
+      "caption": "...",
       "karaokeSubtitles": [
-        { "word": "Sen", "startSec": 0.2, "endSec": 0.9 },
-        { "word": "meni", "startSec": 1.0, "endSec": 1.8 }
+        { "word": "...", "startSec": 0.2, "endSec": 0.9 }
       ]
     },
     {
       "sceneIndex": 2,
-      "actTitle": "Act 2: The Heartbreaking Tear / Confrontation",
-      "emotion": "Crying, dramatic peak tension",
+      "actTitle": "2-Sahna: ...",
+      "emotion": "...",
       "tensionLevel": 10,
       "durationSeconds": 6,
-      "cinematicPrompt": "Vertical 9:16 portrait, tear rolling down cheek...",
-      "dialogueScript": "Endi kech! Qaytish yo'li yo'q...",
-      "caption": "Short caption 2",
+      "cinematicPrompt": "Vertical 9:16...",
+      "dialogueScript": "...",
+      "caption": "...",
       "karaokeSubtitles": [
-        { "word": "Endi", "startSec": 0.2, "endSec": 1.0 },
-        { "word": "kech!", "startSec": 1.1, "endSec": 2.2 }
+        { "word": "...", "startSec": 0.2, "endSec": 1.0 }
       ]
     },
     {
       "sceneIndex": 3,
-      "actTitle": "Act 3: Cathartic Resolution & Product Hero Shot",
-      "emotion": "Redemption, confident triumph",
+      "actTitle": "3-Sahna: ...",
+      "emotion": "...",
       "tensionLevel": 9,
       "durationSeconds": 5,
-      "cinematicPrompt": "Vertical 9:16 golden lighting, victorious smile holding product...",
-      "dialogueScript": "Men o'zimga munosibini tanladim!",
-      "caption": "Short caption 3",
+      "cinematicPrompt": "Vertical 9:16 golden hour...",
+      "dialogueScript": "...",
+      "caption": "...",
       "karaokeSubtitles": [
-        { "word": "Men", "startSec": 0.2, "endSec": 0.9 },
-        { "word": "munosibini", "startSec": 1.0, "endSec": 2.2 }
+        { "word": "...", "startSec": 0.2, "endSec": 0.9 }
       ]
     }
   ]
@@ -399,8 +395,8 @@ Respond ONLY with valid JSON:
 
       if (response && response.text) {
         const parsed = JSON.parse(response.text.replace(/```json|```/g, '').trim());
-        if (Array.isArray(parsed?.scenes) && parsed.scenes.length >= 3) {
-          const validatedScenes: DramaScene[] = parsed.scenes.slice(0, 3).map((s: any, idx: number) => {
+        if (Array.isArray(parsed?.scenes) && parsed.scenes.length >= 2) {
+          const validatedScenes: DramaScene[] = parsed.scenes.map((s: any, idx: number) => {
             const duration = Math.max(4, Math.min(Number(s.durationSeconds) || 5, 8));
             return {
               sceneIndex: idx + 1,
@@ -417,15 +413,15 @@ Respond ONLY with valid JSON:
             };
           });
 
-          this.logger.log(`LLM successfully structured 3 high-intensity drama scenes for prompt.`);
+          this.logger.log(`LLM successfully structured ${validatedScenes.length} dynamic drama scenes for prompt.`);
           return validatedScenes;
         }
       }
+      throw new Error('Gemini javobidan ssenariy sahnalarini ajratib boʻlmadi');
     } catch (llmErr: any) {
-      this.logger.warn(`Gemini LLM drama framing notice: ${llmErr.message}. Using robust fallback script.`);
+      this.logger.error(`Gemini LLM drama framing error: ${llmErr.message}`);
+      throw new BadRequestException(`Gemini AI ssenariyni yaratishda xatolik yuz berdi: ${llmErr.message}`);
     }
-
-    return fallbackDramaScenes;
   }
 
   private generateFallbackKaraoke(text: string, durationSec: number): KaraokeWord[] {

@@ -19,23 +19,9 @@ export class SpeechSynthPlayer {
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 160));
-      if (avatarSlug === 'timur') {
-        utterance.lang = 'ru-RU';
-        utterance.pitch = 0.95;
-        utterance.rate = 1.05;
-      } else if (avatarSlug === 'malika') {
-        utterance.lang = 'uz-UZ';
-        utterance.pitch = 1.15;
-        utterance.rate = 1.0;
-      } else if (avatarSlug === 'javohir') {
-        utterance.lang = 'uz-UZ';
-        utterance.pitch = 0.85;
-        utterance.rate = 1.0;
-      } else {
-        utterance.lang = 'uz-UZ';
-        utterance.pitch = 1.05;
-        utterance.rate = 1.05;
-      }
+      utterance.lang = avatarSlug?.startsWith('ru') ? 'ru-RU' : 'uz-UZ';
+      utterance.pitch = 1.05;
+      utterance.rate = 1.0;
 
       const interval = setInterval(() => {
         if (!this.isPlaying) {

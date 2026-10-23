@@ -21,8 +21,7 @@ export interface TemplateItem {
   imageUrl: string;
   tone: 'discount_hook' | 'quality_review' | 'short_reels';
   platform: string;
-  avatarSlug: string;
-  scriptExcerptUz: string;
+    scriptExcerptUz: string;
   scriptExcerptRu: string;
 }
 
@@ -37,7 +36,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
     tone: 'discount_hook',
     platform: 'uzum_9_16',
-    avatarSlug: 'malika',
     scriptExcerptUz: 'Salom! Uzum Marketda ulgurib qoling! Mashhur krossovkalar atigi 450,000 soʻm...',
     scriptExcerptRu: 'Привет! Успейте заказать на Uzum Market кроссовки всего за 450,000 сум...',
   },
@@ -51,7 +49,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
     tone: 'quality_review',
     platform: 'uzum_9_16',
-    avatarSlug: 'dilnoza',
     scriptExcerptUz: 'Assalomu alaykum! Xonatlas liboslarimiz yangi partiyasi yetib keldi...',
     scriptExcerptRu: 'Здравствуйте! Новая коллекция традиционных платьев из шелкового атласа...',
   },
@@ -65,7 +62,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
     tone: 'short_reels',
     platform: 'instagram_reels',
-    avatarSlug: 'javohir',
     scriptExcerptUz: 'Tezda koʻring! Trenddagi Ultra aqlli soat atigi 290,000 soʻm va naushnik sovgʻa!',
     scriptExcerptRu: 'Смотрите! Трендовые смарт-часы Ultra всего 290,000 сум с подарком!',
   },
@@ -79,7 +75,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
     tone: 'quality_review',
     platform: 'telegram_ad',
-    avatarSlug: 'malika',
     scriptExcerptUz: 'Xushboʻy ifori 48 soat saqlanib qoluvchi oq mushk parfyumi haqida...',
     scriptExcerptRu: 'Стойкий аромат белого мускуса, который держится до 48 часов...',
   },
@@ -93,7 +88,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80',
     tone: 'discount_hook',
     platform: 'uzum_9_16',
-    avatarSlug: 'javohir',
     scriptExcerptUz: 'Oshxonangiz uchun eng kerakli yordamchi — endi bepul yetkazib berish bilan!',
     scriptExcerptRu: 'Незаменимый помощник на кухне с бесплатной доставкой за 1 день!',
   },
@@ -107,7 +101,6 @@ export const TEMPLATES: TemplateItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80',
     tone: 'quality_review',
     platform: 'instagram_reels',
-    avatarSlug: 'dilnoza',
     scriptExcerptUz: 'Onajonlar uchun eng qulay va yengil aravacha bilan tanishing...',
     scriptExcerptRu: 'Самая легкая и маневренная коляска для удобных прогулок с малышом...',
   },
