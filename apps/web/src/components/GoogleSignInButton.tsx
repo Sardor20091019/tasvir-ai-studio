@@ -71,12 +71,15 @@ export function GoogleSignInButton({
 
     const handleCredential = async (response: { credential: string }) => {
       if (!isMounted) return;
-      const effectiveTurnstile = turnstileToken || 'cf_test_pass_token';
+      if (!turnstileToken) {
+        onError?.(new Error('Cloudflare Turnstile tekshiruvidan oʻtish shart'));
+        return;
+      }
       setIsLoading(true);
       try {
         const res = await api.googleLogin({
           credential: response.credential,
-          turnstileToken: effectiveTurnstile,
+          turnstileToken,
         });
         if (res?.user) {
           onSuccess(res.user);
@@ -152,7 +155,10 @@ export function GoogleSignInButton({
   }, [clientId, locale]);
 
   const handleCustomPopupLogin = () => {
-    const effectiveTurnstile = turnstileToken || 'cf_test_pass_token';
+    if (!turnstileToken) {
+      onError?.(new Error('Cloudflare Turnstile tekshiruvidan oʻtish shart'));
+      return;
+    }
     setIsLoading(true);
 
     if (window.google?.accounts?.oauth2) {
@@ -174,7 +180,7 @@ export function GoogleSignInButton({
                 const userInfo = await userInfoRes.json();
                 const res = await api.googleLogin({
                   credential: tokenResponse.access_token,
-                  turnstileToken: effectiveTurnstile,
+                  turnstileToken,
                   email: userInfo.email,
                   name: userInfo.name || 'Google Merchant',
                   googleId: userInfo.sub,
@@ -183,7 +189,7 @@ export function GoogleSignInButton({
                 onSuccess(res.user);
               } catch (e) {
                 console.error('Failed fetching Google userinfo:', e);
-                fallbackToVerified();
+                onError?.(e);
               } finally {
                 setIsLoading(false);
               }
@@ -201,27 +207,9 @@ export function GoogleSignInButton({
 
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
-    }
-
-    fallbackToVerified();
-  };
-
-  const fallbackToVerified = async () => {
-    const effectiveTurnstile = turnstileToken || 'cf_test_pass_token';
-    try {
-      const res = await api.googleLogin({
-        credential: 'mock_demo_credential_google',
-        turnstileToken: effectiveTurnstile,
-        email: 'user@google.com',
-        name: 'Google Foydalanuvchisi',
-        googleId: `google_oauth_sub_${Date.now()}`,
-      });
-      onSuccess(res.user);
-    } catch (e) {
-      console.error(e);
-      onError?.(e);
-    } finally {
+    } else {
       setIsLoading(false);
+      onError?.(new Error('Google tizimiga ulanishda xatolik yuz berdi'));
     }
   };
 

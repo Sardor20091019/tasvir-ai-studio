@@ -208,8 +208,8 @@ export const api = {
     avatarUrl?: string;
     turnstileToken?: string;
   }): Promise<{ user: User; token: string }> {
-    if (!payload.turnstileToken) {
-      payload.turnstileToken = 'cf_test_pass_session';
+    if (!payload?.turnstileToken) {
+      throw new Error('Cloudflare Turnstile tekshiruvidan oʻtish shart');
     }
 
     const saveSession = (user: User, token: string) => {
@@ -259,25 +259,17 @@ export const api = {
         }
         return data;
       }
-    } catch {}
+      const fbErr = await fallbackRes.json().catch(() => null);
+      if (fallbackRes.status === 400 || fallbackRes.status === 401) {
+        throw new Error(fbErr?.message || 'Google autentifikatsiyasida xatolik');
+      }
+    } catch (fbErr: any) {
+      if (fbErr?.message && !fbErr.message.includes('fetch') && !fbErr.message.includes('NetworkError')) {
+        throw fbErr;
+      }
+    }
 
-    // 3. Resilient client session fallback
-    const fallbackUser: User = {
-      id: payload.googleId || `usr_${Date.now()}`,
-      email: payload.email || 'user@google.com',
-      full_name: payload.name || 'Google User',
-      avatar_url: payload.avatarUrl || null,
-      telegram_id: null,
-      locale: 'uz',
-      role: 'user',
-      plan_tier: 'starter',
-      credits_balance: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    const token = `token_${Date.now()}`;
-    saveSession(fallbackUser, token);
-    return { user: fallbackUser, token };
+    throw new Error('Server bilan ulanishda xatolik. Qaytadan urinib koʻring.');
   },
 
   async verifyOtp(phoneNumber: string, code: string): Promise<{ user: User; token: string }> {

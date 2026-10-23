@@ -112,18 +112,29 @@ describe('Security Regression & Remediation Tests', () => {
     }
   });
 
-  test('VULN-05: Turnstile Dev Bypass Token must be rejected in production', async () => {
+  test('VULN-05: Turnstile Dev Bypass Token and failures must be rejected in all environments (No Bypass)', async () => {
     const { AuthService } = await import('../src/auth/auth.service');
     const mockDb: any = {};
     const authService = new AuthService(mockDb);
 
-    const prevEnv = process.env.NODE_ENV;
+    // Bypass tokens must be rejected
+    const bypassResult = await authService.verifyTurnstile('cf_dev_bypass_12345');
+    assert.equal(bypassResult, false, 'Bypass token must return false');
+
+    // Missing token must return false
+    const missingResult = await authService.verifyTurnstile(undefined);
+    assert.equal(missingResult, false, 'Missing token must return false');
+
+    // When Cloudflare network / verification fails, must return false (no bypass)
+    const originalFetch = global.fetch;
     try {
-      process.env.NODE_ENV = 'production';
-      const result = await authService.verifyTurnstile('cf_test_pass_fake_token');
-      assert.equal(result, false, 'Dev bypass token must return false in production');
+      global.fetch = async () => {
+        throw new Error('Cloudflare network unreachable');
+      };
+      const failedResult = await authService.verifyTurnstile('some_turnstile_token');
+      assert.equal(failedResult, false, 'Must strictly return false when Cloudflare fails');
     } finally {
-      process.env.NODE_ENV = prevEnv;
+      global.fetch = originalFetch;
     }
   });
 

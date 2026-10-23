@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, AlertCircle, RotateCcw } from 'lucide-react';
 import { LocaleType } from '../types';
 
 interface TurnstileProps {
@@ -55,53 +55,58 @@ export function Turnstile({
       ? '1x00000000000000000000AA'
       : '0x4AAAAAAFdvkOhmRvnl6lUT');
 
+  const renderWidget = () => {
+    if (!containerRef.current || !window.turnstile) return;
+
+    try {
+      if (widgetIdRef.current) {
+        try {
+          window.turnstile.remove(widgetIdRef.current);
+        } catch (e) {}
+        widgetIdRef.current = null;
+      }
+
+      containerRef.current.innerHTML = '';
+      const id = window.turnstile.render(containerRef.current, {
+        sitekey: effectiveSiteKey,
+        theme: 'auto',
+        size: 'normal',
+        callback: (token: string) => {
+          setIsVerified(true);
+          setHasError(false);
+          setIsLoaded(true);
+          onVerify(token);
+        },
+        'expired-callback': () => {
+          setIsVerified(false);
+          onExpire?.();
+        },
+        'error-callback': (err: any) => {
+          console.warn('Cloudflare Turnstile error:', err);
+          setIsVerified(false);
+          setHasError(true);
+          onError?.(err);
+        },
+      });
+      widgetIdRef.current = id;
+      setIsLoaded(true);
+    } catch (e) {
+      console.warn('Turnstile render exception:', e);
+      setHasError(true);
+      onError?.(e);
+    }
+  };
+
+  const handleRetry = () => {
+    setHasError(false);
+    setIsVerified(false);
+    setIsLoaded(false);
+    onExpire?.();
+    renderWidget();
+  };
+
   useEffect(() => {
     let isMounted = true;
-
-    // Auto-verify fallback if Cloudflare takes too long or is blocked
-    const timeoutTimer = setTimeout(() => {
-      if (isMounted && !isVerified) {
-        setIsLoaded(true);
-      }
-    }, 2500);
-
-    const renderWidget = () => {
-      if (!containerRef.current || !window.turnstile || widgetIdRef.current) return;
-
-      try {
-        containerRef.current.innerHTML = '';
-        const id = window.turnstile.render(containerRef.current, {
-          sitekey: effectiveSiteKey,
-          theme: 'auto',
-          size: 'normal',
-          callback: (token: string) => {
-            if (isMounted) {
-              setIsVerified(true);
-              setHasError(false);
-              onVerify(token);
-            }
-          },
-          'expired-callback': () => {
-            if (isMounted) {
-              setIsVerified(false);
-              onExpire?.();
-            }
-          },
-          'error-callback': (err: any) => {
-            console.warn('Cloudflare Turnstile warning/error:', err);
-            if (isMounted) {
-              setHasError(true);
-              onError?.(err);
-            }
-          },
-        });
-        widgetIdRef.current = id;
-        setIsLoaded(true);
-      } catch (e) {
-        console.warn('Turnstile render exception:', e);
-        if (isMounted) setHasError(true);
-      }
-    };
 
     const SCRIPT_ID = 'cf-turnstile-script';
     let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
@@ -117,18 +122,24 @@ export function Turnstile({
           renderWidget();
         }
       };
+      script.onerror = () => {
+        if (isMounted) {
+          setHasError(true);
+        }
+      };
       document.head.appendChild(script);
     } else {
       if (window.turnstile) {
         renderWidget();
       } else {
-        script.addEventListener('load', renderWidget);
+        script.addEventListener('load', () => {
+          if (isMounted) renderWidget();
+        });
       }
     }
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutTimer);
       if (widgetIdRef.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetIdRef.current);
@@ -152,25 +163,30 @@ export function Turnstile({
         </div>
       )}
 
-      {(hasError || (!isVerified && isLoaded && !widgetIdRef.current)) && (
-        <button
-          type="button"
-          onClick={() => {
-            setIsVerified(true);
-            setHasError(false);
-            onVerify('cf_dev_bypass_' + Date.now());
-          }}
-          className="mt-2 px-3 py-1.5 rounded-lg border border-coral/40 bg-coral/10 hover:bg-coral/20 text-coral text-xs font-semibold flex items-center gap-1.5 transition-colors"
-        >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          <span>
-            {locale === 'uz'
-              ? 'Xavfsizlik tekshiruvini tasdiqlash (Bypass)'
-              : locale === 'en'
-              ? 'Confirm security verification (Bypass)'
-              : 'Подтвердить проверку безопасности'}
-          </span>
-        </button>
+      {/* When Cloudflare fails: show error & retry button (NO bypass!) */}
+      {hasError && !isVerified && (
+        <div className="flex flex-col items-center gap-2 mt-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-center animate-in fade-in duration-200 w-full max-w-[320px]">
+          <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 font-medium">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            <span>
+              {locale === 'uz'
+                ? 'Cloudflare Turnstile tekshiruvida xatolik yuz berdi'
+                : locale === 'en'
+                ? 'Cloudflare Turnstile verification failed'
+                : 'Ошибка проверки Cloudflare Turnstile'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-ink text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-ink-muted" />
+            <span>
+              {locale === 'uz' ? 'Qayta urinish' : locale === 'en' ? 'Retry' : 'Повторить'}
+            </span>
+          </button>
+        </div>
       )}
 
       {isVerified && (
@@ -188,4 +204,3 @@ export function Turnstile({
     </div>
   );
 }
-

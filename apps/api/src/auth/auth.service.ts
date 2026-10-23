@@ -14,31 +14,23 @@ export class AuthService {
 
   async verifyTurnstile(token?: string, remoteip?: string): Promise<boolean> {
     if (!token) {
-      if (process.env.NODE_ENV === 'production') return false;
-      return true;
+      return false;
     }
 
-    const secretKey = process.env.TURNSTILE_SECRET_KEY;
-    if (!secretKey) {
-      if (process.env.NODE_ENV === 'production') {
-        this.logger.error('TURNSTILE_SECRET_KEY is not configured in production!');
-        return false;
-      }
-      return true;
-    }
-
+    // Strictly reject any bypass tokens
     if (
-      token.startsWith('cf_test_pass_') ||
-      token.startsWith('cf_dev_') ||
+      token.startsWith('cf_dev_bypass_') ||
       token === 'test_dev_bypass_token' ||
       token.includes('bypass')
     ) {
-      if (process.env.NODE_ENV === 'production') {
-        this.logger.warn('Turnstile test bypass token rejected in production environment.');
-        return false;
-      }
-      this.logger.log('Turnstile dev test token accepted in non-production.');
-      return true;
+      this.logger.warn('Turnstile bypass token strictly rejected.');
+      return false;
+    }
+
+    const secretKey = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAAFdvkDC021HoBq0VPu3HTgzFuP4';
+    if (!secretKey) {
+      this.logger.error('TURNSTILE_SECRET_KEY is not configured!');
+      return false;
     }
 
     try {
@@ -57,8 +49,9 @@ export class AuthService {
       this.logger.log(`Cloudflare Turnstile verification result: ${data.success}`);
       return Boolean(data.success);
     } catch (err: any) {
-      this.logger.warn(`Turnstile verify network error: ${err.message}.`);
-      return process.env.NODE_ENV !== 'production';
+      // When Cloudflare fails or times out: STRICTLY DO NOT BYPASS
+      this.logger.error(`Turnstile verify network error: ${err.message}. Verification rejected.`);
+      return false;
     }
   }
 

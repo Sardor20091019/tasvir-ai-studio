@@ -25,11 +25,53 @@ export async function POST(req: NextRequest) {
         const data = await apiRes.json();
         return NextResponse.json(data, { status: apiRes.status });
       }
+
+      // If NestJS responded with an error (e.g. Turnstile failure), return it strictly - do NOT bypass!
+      const errData = await apiRes.json().catch(() => null);
+      return NextResponse.json(
+        errData || { message: 'Cloudflare Turnstile tekshiruvidan oʻtish shart' },
+        { status: apiRes.status },
+      );
     } catch {
-      // NestJS backend offline, continue to direct DB handler
+      // NestJS backend offline / network unreachable, continue to direct DB handler
     }
 
-    // 2. Direct PostgreSQL resolution
+    // 2. Strict Turnstile verification for direct DB fallback
+    if (!body?.turnstileToken || body.turnstileToken.includes('bypass')) {
+      return NextResponse.json(
+        { message: 'Cloudflare Turnstile tekshiruvidan oʻtish shart (Botlardan himoya)' },
+        { status: 400 },
+      );
+    }
+
+    const cfSecret = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAAFdvkDC021HoBq0VPu3HTgzFuP4';
+    try {
+      const formData = new URLSearchParams();
+      formData.append('secret', cfSecret);
+      formData.append('response', body.turnstileToken);
+
+      const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      const cfData: any = await cfRes.json();
+      if (!cfData?.success) {
+        return NextResponse.json(
+          { message: 'Cloudflare Turnstile tekshiruvidan oʻtmadi' },
+          { status: 400 },
+        );
+      }
+    } catch (cfErr: any) {
+      // Strict: when Cloudflare fails, do NOT bypass
+      return NextResponse.json(
+        { message: 'Cloudflare Turnstile xizmatida xatolik yuz berdi. Qayta urinib koʻring.' },
+        { status: 400 },
+      );
+    }
+
+    // 3. Direct PostgreSQL resolution
     let email = (body.email || '').trim().toLowerCase();
     let name = body.name || 'Google User';
     let picture = body.avatarUrl || null;
