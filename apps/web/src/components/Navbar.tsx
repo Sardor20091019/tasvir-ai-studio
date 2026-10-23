@@ -62,7 +62,7 @@ export function Navbar({
     en: {
       studio: 'STUDIO',
       prompt: 'VEO ENGINE',
-      editor: 'CAPCUT EDITOR',
+      editor: 'VIDEO EDITOR',
       templates: 'TEMPLATES',
       pricing: 'PRICING',
       library: 'ARCHIVE',
@@ -86,7 +86,7 @@ export function Navbar({
   }[locale] || {
     studio: 'STUDIO',
     prompt: 'VEO ENGINE',
-    editor: 'CAPCUT EDITOR',
+    editor: 'VIDEO EDITOR',
     templates: 'TEMPLATES',
     pricing: 'PRICING',
     library: 'ARCHIVE',
@@ -97,8 +97,7 @@ export function Navbar({
   };
 
   const navItems: { key: NavTabType; label: string; accent?: boolean; badge?: string }[] = [
-    { key: 'studio', label: t.studio },
-    { key: 'prompt', label: t.prompt, accent: true },
+    { key: 'prompt', label: t.prompt, accent: true, badge: 'OMNI 1.1' },
     { key: 'editor', label: t.editor, badge: 'PRO' },
     { key: 'templates', label: t.templates },
     { key: 'pricing', label: t.pricing },
@@ -113,7 +112,7 @@ export function Navbar({
           {/* LEFT — Brand mark */}
           <div className="flex items-center gap-8">
             <button
-              onClick={() => setActiveTab('studio')}
+              onClick={() => setActiveTab('prompt')}
               className="flex items-center gap-3 group"
             >
               {/* Logomark — sharp square */}

@@ -23,8 +23,11 @@ export interface DramaScene {
 export interface DramaVideoGenerationJob {
   jobId: string;
   prompt: string;
+  productImageUrl?: string;
+  imageUrl?: string;
   aspectRatio: '9:16';
-  modelTier: 'veo-3.1-lite-generate';
+  resolution?: string;
+  modelTier: string;
   includeBackgroundMusic: boolean;
   bgMusicTrack: string;
   status:

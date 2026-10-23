@@ -17,6 +17,7 @@ export interface ConcatOptions {
   backgroundMusicPath?: string;
   includeBackgroundMusic: boolean;
   totalDurationSeconds: number;
+  resolution?: string;
 }
 
 @Injectable()
@@ -27,6 +28,53 @@ export class FfmpegConcatService {
     return ffmpegPath;
   }
 
+  getResolutionDimensions(resolution: string = '360p'): {
+    width: number;
+    height: number;
+    scaleFilter: string;
+    captionY: number;
+    boxY: number;
+    boxW: number;
+    boxH: number;
+    fontSize: number;
+  } {
+    const res = (resolution || '360p').toLowerCase();
+    if (res === '1080p' || res === '1080') {
+      return {
+        width: 1080,
+        height: 1920,
+        scaleFilter: 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1',
+        captionY: 1660,
+        boxY: 1600,
+        boxW: 1000,
+        boxH: 180,
+        fontSize: 48,
+      };
+    }
+    if (res === '720p' || res === '720') {
+      return {
+        width: 720,
+        height: 1280,
+        scaleFilter: 'scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1',
+        captionY: 1100,
+        boxY: 1060,
+        boxW: 660,
+        boxH: 120,
+        fontSize: 32,
+      };
+    }
+    return {
+      width: 360,
+      height: 640,
+      scaleFilter: 'scale=360:640:force_original_aspect_ratio=decrease,pad=360:640:(ow-iw)/2:(oh-ih)/2,setsar=1',
+      captionY: 550,
+      boxY: 530,
+      boxW: 330,
+      boxH: 60,
+      fontSize: 16,
+    };
+  }
+
   async concatScenes(options: ConcatOptions): Promise<string> {
     const {
       sceneClipPaths,
@@ -34,6 +82,7 @@ export class FfmpegConcatService {
       backgroundMusicPath,
       includeBackgroundMusic,
       totalDurationSeconds,
+      resolution,
     } = options;
 
     if (!sceneClipPaths || sceneClipPaths.length === 0) {
@@ -70,7 +119,7 @@ export class FfmpegConcatService {
 
     if (shouldMixMusic && backgroundMusicPath) {
       this.logger.log(
-        `Overlaying background music: "Kamin" by EMIN & JONY from ${backgroundMusicPath} (duration: ${totalDurationSeconds}s)`,
+        `Overlaying background audio track from ${backgroundMusicPath} (duration: ${totalDurationSeconds}s)`,
       );
       ffmpegArgs.push(
         '-stream_loop',
@@ -89,9 +138,12 @@ export class FfmpegConcatService {
       ffmpegArgs.push('-map', '0:v', '-map', '0:a?');
     }
 
+    const dims = this.getResolutionDimensions(resolution);
+    this.logger.log(`Encoding concatenated master video at target resolution: ${dims.width}x${dims.height} (${resolution || '360p'})`);
+
     ffmpegArgs.push(
       '-vf',
-      'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1',
+      dims.scaleFilter,
       '-c:v',
       'libx264',
       '-preset',
@@ -143,9 +195,11 @@ export class FfmpegConcatService {
     sceneIndex: number;
     tensionLevel: number;
     caption: string;
+    resolution?: string;
   }): Promise<string> {
-    const { outputPath, sceneIndex, caption } = params;
+    const { outputPath, sceneIndex, caption, resolution } = params;
     const duration = Math.max(4, Math.min(params.durationSeconds || 5, 8));
+    const dims = this.getResolutionDimensions(resolution);
 
     const outDir = path.dirname(outputPath);
     if (!fs.existsSync(outDir)) {
@@ -165,13 +219,13 @@ export class FfmpegConcatService {
       '-f',
       'lavfi',
       '-i',
-      `color=c=${color}:s=1080x1920:d=${duration}:r=30`,
+      `color=c=${color}:s=${dims.width}x${dims.height}:d=${duration}:r=30`,
       '-f',
       'lavfi',
       '-i',
       `sine=frequency=${freq}:duration=${duration}`,
       '-filter_complex',
-      `[0:v]noise=alls=12:allf=t+u,drawbox=x=40:y=1600:w=1000:h=180:color=black@0.65:t=fill,drawtext=text='${safeCaption}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=1660[v];[1:a]volume=0.4,afade=t=in:st=0:d=1,afade=t=out:st=${duration - 1}:d=1[a]`,
+      `[0:v]noise=alls=12:allf=t+u,drawbox=x=15:y=${dims.boxY}:w=${dims.boxW}:h=${dims.boxH}:color=black@0.65:t=fill,drawtext=text='${safeCaption}':fontcolor=white:fontsize=${dims.fontSize}:x=(w-text_w)/2:y=${dims.captionY}[v];[1:a]volume=0.4,afade=t=in:st=0:d=1,afade=t=out:st=${duration - 1}:d=1[a]`,
       '-map',
       '[v]',
       '-map',

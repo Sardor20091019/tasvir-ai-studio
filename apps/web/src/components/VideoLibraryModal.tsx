@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Film,
   Download,
@@ -12,8 +12,11 @@ import {
   AlertCircle,
   X,
   Scissors,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { VideoJob, LocaleType } from '../types';
+import { api } from '../lib/api';
 
 interface VideoLibraryModalProps {
   jobs: VideoJob[];
@@ -21,6 +24,7 @@ interface VideoLibraryModalProps {
   onClose?: () => void;
   onOpenStudio?: () => void;
   onEditJob?: (job: VideoJob) => void;
+  onUpdateJob?: (job: VideoJob) => void;
 }
 
 export function VideoLibraryModal({
@@ -29,15 +33,50 @@ export function VideoLibraryModal({
   onClose,
   onOpenStudio,
   onEditJob,
+  onUpdateJob,
 }: VideoLibraryModalProps) {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+
+  // Auto-poll any rendering or queued jobs
+  useEffect(() => {
+    const activeJobs = jobs.filter((j) => j.status !== 'completed' && j.status !== 'failed');
+    if (activeJobs.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const activeJob of activeJobs) {
+        try {
+          const statusData = await api.getPromptVideoStatus(activeJob.id);
+          if (statusData) {
+            const isDone = statusData.status === 'completed';
+            const isFailed = statusData.status === 'failed';
+
+            const updated: VideoJob = {
+              ...activeJob,
+              status: statusData.status || activeJob.status,
+              progress_percent: statusData.progress ?? (isDone ? 100 : activeJob.progress_percent),
+              step_message: statusData.currentStepMessage || activeJob.step_message,
+              output_video_url: statusData.videoUrl || statusData.downloadUrl || activeJob.output_video_url,
+              completed_at: isDone ? new Date().toISOString() : activeJob.completed_at,
+              error_message: isFailed ? (statusData.error || 'Video yaratishda xatolik yuz berdi') : null,
+            };
+
+            onUpdateJob?.(updated);
+          }
+        } catch (pollErr) {
+          // ignore transient network errors
+        }
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [jobs, onUpdateJob]);
 
   const t = {
     uz: {
       title: 'Mening Videolarim (Render Tarixi)',
       sub: 'Tayyorlangan va navbatdagi 9:16 video reklamalar arxivi',
       emptyTitle: 'Hozircha videolar yoʻq',
-      emptySub: 'Studiyada mahsulot tanlab, birinchi AI video reklamangizni yarating!',
+      emptySub: 'Veo Engine orqali birinchi kinematografik AI videongizni yarating!',
       createFirst: 'Birinchi videoni yaratish',
       download: 'MP4 Yuklash',
       preview: 'Koʻrish',
@@ -49,7 +88,7 @@ export function VideoLibraryModal({
       title: 'My Videos (Render History)',
       sub: 'Archive of generated and in-progress 9:16 video advertisements',
       emptyTitle: 'No videos created yet',
-      emptySub: 'Select a product in Studio and generate your first AI video ad!',
+      emptySub: 'Create your first cinematic AI video in Veo Engine!',
       createFirst: 'Create your first video',
       download: 'Download MP4',
       preview: 'Preview',
@@ -61,7 +100,7 @@ export function VideoLibraryModal({
       title: 'Мои видео (История рендеров)',
       sub: 'Архив готовых и обрабатываемых 9:16 видео-роликов',
       emptyTitle: 'Видео пока нет',
-      emptySub: 'Выберите товар в студии и создайте свой первый AI ролик!',
+      emptySub: 'Создайте свой первый кинематографический AI ролик в Veo Engine!',
       createFirst: 'Создать первое видео',
       download: 'Скачать MP4',
       preview: 'Смотреть',
@@ -73,7 +112,7 @@ export function VideoLibraryModal({
     title: 'My Videos',
     sub: 'Archive of generated 9:16 video advertisements',
     emptyTitle: 'No videos yet',
-    emptySub: 'Select a product in Studio to generate your first AI video!',
+    emptySub: 'Generate your first AI video with Veo Engine!',
     createFirst: 'Create first video',
     download: 'Download MP4',
     preview: 'Preview',
@@ -123,6 +162,8 @@ export function VideoLibraryModal({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => {
             const isCompleted = job.status === 'completed';
+            const isFailed = job.status === 'failed';
+            const isRendering = !isCompleted && !isFailed;
             const videoSrc = job.output_video_url || '';
 
             return (
@@ -131,28 +172,87 @@ export function VideoLibraryModal({
                 className="rounded-xl border border-border bg-canvas overflow-hidden flex flex-col justify-between hover:shadow-tactile transition-all"
               >
                 <div className="relative aspect-[9/12] w-full bg-black/90 overflow-hidden group">
-                  <video
-                    src={videoSrc}
-                    playsInline
-                    loop
-                    muted
-                    autoPlay
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2.5 left-2.5">
+                  {isCompleted && videoSrc ? (
+                    <video
+                      src={videoSrc}
+                      playsInline
+                      loop
+                      muted
+                      autoPlay
+                      className="w-full h-full object-cover"
+                    />
+                  ) : isFailed ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-950/20 text-center">
+                      <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                      <p className="text-xs text-red-400 font-medium line-clamp-3">
+                        {job.error_message || (locale === 'en' ? 'Rendering failed' : 'Render jarayonida xatolik')}
+                      </p>
+                    </div>
+                  ) : (
+                    /* In-Progress Cinematic Rendering Animation */
+                    <div className="w-full h-full flex flex-col items-center justify-between p-4 bg-gradient-to-b from-surface via-obsidian to-surface relative overflow-hidden">
+                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/30 via-transparent to-transparent animate-pulse" />
+                      
+                      <div className="w-full flex justify-end relative z-10">
+                        <span className="px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white text-[10px] font-mono font-bold">
+                          9:16 • 360p
+                        </span>
+                      </div>
+
+                      {/* Center Animated Indicator */}
+                      <div className="flex flex-col items-center justify-center space-y-2.5 relative z-10 my-auto">
+                        <div className="relative flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin" />
+                          <Film className="h-5 w-5 text-amber-500 absolute" />
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-mono font-black text-amber-500 tracking-tight">
+                            {job.progress_percent || 15}%
+                          </div>
+                          <p className="text-[10px] font-mono text-ink-muted line-clamp-2 max-w-[180px] mt-1 leading-snug">
+                            {job.step_message || t.statusRendering}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Progress bar across bottom of media */}
+                      <div className="w-full relative z-10">
+                        <div className="w-full h-1.5 rounded-full bg-surface-raised overflow-hidden border border-border/40">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
+                            style={{ width: `${Math.max(10, Math.min(job.progress_percent || 15, 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top Status Tag */}
+                  <div className="absolute top-2.5 left-2.5 z-20">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         isCompleted
                           ? 'bg-emerald-500 text-white'
-                          : 'bg-amber-500 text-white animate-pulse'
+                          : isFailed
+                          ? 'bg-red-500 text-white'
+                          : 'bg-amber-500 text-obsidian shadow-xs animate-pulse'
                       }`}
                     >
-                      {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                      <span>{isCompleted ? t.statusCompleted : t.statusRendering}</span>
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : isFailed ? (
+                        <AlertCircle className="h-3 w-3" />
+                      ) : (
+                        <Clock className="h-3 w-3" />
+                      )}
+                      <span>
+                        {isCompleted
+                          ? t.statusCompleted
+                          : isFailed
+                          ? (locale === 'en' ? 'Failed' : 'Xatolik')
+                          : `${t.statusRendering} (${job.progress_percent || 15}%)`}
+                      </span>
                     </span>
-                  </div>
-                  <div className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-mono px-2 py-0.5 rounded">
-                    9:16
                   </div>
                 </div>
 
@@ -165,6 +265,20 @@ export function VideoLibraryModal({
                     <span>1 kredit</span>
                   </div>
                 </div>
+
+                {isRendering && (
+                  <div className="p-3 pt-0">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-mono font-bold text-amber-700 dark:text-amber-300">
+                        <span>{locale === 'en' ? 'Processing scenes...' : 'Sahnalar render qilinmoqda...'}</span>
+                        <span>{job.progress_percent || 15}%</span>
+                      </div>
+                      <p className="text-[10px] font-mono text-ink-muted truncate">
+                        {job.step_message || 'Google Gemini Omni 1.1 Flash'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {isCompleted && (
                   <div className="p-3 pt-0 space-y-1.5">

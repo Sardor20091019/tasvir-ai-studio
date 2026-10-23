@@ -45,8 +45,9 @@ export interface VideoJob {
   platform_preset: string;
   script_tone: string;
   script_text: string;
-  status: 'queued' | 'analyzing' | 'synthesizing_voice' | 'lip_syncing' | 'completed' | 'failed';
+  status: string;
   progress_percent: number;
+  step_message?: string;
   audio_preview_url: string | null;
   output_video_url: string | null;
   credits_charged: number;
@@ -140,7 +141,8 @@ export interface DramaVideoJob {
   jobId: string;
   prompt: string;
   aspectRatio: '9:16';
-  modelTier: 'veo-3.1-lite-generate';
+  resolution?: string;
+  modelTier: string;
   includeBackgroundMusic: boolean;
   bgMusicTrack: string;
   status: string;

@@ -25,6 +25,7 @@ function generateFallbackKaraoke(text: string, durationSec: number): KaraokeWord
 export async function generateDramaScenesWithGemini(
   userPrompt: string,
   dramaLevel = 'high_tension',
+  productImageUrl?: string,
 ): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
   const cleanPrompt = (userPrompt || 'Mahsulot dramatik reklamasi')
     .replace(/[\r\n\t]+/g, ' ')
@@ -90,8 +91,9 @@ Respond ONLY with valid JSON in this exact structure:
   ]
 }`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      const model = process.env.GEMINI_MODEL || 'gemini-omni-1.1-flash';
+      let res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -105,11 +107,36 @@ Respond ONLY with valid JSON in this exact structure:
         },
       );
 
+      if (!res.ok) {
+        res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: systemInstruction }] }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.8,
+              },
+            }),
+          },
+        );
+      }
+
       if (res.ok) {
         const data: any = await res.json();
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawText) {
-          const parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+          const cleaned = rawText.replace(/```json|```/gi, '').trim();
+          let parsed: any;
+          const firstBrace = cleaned.indexOf('{');
+          const lastBrace = cleaned.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+          } else {
+            parsed = JSON.parse(cleaned);
+          }
           if (Array.isArray(parsed?.scenes) && parsed.scenes.length >= 2) {
             const scenes: DramaScene[] = parsed.scenes.map((s: any, idx: number) => {
               const duration = Math.max(4, Math.min(Number(s.durationSeconds) || 5, 8));
@@ -202,10 +229,13 @@ export async function createDramaVideoJob(params: {
   prompt: string;
   scenes?: DramaScene[];
   aspectRatio?: '9:16';
+  resolution?: string;
   includeBackgroundMusic?: boolean;
   dramaLevel?: string;
 }): Promise<{ jobId: string; status: string; progress: number; message: string; model: string }> {
   const jobId = `drama_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const resolution = params.resolution || process.env.GEMINI_VIDEO_RESOLUTION || '360p';
+  const targetModel = process.env.GEMINI_VIDEO_MODEL || 'gemini-omni-1.1-flash';
 
   let scenes = params.scenes;
   if (!scenes || scenes.length === 0) {
@@ -233,9 +263,10 @@ export async function createDramaVideoJob(params: {
     jobId,
     prompt: params.prompt,
     aspectRatio: '9:16',
-    modelTier: 'veo-3.1-lite-generate',
+    resolution,
+    modelTier: targetModel,
     includeBackgroundMusic: params.includeBackgroundMusic ?? true,
-    bgMusicTrack: 'EMIN & JONY — «Камин» (Fireplace)',
+    bgMusicTrack: '',
     scenes,
     totalDurationSeconds,
     karaokeTimeline: masterKaraokeTimeline,
@@ -291,7 +322,8 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
       jobId: job.jobId,
       prompt: job.prompt,
       aspectRatio: '9:16',
-      modelTier: 'veo-3.1-lite-generate',
+      resolution: job.resolution || '360p',
+      modelTier: job.modelTier || 'gemini-omni-1.1-flash',
       includeBackgroundMusic: job.includeBackgroundMusic,
       bgMusicTrack: job.bgMusicTrack,
       status: 'framing_drama_scenes',
@@ -308,7 +340,8 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
       jobId: job.jobId,
       prompt: job.prompt,
       aspectRatio: '9:16',
-      modelTier: 'veo-3.1-lite-generate',
+      resolution: job.resolution || '360p',
+      modelTier: job.modelTier || 'gemini-omni-1.1-flash',
       includeBackgroundMusic: job.includeBackgroundMusic,
       bgMusicTrack: job.bgMusicTrack,
       status: 'generating_veo_clips',
@@ -325,7 +358,8 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
       jobId: job.jobId,
       prompt: job.prompt,
       aspectRatio: '9:16',
-      modelTier: 'veo-3.1-lite-generate',
+      resolution: job.resolution || '360p',
+      modelTier: job.modelTier || 'gemini-omni-1.1-flash',
       includeBackgroundMusic: job.includeBackgroundMusic,
       bgMusicTrack: job.bgMusicTrack,
       status: 'concatenating_master_video',
@@ -343,7 +377,8 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
     jobId: job.jobId,
     prompt: job.prompt,
     aspectRatio: '9:16',
-    modelTier: 'veo-3.1-lite-generate',
+    resolution: job.resolution || '360p',
+    modelTier: job.modelTier || 'gemini-omni-1.1-flash',
     includeBackgroundMusic: job.includeBackgroundMusic,
     bgMusicTrack: job.bgMusicTrack,
     status: 'completed',

@@ -563,6 +563,8 @@ export const api = {
 
   async planScenesFromPrompt(params: {
     prompt: string;
+    productImageUrl?: string;
+    imageUrl?: string;
     dramaLevel?: string;
   }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const res = await fetch(`${API_BASE}/generate-video/plan-scenes`, {
@@ -587,8 +589,11 @@ export const api = {
 
   async generateVideoFromPrompt(params: {
     prompt: string;
+    productImageUrl?: string;
+    imageUrl?: string;
     scenes?: DramaScene[];
     aspectRatio?: '9:16';
+    resolution?: string;
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
   }): Promise<{ jobId: string; status: string; progress: number; message: string; model?: string }> {
@@ -601,6 +606,7 @@ export const api = {
       body: JSON.stringify({
         ...params,
         aspectRatio: '9:16',
+        resolution: params.resolution || '360p',
       }),
     });
 

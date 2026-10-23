@@ -26,9 +26,12 @@ import {
   ArrowRight,
   RefreshCw,
   FileText,
+  Upload,
+  Image as ImageIcon,
+  X,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType, User, VideoEditorProject } from '../types';
+import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType, User, VideoEditorProject, VideoJob } from '../types';
 import { KaraokeSubtitles } from './KaraokeSubtitles';
 import { SUBTITLE_PRESETS } from './CapCutEditor';
 
@@ -36,12 +39,25 @@ interface PromptVideoGeneratorProps {
   locale?: LocaleType;
   user?: User | null;
   onRequireAuth?: () => void;
+  onJobStarted?: (job: VideoJob) => void;
   onVideoCreated?: (videoUrl: string) => void;
   onEditInCapCut?: (project: VideoEditorProject) => void;
+  initialPrompt?: string;
+  initialImage?: string;
 }
 
 const DRAMA_PROMPT_SUGGESTIONS = {
   uz: [
+    {
+      label: '🍓 Meva Kinolari: Berry va Qulupnay Suti (Studiya Reklamasi)',
+      prompt:
+        "Meva qishlogʻida yashovchi kichik qulupnay bola Berry va uning kasal boʻlib qolgan mehribon onasi haqidagi emotsional hikoya. Onasining xotirasi sifatida qolgan qulupnayli sut shishasi. Yakunda sokin xonadan chiroyli pushti fotostudiyaga oʻtadi: yogʻoch stolda qulupnayli sut shishasi, sekin oqayotgan qaymoqli sut, yaltiroq tomchilar va shior: 'Berry Milk. Shirin xotiralar doim siz bilan.'",
+    },
+    {
+      label: '💔 Qulupnay va Avokado Xiyonati (3D Pixar)',
+      prompt:
+        "Meva kinolari (Fruit Movie Maker) 3D Pixar uslubida: Qulupnay eri Avokadoni qahvaxonada kutilmaganda boshqa meva bilan ushlab oladi. Katta yaltiroq koʻzlar, achchiq koʻz yoshlar, emotsional janjal va kutilmagan keskin yakun!",
+    },
     {
       label: '💔 Xiyonat va Koʻz Yosh (AirPods Max)',
       prompt:
@@ -57,13 +73,18 @@ const DRAMA_PROMPT_SUGGESTIONS = {
       prompt:
         "Dramatik poyga va ogʻriqli sinov: Yolgʻonlar tufayli yiqilgan qahramon yangi Nike Pegasus 40 krossovkasida oyoqqa turadi va qasoskorona marraga yetib keladi. Uzum Marketda tezkor yetkazish.",
     },
-    {
-      label: '✨ Samarqand Ipak Libosi (Xonatlas)',
-      prompt:
-        "Kelinlik koʻz yoshlari va ajdodlar anʼanasi: Toʻydan oldingi keskin dramatik daqiqa, Samarqand ipak xonatlasining goʻzalligi barcha xafagarchiliklarni unutdiradi.",
-    },
   ],
   en: [
+    {
+      label: '🍓 Fruit Movie: Berry Milk & Mom (With Studio Ad Ending)',
+      prompt:
+        "In a little fruit village, a small strawberry boy Berry made fresh strawberry milk for his sick mother. The room fell silent, and only her favorite strawberry milk bottle remained as a token of endless love. In the final scene, the screen fades into a gorgeous, softly lit pink commercial studio: the strawberry milk bottle on a wooden table, ribbon of milk swirling in slow motion, sparkling droplets, and the voiceover: 'Berry Milk. A little sweetness, a memory that stays.'",
+    },
+    {
+      label: '💔 Strawberry & Avocado Betrayal (3D Pixar)',
+      prompt:
+        "Fruit Movie Maker in 3D Pixar style: A sobbing strawberry catches her avocado husband cheating in a cafe. High drama, expressive CGI eyes, tears, emotional confrontation, and a shocking twist!",
+    },
     {
       label: '💔 Betrayal & Tears (AirPods Max)',
       prompt:
@@ -79,13 +100,18 @@ const DRAMA_PROMPT_SUGGESTIONS = {
       prompt:
         "Dramatic heartbreak and a relentless comeback: knocked down by rivals, the runner rises in Nike Pegasus 40 sneakers and crosses the finish line in glory.",
     },
-    {
-      label: '✨ Silk Khan-Atlas (Heritage)',
-      prompt:
-        "A bride crying before the wedding ceremony: the timeless beauty of handcrafted Samarkand silk khan-atlas dissolves all sorrow in pure celebration.",
-    },
   ],
   ru: [
+    {
+      label: '🍓 Фруктовая Драма: Клубничное Молоко и Мама (Финал с рекламой)',
+      prompt:
+        "Трогательная история про маленького клубничного мальчика Берри и его заболевшую маму, которой он готовил клубничное молоко. Бутылочка молока как символ вечной любви. Финал: экран переходит в мягко освещенную розовую студию, бутылочка на деревянном столе, молоко льется в замедленной съемке, сверкающие капли и слоган: 'Berry Milk. Капля сладости, память навсегда.'",
+    },
+    {
+      label: '💔 Клубника и Авокадо (3D Pixar)',
+      prompt:
+        "Fruit Movie Maker в стиле 3D Pixar: Плачущая клубника ловит своего мужа авокадо на измене в кафе. Буря эмоций, живые глаза, слезы, драматический конфликт и неожиданный финал!",
+    },
     {
       label: '💔 Предательство и Слёзы (AirPods Max)',
       prompt:
@@ -101,11 +127,6 @@ const DRAMA_PROMPT_SUGGESTIONS = {
       prompt:
         "Драматическое падение и триумфальный подъем: преданный герой встает на ноги в кроссовках Nike Pegasus 40 и первым пересекает финишную черту.",
     },
-    {
-      label: '✨ Шёлковый Хан-атлас (Традиции)',
-      prompt:
-        "Слёзы невесты перед свадьбой и прощание с отчим домом: эстетичный шёлковый хан-атлас ручной работы исцеляет все душевные сомнения.",
-    },
   ],
 };
 
@@ -113,39 +134,42 @@ export function PromptVideoGenerator({
   locale = 'uz',
   user,
   onRequireAuth,
+  onJobStarted,
   onVideoCreated,
   onEditInCapCut,
+  initialPrompt,
+  initialImage,
 }: PromptVideoGeneratorProps) {
   const t = {
     uz: {
-      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
-      title: 'Dramatik AI Mahsulot Reklamasi (Veo 3.1)',
+      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
+      title: 'Kinematografik AI Video (Gemini Omni 1.1)',
       subtitle:
-        'Google Veo 3.1 ("veo-3.1-lite-generate") orqali yuqori emotsional ziddiyat, xiyonat motivlari va koʻz yoshlar bilan toʻyingan 9:16 vertikal master video yarating.',
+        'Google Gemini Omni 1.1 Flash orqali yuqori emotsional ziddiyat, mahsulot integratsiyasi va 9:16 vertikal master video yarating.',
       promptLabel: 'Dramatik reklama gʻoyasi (Prompt)',
       promptPlaceholder:
         'Masalan: Xiyonat tufayli yigʻlayotgan qahramon va uning hayotini oʻzgartirgan kutilmagan sovgʻa...',
       suggestionsLabel: '🎭 Dramatik ssenariy gʻoyalari:',
-      aspectRatioLabel: 'Video formati (Majburiy 9:16 Vertikal):',
-      ratioLockedNote: 'Google Veo 3.1 vertikal 9:16 (1080x1920) formati Reels/TikTok/Uzum uchun mustahkamlangan.',
-      durationBadge: '3 ta drama sahna • 15–18 soniya (har biri 4–8s)',
+      aspectRatioLabel: 'Video formati va Aniqligi:',
+      ratioLockedNote: 'Gemini Omni 1.1 Flash vertikal 9:16 (360p).',
+      durationBadge: '3–8 sahna • Har biri 4–8 soniya',
       planScenarioBtn: '🧠 AI Ssenariy Yaratish (Gemini)',
       planningScenarioBtn: 'Gemini ssenariyni shakllantirmoqda...',
       scenarioReviewTitle: '🎬 AI Ssenariy Tayyorlandi (Tasdiqlang yoki Tahrirlang)',
       scenarioReviewSub:
         'AI har bir sahna uchun kadr va dialoglarni yaratdi. Matnlarni xohishingizga koʻra oʻzgartirishingiz mumkin. Tasdiqlangach, video render boshlanadi.',
-      confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Veo 3.1)',
-      renderingBtn: 'Google Veo 3.1 videoni render qilmoqda...',
+      confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Gemini Omni 1.1)',
+      renderingBtn: 'Gemini Omni 1.1 videoni render qilmoqda...',
       regenerateScenarioBtn: '🔄 Qayta Ssenariy Yozish',
       backToPromptBtn: '✏️ Promptni Oʻzgartirish',
       sceneNumber: 'Sahna',
       dialogueLabel: 'Ovozli dialog (Subtitr):',
       captionLabel: 'Kadr ustidagi sarlavha:',
       durationLabel: 'Davomiyligi:',
-      progressTitle: 'Google Veo 3.1 Dramatik Video Ishlab Chiqarilmoqda',
-      completedTitle: 'Dramatik Master Video Tayyorlandi!',
+      progressTitle: 'Gemini Omni 1.1 Flash Video Ishlab Chiqarilmoqda',
+      completedTitle: 'Kinematografik Master Video Tayyorlandi!',
       downloadBtn: 'MP4 Master Yuklab Olish',
-      createAnother: 'Yangi dramatik video yaratish',
+      createAnother: 'Yangi video yaratish',
       karaokeTitle: 'Karaoke Subtitr Rejimi:',
       karaokeDomMode: 'Dinamik Reels Matni',
       karaokeCanvasMode: 'Canvas Qatlami',
@@ -158,32 +182,32 @@ export function PromptVideoGenerator({
       placeholderSub: 'Dramatik prompt kiriting va avval AI ssenariyni shakllantiring.',
     },
     en: {
-      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
-      title: 'Dramatic AI Product Ads (Veo 3.1)',
+      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
+      title: 'Cinematic AI Video Ads (Gemini Omni 1.1 Flash)',
       subtitle:
-        'Create high-stakes 9:16 vertical master video ads with Google Veo 3.1 ("veo-3.1-lite-generate") featuring betrayal tropes, emotional tears, and victorious redemption.',
+        'Generate high-stakes 9:16 vertical video ads with Google Gemini Omni 1.1 Flash featuring emotional continuity, product finale, and resolution controls.',
       promptLabel: 'Dramatic Ad Idea (Prompt)',
       promptPlaceholder:
         'E.g., A protagonist crying after finding out they were betrayed, but a surprise product turns everything into victory...',
       suggestionsLabel: '🎭 Dramatic storyline concepts:',
-      aspectRatioLabel: 'Video Format (Strictly 9:16 Vertical):',
-      ratioLockedNote: 'Google Veo 3.1 vertical 9:16 (1080x1920) format locked for Reels, TikTok, and Uzum.',
-      durationBadge: '3 drama acts • 15–18 seconds (4–8s each)',
+      aspectRatioLabel: 'Video Format:',
+      ratioLockedNote: 'Gemini Omni 1.1 Flash vertical 9:16 (360p).',
+      durationBadge: '3–8 scenes • 4–8 seconds each',
       planScenarioBtn: '🧠 Generate AI Storyline (Gemini)',
       planningScenarioBtn: 'Gemini is framing scenes...',
       scenarioReviewTitle: '🎬 AI Storyline Ready (Review & Confirm)',
       scenarioReviewSub:
-        'AI drafted the 3 dramatic scenes and dialogue. You can tweak any script or caption before launching the video render.',
-      confirmAndRenderBtn: '✅ Confirm Scenario & Render Video (Veo 3.1)',
-      renderingBtn: 'Google Veo 3.1 rendering video...',
+        'AI drafted the dramatic scenes and dialogue. You can tweak any script or caption before launching the video render.',
+      confirmAndRenderBtn: '✅ Confirm Scenario & Render Video (Gemini Omni 1.1)',
+      renderingBtn: 'Gemini Omni 1.1 rendering video...',
       regenerateScenarioBtn: '🔄 Regenerate Storyline',
       backToPromptBtn: '✏️ Edit Prompt',
       sceneNumber: 'Scene',
       dialogueLabel: 'Dialogue / Voiceover Script:',
       captionLabel: 'Screen Caption:',
       durationLabel: 'Duration:',
-      progressTitle: 'Creating Dramatic Video with Google Veo 3.1',
-      completedTitle: 'Dramatic Master Video Ready!',
+      progressTitle: 'Creating Video with Google Gemini Omni 1.1 Flash',
+      completedTitle: 'Cinematic Master Video Ready!',
       downloadBtn: 'Download Master MP4',
       createAnother: 'Create another dramatic video',
       karaokeTitle: 'Karaoke Subtitle Mode:',
@@ -198,32 +222,32 @@ export function PromptVideoGenerator({
       placeholderSub: 'Enter a dramatic prompt and generate the AI scenes first.',
     },
     ru: {
-      badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
-      title: 'Драматическая AI Реклама Товаров (Veo 3.1)',
+      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
+      title: 'Кинематографический AI Видео Движок (Gemini Omni 1.1)',
       subtitle:
-        'Создайте вертикальный 9:16 мастер-ролик через Google Veo 3.1 ("veo-3.1-lite-generate") с высоким накалом страстей, слезами и тропом предательства.',
+        'Создайте вертикальный 9:16 ролик через Google Gemini Omni 1.1 Flash с высоким накалом страстей, слезами и студийным финалом.',
       promptLabel: 'Драматическая идея рекламы (Промпт)',
       promptPlaceholder:
         'Например: Герой плачет из-за предательства партнера, но спасение приходит в виде неожиданного товара...',
       suggestionsLabel: '🎭 Идеи драматических сюжетов:',
-      aspectRatioLabel: 'Формат видео (Строго 9:16 Вертикальный):',
-      ratioLockedNote: 'Формат Google Veo 3.1 9:16 (1080x1920) закреплен для Reels/TikTok/Uzum.',
-      durationBadge: '3 акта драмы • 15–18 сек (каждый от 4 до 8с)',
+      aspectRatioLabel: 'Формат видео:',
+      ratioLockedNote: 'Gemini Omni 1.1 Flash 9:16 (360p).',
+      durationBadge: '3–8 сцен • 4–8 сек каждая',
       planScenarioBtn: '🧠 Сгенерировать AI Сценарий (Gemini)',
       planningScenarioBtn: 'Gemini пишет драматический сценарий...',
       scenarioReviewTitle: '🎬 AI Сценарий Готов (Проверьте и Подтвердите)',
       scenarioReviewSub:
-        'AI составил 3 сцены с диалогами. Вы можете отредактировать фразы перед запуском финального рендера.',
-      confirmAndRenderBtn: '✅ Подтвердить Сценарий & Рендерить Видео (Veo 3.1)',
-      renderingBtn: 'Google Veo 3.1 рендерит сцены...',
+        'AI составил сцены с диалогами. Вы можете отредактировать фразы перед запуском финального рендера.',
+      confirmAndRenderBtn: '✅ Подтвердить Сценарий & Рендерить Видео (Gemini Omni 1.1)',
+      renderingBtn: 'Gemini Omni 1.1 рендерит сцены...',
       regenerateScenarioBtn: '🔄 Переписать Сценарий',
       backToPromptBtn: '✏️ Изменить Промпт',
       sceneNumber: 'Сцена',
       dialogueLabel: 'Озвучка / Диалог (Субтитры):',
       captionLabel: 'Текст на кадре:',
       durationLabel: 'Длительность:',
-      progressTitle: 'Идет создание драматического видео в Google Veo 3.1',
-      completedTitle: 'Драматический Мастер-Ролик Готов!',
+      progressTitle: 'Идет создание видео в Google Gemini Omni 1.1 Flash',
+      completedTitle: 'Кинематографический Мастер-Ролик Готов!',
       downloadBtn: 'Скачать Мастер MP4',
       createAnother: 'Создать новый ролик',
       karaokeTitle: 'Режим Караоке Субтитров:',
@@ -238,20 +262,20 @@ export function PromptVideoGenerator({
       placeholderSub: 'Введите промпт и сначала сгенерируйте AI сценарий.',
     },
   }[locale] || {
-    badge: 'GOOGLE VEO 3.1 & DRAMA ENGINE',
-    title: 'Dramatik AI Mahsulot Reklamasi (Veo 3.1)',
-    subtitle: 'Google Veo 3.1 orqali 9:16 vertikal video yarating.',
+    badge: 'Gemini Omni 1.1 Flash & Vision Engine',
+    title: 'Kinematografik AI Video (Gemini Omni 1.1)',
+    subtitle: 'Google Gemini Omni 1.1 Flash orqali 9:16 vertikal video yarating.',
     promptLabel: 'Dramatik reklama gʻoyasi (Prompt)',
     promptPlaceholder: 'Mahsulot haqida maʼlumot kiriting...',
     suggestionsLabel: '🎭 Tavsiya etilgan gʻoyalar:',
     aspectRatioLabel: 'Format: 9:16',
-    ratioLockedNote: '9:16 Vertikal format.',
-    durationBadge: '3 ta sahna • 15–18 soniya',
+    ratioLockedNote: '9:16 Vertikal format (360p).',
+    durationBadge: '3–8 sahna • 15–30 soniya',
     planScenarioBtn: '🧠 AI Ssenariy Yaratish (Gemini)',
     planningScenarioBtn: 'Gemini ssenariyni shakllantirmoqda...',
     scenarioReviewTitle: '🎬 AI Ssenariy Tayyorlandi',
     scenarioReviewSub: 'Matnlarni tahrirlab, tasdiqlang.',
-    confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Veo 3.1)',
+    confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Gemini Omni 1.1)',
     renderingBtn: 'Video render qilinmoqda...',
     regenerateScenarioBtn: '🔄 Qayta Ssenariy Yozish',
     backToPromptBtn: '✏️ Promptni Oʻzgartirish',
@@ -278,7 +302,46 @@ export function PromptVideoGenerator({
   const suggestions = DRAMA_PROMPT_SUGGESTIONS[locale] || DRAMA_PROMPT_SUGGESTIONS.uz;
 
   const [prompt, setPrompt] = useState(suggestions[0].prompt);
+  const [productImage, setProductImage] = useState<string | null>(null);
+  const resolution = '360p';
   const [subtitleMode, setSubtitleMode] = useState<'dom' | 'canvas'>('dom');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError(
+          locale === 'en'
+            ? 'Image file size exceeds 10MB limit.'
+            : locale === 'ru'
+            ? 'Размер изображения превышает 10 МБ.'
+            : 'Rasm hajmi 10MB dan oshmasligi kerak.',
+        );
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        if (uploadEvent.target?.result) {
+          setProductImage(uploadEvent.target.result as string);
+          setError(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveProductImage = () => {
+    setProductImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  useEffect(() => {
+    if (initialPrompt) setPrompt(initialPrompt);
+    if (initialImage) setProductImage(initialImage);
+  }, [initialPrompt, initialImage]);
 
   // AI-first generation & confirmation states
   const [plannedScenes, setPlannedScenes] = useState<DramaScene[] | null>(null);
@@ -360,6 +423,7 @@ export function PromptVideoGenerator({
     try {
       const res = await api.planScenesFromPrompt({
         prompt: prompt.trim(),
+        productImageUrl: productImage || undefined,
         dramaLevel: 'high_tension',
       });
 
@@ -406,10 +470,10 @@ export function PromptVideoGenerator({
     setProgress(10);
     setStatusMessage(
       locale === 'en'
-        ? 'Launching Google Veo 3.1 & dramatic storyline framing...'
+        ? `Launching Gemini Omni 1.1 Flash (${resolution}) & dramatic scene rendering...`
         : locale === 'ru'
-        ? 'Запуск Google Veo 3.1 и драматической раскадровки...'
-        : 'Google Veo 3.1 va dramatik sahnalar generatsiyasi boshlanmoqda...',
+        ? `Запуск Gemini Omni 1.1 Flash (${resolution}) и рендеринга сцен...`
+        : `Gemini Omni 1.1 Flash (${resolution}) orqali video generatsiyasi boshlanmoqda...`,
     );
     setResultVideo(null);
     setCurrentTime(0);
@@ -417,8 +481,10 @@ export function PromptVideoGenerator({
     try {
       const res = await api.generateVideoFromPrompt({
         prompt: prompt.trim(),
+        productImageUrl: productImage || undefined,
         scenes: plannedScenes,
         aspectRatio: '9:16',
+        resolution,
         includeBackgroundMusic: false,
       });
 
@@ -428,12 +494,34 @@ export function PromptVideoGenerator({
 
       setJobId(res.jobId);
       setProgress(res.progress || 15);
-      setStatusMessage(
+      const initialStepMsg =
         res.message ||
-          (locale === 'en'
-            ? 'Generating Google Veo 3.1 scenes...'
-            : 'Google Veo 3.1 sahnalari tayyorlanmoqda...'),
-      );
+        (locale === 'en'
+          ? `Generating scenes with Gemini Omni 1.1 Flash (${resolution})...`
+          : `Gemini Omni 1.1 Flash (${resolution}) sahnalari tayyorlanmoqda...`);
+      setStatusMessage(initialStepMsg);
+
+      const newJob: VideoJob = {
+        id: res.jobId,
+        user_id: user?.id || 'usr_demo',
+        product_id: 'p-drama',
+        platform_preset: '9:16 (360p)',
+        script_tone: 'gemini_omni',
+        script_text: prompt.trim().slice(0, 100),
+        status: res.status || 'queued',
+        progress_percent: res.progress || 10,
+        step_message: initialStepMsg,
+        audio_preview_url: null,
+        output_video_url: null,
+        credits_charged: 1,
+        error_message: null,
+        created_at: new Date().toISOString(),
+        completed_at: null,
+      };
+
+      if (onJobStarted) {
+        onJobStarted(newJob);
+      }
 
       startPolling(res.jobId);
     } catch (err: any) {
@@ -543,6 +631,102 @@ export function PromptVideoGenerator({
                 />
               </div>
 
+              {/* Product Photo Upload (Optional) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-surface-raised border border-border">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={handleFileUpload}
+                  disabled={isPlanningScenario || isRendering}
+                  className="hidden"
+                />
+
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-coral" />
+                    <span>
+                      {locale === 'en'
+                        ? 'Product Reference Photo (Optional)'
+                        : locale === 'ru'
+                        ? 'Фотография товара (Опционально)'
+                        : 'Mahsulot rasmi (Ixtiyoriy)'}
+                    </span>
+                  </label>
+                  {productImage && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProductImage}
+                      disabled={isPlanningScenario || isRendering}
+                      className="text-[11px] text-red-500 hover:text-red-600 flex items-center gap-1 font-semibold transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      {locale === 'en' ? 'Remove' : locale === 'ru' ? 'Удалить' : 'Oʻchirish'}
+                    </button>
+                  )}
+                </div>
+
+                {!productImage ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isPlanningScenario || isRendering}
+                    className="w-full py-3 px-4 rounded-xl border border-dashed border-border hover:border-coral/60 bg-surface hover:bg-coral/5 transition-all flex items-center justify-center gap-2.5 text-ink group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-coral/10 text-coral flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-ink">
+                        {locale === 'en'
+                          ? 'Upload your product image'
+                          : locale === 'ru'
+                          ? 'Загрузить фото вашего товара'
+                          : 'Mahsulotingiz rasmini yuklang'}
+                      </p>
+                      <p className="text-[10px] text-ink-muted">
+                        {locale === 'en'
+                          ? 'AI will feature this exact product in the emotional story and commercial studio finale'
+                          : locale === 'ru'
+                          ? 'AI встроит этот товар в сюжет и студийный рекламный финал'
+                          : 'AI ushbu mahsulotni emotsional ssenariy va yakuniy studiya reklamasiga joylaydi'}
+                      </p>
+                    </div>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface border border-coral/30">
+                    <img
+                      src={productImage}
+                      alt="Product preview"
+                      className="w-14 h-14 rounded-lg object-cover border border-border shrink-0 shadow-2xs"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {locale === 'en' ? 'Product Attached' : locale === 'ru' ? 'Товар прикреплен' : 'Mahsulot biriktirildi'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-ink-muted line-clamp-1 mt-1">
+                        {locale === 'en'
+                          ? 'Packaging & branding will be preserved throughout the story & studio ad'
+                          : locale === 'ru'
+                          ? 'Упаковка и стиль будут сохранены в сюжете и рекламном финале'
+                          : 'Qadoq va ranglar hikoya hamda studiya reklamasida toʻliq saqlanadi'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isPlanningScenario || isRendering}
+                      className="px-2.5 py-1 text-xs rounded-lg bg-surface-raised hover:bg-surface-overlay border border-border text-ink font-semibold shrink-0 transition-colors"
+                    >
+                      {locale === 'en' ? 'Change' : locale === 'ru' ? 'Изменить' : 'Almashtirish'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <span className="text-[11px] font-semibold text-ink-muted block">
                   {t.suggestionsLabel}
@@ -562,14 +746,14 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              <div className="space-y-2 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+              <div className="space-y-2.5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-heading font-bold text-ink flex items-center gap-1.5">
                     <Smartphone className="h-4 w-4 text-amber-500" />
                     <span>{t.aspectRatioLabel}</span>
                   </label>
                   <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-mono font-bold uppercase">
-                    Google Veo 3.1 • 9:16 (1080x1920)
+                    Gemini Omni 1.1 • 9:16 ({resolution})
                   </span>
                 </div>
                 <p className="text-[11px] text-ink-muted">
@@ -577,7 +761,7 @@ export function PromptVideoGenerator({
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border border-amber-400/40 text-ink text-xs font-bold shadow-2xs">
-                    📱 9:16
+                    📱 9:16 • 360p
                   </span>
                   <span className="text-xs text-ink-muted">
                     • {t.durationBadge}
@@ -666,7 +850,17 @@ export function PromptVideoGenerator({
                           className="font-heading font-bold text-xs sm:text-sm text-ink bg-transparent border-b border-transparent hover:border-border focus:border-coral focus:outline-none px-1 py-0.5 rounded transition-all"
                         />
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {idx === plannedScenes.length - 1 && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            {locale === 'en'
+                              ? '🎬 Product Ad Finale'
+                              : locale === 'ru'
+                              ? '🎬 Рекламный финал'
+                              : '🎬 Studiya reklamasi'}
+                          </span>
+                        )}
                         <span className="px-2 py-0.5 rounded-md bg-coral/10 text-coral text-[10px] font-bold">
                           ⚡ {scene.tensionLevel}/10
                         </span>

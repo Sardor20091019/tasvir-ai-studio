@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (API_BASE && API_BASE.startsWith('http')) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const apiRes = await fetch(`${API_BASE}/generate-video/plan-scenes`, {
           method: 'POST',
@@ -36,7 +36,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Direct Gemini AI execution (works seamlessly on real deployed website / Vercel)
-    const result = await generateDramaScenesWithGemini(body.prompt || '', body.dramaLevel);
+    const result = await generateDramaScenesWithGemini(
+      body.prompt || '',
+      body.dramaLevel,
+      body.productImageUrl || body.imageUrl,
+    );
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Plan scenes execution error:', error);

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (API_BASE && API_BASE.startsWith('http')) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const apiRes = await fetch(`${API_BASE}/generate-video`, {
           method: 'POST',

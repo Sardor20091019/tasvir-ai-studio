@@ -219,7 +219,7 @@ export function CapCutEditor({
   const [volume, setVolume] = useState<number>(1);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
-  const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9'>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<'9:16'>('9:16');
 
   // Timeline & UI state
   const [selectedCueId, setSelectedCueId] = useState<string | null>(null);
@@ -1486,7 +1486,7 @@ export function CapCutEditor({
                 CANVAS:
               </span>
               <button
-                onClick={() => setAspectRatio(aspectRatio === '9:16' ? '16:9' : '9:16')}
+                onClick={() => setAspectRatio(aspectRatio === '9:16' ? '9:16' : '9:16')}
                 className="px-2 py-0.5 rounded bg-surface border border-stroke text-ink text-[11px] font-mono font-bold hover:border-accent-warm transition-colors"
               >
                 {aspectRatio}

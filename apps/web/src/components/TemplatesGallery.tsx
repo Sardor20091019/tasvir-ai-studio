@@ -121,26 +121,26 @@ export function TemplatesGallery({
     uz: {
       badge: 'Tayyor Shablonlar Kolleksiyasi',
       title: 'Uzum Market va Reels uchun tasdiqlangan ssenariylar',
-      sub: 'Eng koʻp sotilgan tovarlar asosida tayyorlangan 9:16 video qoliplar. Bitta tugma orqali studiyaga oʻtkazing.',
-      useBtn: 'Studiyada ochish',
+      sub: 'Eng koʻp sotilgan tovarlar asosida tayyorlangan 9:16 video qoliplar. Bitta tugma orqali Veo 3.1 da yarating.',
+      useBtn: 'Veo 3.1 da ochish',
     },
     en: {
       badge: 'Curated Template Collection',
       title: 'Proven viral ad scripts for Uzum Market and Reels',
-      sub: 'High-converting 9:16 video templates based on top-selling e-commerce items. Load into Studio with one click.',
-      useBtn: 'Open in Studio',
+      sub: 'High-converting 9:16 video templates based on top-selling e-commerce items. Load into Veo Engine with one click.',
+      useBtn: 'Open in Veo Engine',
     },
     ru: {
       badge: 'Коллекция готовых шаблонов',
       title: 'Проверенные сценарии для Uzum Market и Reels',
-      sub: 'Готовые 9:16 видео-шаблоны для топовых категорий e-commerce. Загрузка в студию в один клик.',
-      useBtn: 'Открыть в студии',
+      sub: 'Готовые 9:16 видео-шаблоны для топовых категорий e-commerce. Загрузка в Veo Engine в один клик.',
+      useBtn: 'Открыть в Veo Engine',
     },
   }[locale] || {
     badge: 'Template Collection',
     title: 'Ad scripts for Uzum Market and Reels',
-    sub: 'High-converting 9:16 video templates. Load into Studio with one click.',
-    useBtn: 'Open in Studio',
+    sub: 'High-converting 9:16 video templates. Load into Veo Engine with one click.',
+    useBtn: 'Open in Veo Engine',
   };
 
   return (

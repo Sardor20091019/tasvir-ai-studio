@@ -54,7 +54,7 @@ export default function EditorPage() {
         <CapCutEditor
           locale={locale}
           user={user}
-          onBackToStudio={() => router.push('/?tab=studio')}
+          onBackToStudio={() => router.push('/?tab=prompt')}
         />
       </main>
 

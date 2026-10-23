@@ -17,7 +17,6 @@ import {
   Crown,
 } from 'lucide-react';
 import { Navbar, NavTabType } from '../components/Navbar';
-import { Studio } from '../components/Studio';
 import { TemplatesGallery, TemplateItem } from '../components/TemplatesGallery';
 import { PricingSection } from '../components/PricingSection';
 import { VideoLibraryModal } from '../components/VideoLibraryModal';
@@ -51,7 +50,23 @@ export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
 
-  const [jobs, setJobs] = useState<VideoJob[]>([]);
+  const [jobs, setJobs] = useState<VideoJob[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tasvir_jobs');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('tasvir_jobs', JSON.stringify(jobs));
+      } catch {}
+    }
+  }, [jobs]);
 
   useEffect(() => {
     api.getMe().then((u) => {
@@ -62,7 +77,7 @@ export default function HomePage() {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as NavTabType | null;
       if (tabParam) {
-        setActiveTab(tabParam);
+        setActiveTab(tabParam === ('studio' as any) ? 'prompt' : tabParam);
       }
     }
   }, []);
@@ -88,12 +103,22 @@ export default function HomePage() {
 
   const handleSelectTemplate = (template: TemplateItem) => {
     setSelectedTemplate(template);
-    setActiveTab('studio');
+    setActiveTab('prompt');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleJobCreated = (newJob: VideoJob) => {
-    setJobs((prev) => [newJob, ...prev]);
+    setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
+  };
+
+  const handleJobStarted = (newJob: VideoJob) => {
+    setJobs((prev) => [newJob, ...prev.filter((j) => j.id !== newJob.id)]);
+    setActiveTab('library');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUpdateJob = (updatedJob: VideoJob) => {
+    setJobs((prev) => prev.map((j) => (j.id === updatedJob.id ? updatedJob : j)));
   };
 
   const enterStudio = (tab: NavTabType = 'prompt') => {
@@ -110,7 +135,7 @@ export default function HomePage() {
       ctaPrimary: 'Studiyaga kirish',
       ctaSecondary: 'Namoyish ko\u02BBrish',
       statsLabel: ['RENDERING', 'FORMATLAR', 'ENGINE', 'ANIQLIK'],
-      statsValue: ['< 60s', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60s', '9:16 ', 'Veo 3.1', '1080p+'],
     },
     en: {
       overline: 'CINEMATIC AI VIDEO PLATFORM',
@@ -119,7 +144,7 @@ export default function HomePage() {
       ctaPrimary: 'Enter Studio',
       ctaSecondary: 'View Reel',
       statsLabel: ['RENDERING', 'FORMATS', 'ENGINE', 'RESOLUTION'],
-      statsValue: ['< 60s', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60s', '9:16', 'Veo 3.1', '1080p+'],
     },
     ru: {
       overline: 'КИНЕМАТОГРАФИЧЕСКАЯ AI ВИДЕО ПЛАТФОРМА',
@@ -128,7 +153,7 @@ export default function HomePage() {
       ctaPrimary: 'Войти в студию',
       ctaSecondary: 'Смотреть шоурил',
       statsLabel: ['РЕНДЕРИНГ', 'ФОРМАТЫ', 'ДВИЖОК', 'РАЗРЕШЕНИЕ'],
-      statsValue: ['< 60с', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60с', '9:16 ', 'Veo 3.1', '1080p+'],
     },
   }[locale]!;
 
@@ -137,19 +162,19 @@ export default function HomePage() {
       { label: 'Veo 3.1 Engine', desc: 'Google\u02BCning eng so\u02BBnggi generativ video modeli', num: '01' },
       { label: 'CapCut Video Studio', desc: 'Soniyama-soniya subtitrlarni professional tahrirlash', num: '02' },
       { label: 'Karaoke Subtitrlar', desc: 'Millisekund aniqlikdagi jonli matn animatsiyasi', num: '03' },
-      { label: 'Professional Eksport', desc: '9:16 vertikal va 16:9 keng formatlar', num: '04' },
+      { label: 'Professional Eksport', desc: '9:16 vertikal formatlar', num: '04' },
     ],
     en: [
       { label: 'Veo 3.1 Engine', desc: 'Google\u2019s latest generative video model with cinematic fidelity', num: '01' },
       { label: 'CapCut Video Editor', desc: 'Frame-accurate subtitle editing and dynamic karaoke styles', num: '02' },
       { label: 'Karaoke Captions', desc: 'Millisecond-precise synchronized text animation', num: '03' },
-      { label: 'Professional Export', desc: '9:16 vertical and 16:9 widescreen delivery formats', num: '04' },
+      { label: 'Professional Export', desc: '9:16 vertical delivery formats', num: '04' },
     ],
     ru: [
       { label: 'Движок Veo 3.1', desc: 'Новейшая генеративная видеомодель Google', num: '01' },
       { label: 'CapCut Видео Редактор', desc: 'Посекундное редактирование субтитров и стили караоке', num: '02' },
       { label: 'Караоке Субтитры', desc: 'Синхронизированная текстовая анимация с точностью до миллисекунд', num: '03' },
-      { label: 'Профессиональный Экспорт', desc: 'Форматы 9:16 вертикальный и 16:9 широкоэкранный', num: '04' },
+      { label: 'Профессиональный Экспорт', desc: 'Форматы 9:16 вертикальный', num: '04' },
     ],
   }[locale]!;
 
@@ -577,9 +602,9 @@ export default function HomePage() {
               <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">PLATFORM</div>
               <div className="space-y-2">
                 {[
-                  { label: 'Studio', tab: 'studio' as NavTabType },
                   { label: 'Veo Engine', tab: 'prompt' as NavTabType },
                   { label: 'Templates', tab: 'templates' as NavTabType },
+                  { label: 'Pricing', tab: 'pricing' as NavTabType },
                 ].map((item) => (
                   <button
                     key={item.tab}
@@ -639,38 +664,21 @@ export default function HomePage() {
 
   const studioContent = (
     <main className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8 pb-24 lg:pb-12 min-h-screen">
-      {activeTab === 'studio' && (
-        <div className="animate-in fade-in duration-200">
-          <Studio
-            user={user}
-            onUpdateUser={setUser}
-            locale={locale}
-            onOpenCheckout={() => setIsCheckoutOpen(true)}
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onJobCreated={handleJobCreated}
-            initialTemplate={
-              selectedTemplate
-                ? {
-                    productTitle: selectedTemplate.titleUz,
-                    category: selectedTemplate.category,
-                    priceUzs: selectedTemplate.priceUzs,
-                    discountBadge: selectedTemplate.discountBadge,
-                    imageUrl: selectedTemplate.imageUrl,
-                    tone: selectedTemplate.tone,
-                    platform: selectedTemplate.platform,
-                  }
-                : null
-            }
-          />
-        </div>
-      )}
-
-      {activeTab === 'prompt' && (
+      {(activeTab === 'prompt' || activeTab === ('studio' as any)) && (
         <div className="animate-in fade-in duration-200">
           <PromptVideoGenerator
             user={user}
             locale={locale}
+            initialPrompt={
+              selectedTemplate
+                ? locale === 'ru'
+                  ? selectedTemplate.scriptExcerptRu
+                  : selectedTemplate.scriptExcerptUz
+                : undefined
+            }
+            initialImage={selectedTemplate?.imageUrl}
             onRequireAuth={() => setIsAuthOpen(true)}
+            onJobStarted={handleJobStarted}
             onEditInCapCut={(proj) => {
               setCurrentEditorProject(proj);
               setActiveTab('editor');
@@ -683,7 +691,7 @@ export default function HomePage() {
                 product_id: 'p-prompt',
                 platform_preset: 'uzum_9_16',
                 script_tone: 'discount_hook',
-                script_text: 'Google Veo 3.1 Dramatic Video Ad',
+                script_text: 'Gemini Omni 1.1 Flash Video Ad',
                 status: 'completed',
                 progress_percent: 100,
                 audio_preview_url: null,
@@ -705,7 +713,7 @@ export default function HomePage() {
             locale={locale}
             user={user}
             initialProject={currentEditorProject}
-            onBackToStudio={() => setActiveTab('studio')}
+            onBackToStudio={() => setActiveTab('prompt')}
             onSave={(p) => setCurrentEditorProject(p)}
           />
         </div>
@@ -734,7 +742,8 @@ export default function HomePage() {
           <VideoLibraryModal
             jobs={jobs}
             locale={locale}
-            onOpenStudio={() => setActiveTab('studio')}
+            onUpdateJob={handleUpdateJob}
+            onOpenStudio={() => setActiveTab('prompt')}
             onEditJob={(job) => {
               setCurrentEditorProject({
                 id: job.id,

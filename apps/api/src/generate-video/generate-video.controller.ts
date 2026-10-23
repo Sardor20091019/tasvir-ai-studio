@@ -29,6 +29,8 @@ export class GenerateVideoController {
     @Body()
     body: {
       prompt: string;
+      productImageUrl?: string;
+      imageUrl?: string;
       dramaLevel?: string;
     },
   ) {
@@ -51,6 +53,7 @@ export class GenerateVideoController {
 
     return this.generateVideoService.planScenes({
       prompt,
+      productImageUrl: body.productImageUrl || body.imageUrl,
       dramaLevel: body.dramaLevel,
     });
   }
@@ -63,8 +66,11 @@ export class GenerateVideoController {
     @Body()
     body: {
       prompt: string;
+      productImageUrl?: string;
+      imageUrl?: string;
       scenes?: DramaScene[];
       aspectRatio?: AspectRatioType;
+      resolution?: string;
       includeBackgroundMusic?: boolean;
       dramaLevel?: string;
     },
@@ -88,8 +94,10 @@ export class GenerateVideoController {
 
     return this.generateVideoService.startGeneration({
       prompt,
+      productImageUrl: body.productImageUrl || body.imageUrl,
       scenes: body.scenes,
       aspectRatio: '9:16',
+      resolution: body.resolution,
       includeBackgroundMusic: body.includeBackgroundMusic,
       dramaLevel: body.dramaLevel,
     });
