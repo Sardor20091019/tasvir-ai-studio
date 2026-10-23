@@ -49,83 +49,85 @@ interface PromptVideoGeneratorProps {
 const DRAMA_PROMPT_SUGGESTIONS = {
   uz: [
     {
-      label: '🍓 Meva Kinolari: Berry va Qulupnay Suti (Studiya Reklamasi)',
+      label: '🍓 Berry va Onasining Soʻnggi Xotirasi (Qulupnayli Sut)',
       prompt:
-        "Meva qishlogʻida yashovchi kichik qulupnay bola Berry va uning kasal boʻlib qolgan mehribon onasi haqidagi emotsional hikoya. Onasining xotirasi sifatida qolgan qulupnayli sut shishasi. Yakunda sokin xonadan chiroyli pushti fotostudiyaga oʻtadi: yogʻoch stolda qulupnayli sut shishasi, sekin oqayotgan qaymoqli sut, yaltiroq tomchilar va shior: 'Berry Milk. Shirin xotiralar doim siz bilan.'",
+        "Kinematik, yuqori sifatli stilize qilingan 3D meva olamida Berry ismli kichkina qulupnay bola kasal onasiga har kuni qulupnayli sut tayyorlaydi. Bir kuni u onasining xonasiga sut olib kiradi, ammo xona jimjit, onasining sevimli kursisi esa boʻsh. Berry oshxonada yolgʻiz oʻtirib, onasining eski sut shishasini bagʻriga bosadi va birga oʻtkazgan baxtli tonglarini eslaydi. Yomgʻirli deraza, ifodali koʻzlar, sokin musiqa va iliq xotiralar bilan sovuq xona oʻrtasidagi kuchli kontrast. Yakunda kamera pushti rangli premium reklama studiyasiga silliq oʻtadi: yogʻoch stol ustidagi Berry Milk qulupnayli sut shishasi, yangi qulupnaylar, sekin harakatlanayotgan sut tomchilari va oltin rangli yorugʻlik. Ovozli matn: 'Baʼzan eng kichik narsalar eng shirin xotiralarni saqlaydi. Berry Milk — qalbingizda qoladigan shirinlik.' Barcha sahnalarda qahramon koʻrinishi bir xil saqlansin.",
     },
     {
-      label: '💔 Qulupnay va Avokado Xiyonati (3D Pixar)',
+      label: '💔 Qulupnayning Singan Yuragi (Yangi Hayot va Atir Reklamasi)',
       prompt:
-        "Meva kinolari (Fruit Movie Maker) 3D Pixar uslubida: Qulupnay eri Avokadoni qahvaxonada kutilmaganda boshqa meva bilan ushlab oladi. Katta yaltiroq koʻzlar, achchiq koʻz yoshlar, emotsional janjal va kutilmagan keskin yakun!",
+        "Kinematik stilize qilingan 3D meva olamida qulupnay ayol sevgan avokadosi boshqa meva bilan yashirincha uchrashayotganini koʻrib qoladi. U qoʻlidagi sovgʻani sekin tushiradi, koʻzlariga yosh keladi va yomgʻir ostida yolgʻiz ketadi. Bir necha kun oʻtgach, u eski suratlarni yigʻishtirib, oʻz hayotini qayta boshlashga qaror qiladi. U nafis kiyim kiyib, hashamatli bogʻda oʻziga ishongan holda yuradi. Yakunda sahna premium atir reklamasiga aylanadi: nafis shisha idish, atrofida mayin tuman, oltin yorugʻlik va sekin makro kamera harakati. Ovozli matn: 'Baʼzi yakunlar yangi boshlanishlarga yoʻl ochadi.' Hissiy drama, tabiiy mimika, yomgʻirli koʻchalar, izchil qahramon dizayni va mahsulotga silliq oʻtish.",
     },
     {
-      label: '💔 Xiyonat va Koʻz Yosh (AirPods Max)',
+      label: '🥛 Kichkina Banan va Oxirgi Nonushta (Shokoladli Sut Reklamasi)',
       prompt:
-        "Dramatik xiyonat va koʻz yoshlar: Doʻstim meni arzon soxta naushnik bilan aldadi, lekin asl AirPods Max faqat Uzum Marketda 30% chegirma bilan sotilmoqda! Keskin burilish va qahramonona gʻalaba.",
+        "Kichkina banan bola har kuni ertalab bobosi bilan nonushta qiladi. Bobosi unga shokoladli sut quyib, hayotdagi eng muhim narsa mehr ekanini aytadi. Bir kuni bobosi uzoq safarga ketadi va uy jimjit boʻlib qoladi. Banan bola ertalab ikki stakan sut tayyorlaydi, keyin ikkinchi stakan qarshisida yolgʻiz oʻtiradi. U bobosining eski suratini koʻrib, tabassum bilan koʻz yoshlarini artadi. Iliq tonggi yorugʻlik, mayin kamera harakati, sokin musiqa va ifodali yuzlar. Yakunda shokoladli sut shishasi yogʻoch stol ustida premium reklama uslubida koʻrsatiladi, shokoladli sut stakanga sekin quyiladi. Ovozli matn: 'Mehr bilan boshlangan har bir kun — unutilmas xotira.' Mahsulot dizayni barcha reklama kadrlarida bir xil saqlansin.",
     },
     {
-      label: '😢 Rashk va Oltin Soat (Smart Watch)',
+      label: '🌧️ Yolgʻiz Olma va Unutilgan Sovgʻa (Smart Watch Reklamasi)',
       prompt:
-        "Yuqori emotsional ziddiyat: U mening sevgimga ishonmadi va sovgʻani rad etdi. Lekin Smart Watch Ultra soatini koʻrgach, barcha shubhalar koʻz yosh bilan yuvilib ketdi. 1+1 aksiyasi!",
+        "Kinematik 3D meva dramasi. Yosh olma yigit tugʻilgan kunida doʻstlaridan hech qanday tabrik olmagach, yomgʻirli koʻchalarda yolgʻiz yuradi. U telefonidagi eski suratlarni koʻrib, oʻzini hamma unutgandek his qiladi. Uyiga qaytgach, stol ustida yaqin insonidan qolgan kichik sovgʻa va samimiy maktubni topadi. Maktub unga hayotida hali ham uni qadrlaydigan insonlar borligini eslatadi. Uning yuzida sekin tabassum paydo boʻladi. Yakunda aqlli soatning ekrani yonadi, soat bilagiga taqiladi va premium studiyada makro kadrlarda namoyish etiladi. Ovozli matn: 'Siz uchun muhim boʻlgan lahzalarni qadrlang.' Yomgʻirli atmosfera, iliq ichki yorugʻlik, tabiiy emotsiyalar va silliq mahsulot reklamasiga oʻtish.",
     },
     {
-      label: '🔥 Oʻch olish va Krossovka (Nike Pegasus)',
+      label: '🏃 Apelsinning Soʻnggi Qadami (Nike Pegasus Reklamasi)',
       prompt:
-        "Dramatik poyga va ogʻriqli sinov: Yolgʻonlar tufayli yiqilgan qahramon yangi Nike Pegasus 40 krossovkasida oyoqqa turadi va qasoskorona marraga yetib keladi. Uzum Marketda tezkor yetkazish.",
+        "Kinematik stilize qilingan 3D meva olamida yosh apelsin yuguruvchi muhim poygada yutqazib, stadion zinapoyalarida yolgʻiz oʻtiradi. U eski medalini qoʻlida ushlab, orzularidan voz kechish haqida oʻylaydi. Ertasi tongda u quyosh chiqishidan oldin turib, mashgʻulotlarni qayta boshlaydi. Har kuni u koʻproq kuch va ishonch bilan yuguradi. Nihoyat, katta poyga kuni keladi. U marraga yetib kelganda, eng muhimi birinchi boʻlish emas, oʻziga boʻlgan ishonchini qayta topganini tushunadi. Yakunda Nike Pegasus krossovkalari qoramtir premium studiyada namoyish etiladi: kuchli yon yorugʻlik, sekin aylanuvchi kamera va poyabzal tagligi hamda matosining makro kadrlari. Ovozli matn: 'Har bir qadam — yangi imkoniyat.' Haqiqiy mahsulot dizaynini saqlash, dinamik sport kadrlari va kuchli hissiy yakun.",
     },
   ],
+
   en: [
     {
-      label: '🍓 Fruit Movie: Berry Milk & Mom (With Studio Ad Ending)',
+      label: '🍓 Berry and His Mother’s Last Memory (Strawberry Milk Ad)',
       prompt:
-        "In a little fruit village, a small strawberry boy Berry made fresh strawberry milk for his sick mother. The room fell silent, and only her favorite strawberry milk bottle remained as a token of endless love. In the final scene, the screen fades into a gorgeous, softly lit pink commercial studio: the strawberry milk bottle on a wooden table, ribbon of milk swirling in slow motion, sparkling droplets, and the voiceover: 'Berry Milk. A little sweetness, a memory that stays.'",
+        "A cinematic, highly detailed stylized 3D fruit world. Berry, a small strawberry boy, prepares strawberry milk for his sick mother every morning. One day, he enters her room with a fresh glass, but the room is silent and her favorite chair is empty. Berry sits alone in the kitchen, holding her old milk bottle and remembering their happy mornings together. Rain runs down the window as tears fill his expressive eyes. Contrast the cold, quiet room with warm golden flashbacks of his mother smiling at breakfast. Transition smoothly into a premium pink advertising studio: a Berry Milk bottle on a wooden table, fresh strawberries, milk droplets floating in slow motion, and soft golden rim lighting. Voiceover: 'Sometimes the smallest things hold the sweetest memories. Berry Milk — a little sweetness that stays in your heart.' Maintain consistent character design, cinematic lighting, natural movement, and emotional continuity.",
     },
     {
-      label: '💔 Strawberry & Avocado Betrayal (3D Pixar)',
+      label: '💔 The Strawberry’s Broken Heart (A New Beginning & Perfume Ad)',
       prompt:
-        "Fruit Movie Maker in 3D Pixar style: A sobbing strawberry catches her avocado husband cheating in a cafe. High drama, expressive CGI eyes, tears, emotional confrontation, and a shocking twist!",
+        "A cinematic stylized 3D fruit drama. A strawberry woman discovers her avocado partner secretly meeting another fruit. She slowly drops the gift she was holding, her eyes fill with tears, and she walks alone through the rain. Days later, she puts away their old photographs and decides to start a new chapter. Wearing an elegant outfit, she walks confidently through a luxurious garden at sunset. The emotional scene transitions into a premium perfume commercial: an elegant glass bottle surrounded by delicate mist, golden rim lighting, and slow macro camera movements. Voiceover: 'Sometimes an ending is the beginning of something beautiful.' Expressive facial animation, realistic micro-expressions, rainy streets, consistent character designs, and a seamless emotional-to-commercial transition.",
     },
     {
-      label: '💔 Betrayal & Tears (AirPods Max)',
+      label: '🥛 The Little Banana’s Last Breakfast (Chocolate Milk Ad)',
       prompt:
-        "Dramatic betrayal and tears: my friend deceived me with cheap fake earphones, but original AirPods Max are 30% off on Uzum Market! Sudden plot twist and triumphant resolution.",
+        "A cinematic stylized 3D fruit story. A little banana boy shares breakfast with his grandfather every morning. His grandfather pours him chocolate milk and reminds him that love is life's most precious gift. One day, his grandfather leaves for a long journey, and the house becomes quiet. The next morning, the little banana prepares two glasses of milk, then sits alone across from the untouched glass. He looks at an old photograph of his grandfather and gently wipes away his tears with a small smile. Warm morning sunlight, soft camera movements, expressive eyes, and gentle emotional music. The scene transitions into a premium chocolate milk commercial: a bottle on a wooden table as rich chocolate milk pours into a glass in slow motion. Voiceover: 'Every day that begins with love becomes a memory worth keeping.' Keep the product and character designs consistent.",
     },
     {
-      label: '😢 Jealousy & Gold Watch (Smart Watch)',
+      label: '🌧️ The Lonely Apple and the Forgotten Gift (Smartwatch Ad)',
       prompt:
-        "High emotional stakes: she rejected my gift due to misunderstandings. But unboxing the Smart Watch Ultra brings tears of cathartic joy. 1+1 Special Promotion!",
+        "A cinematic stylized 3D fruit drama. A young apple man walks alone through rainy streets after receiving no birthday wishes from his friends. Looking through old photos on his phone, he feels forgotten. When he returns home, he discovers a small gift and a heartfelt letter from someone who still cares about him. The letter reminds him that he is not alone. A gentle smile returns to his face. Transition into a premium smartwatch commercial: the watch display lights up, the apple character fastens it around his wrist, and elegant macro shots reveal the screen, case, and strap under soft studio lighting. Voiceover: 'Make every moment that matters count.' Emotional storytelling, rain-soaked reflections, warm interior lighting, expressive character acting, and a smooth product reveal.",
     },
     {
-      label: '🔥 Revenge & Comeback (Nike Pegasus)',
+      label: '🏃 The Orange Runner’s Final Step (Nike Pegasus Ad)',
       prompt:
-        "Dramatic heartbreak and a relentless comeback: knocked down by rivals, the runner rises in Nike Pegasus 40 sneakers and crosses the finish line in glory.",
+        "A cinematic stylized 3D fruit sports drama. A young orange runner loses an important race and sits alone on the stadium steps, holding his old medal and wondering whether to give up. Before sunrise the next morning, he returns to training. Day after day, he runs with greater determination and confidence. Finally, race day arrives. As he crosses the finish line, he realizes that his greatest victory is not coming first but believing in himself again. Transition into a premium Nike Pegasus product commercial: the shoes are displayed in a dark studio with dramatic side lighting, a slowly rotating camera, and detailed macro shots of the sole and fabric. Voiceover: 'Every step is a new opportunity.' Preserve the authentic shoe design, cinematic sports movement, emotional storytelling, and a polished commercial ending.",
     },
   ],
+
   ru: [
     {
-      label: '🍓 Фруктовая Драма: Клубничное Молоко и Мама (Финал с рекламой)',
+      label: '🍓 Берри и последнее воспоминание о маме (Реклама клубничного молока)',
       prompt:
-        "Трогательная история про маленького клубничного мальчика Берри и его заболевшую маму, которой он готовил клубничное молоко. Бутылочка молока как символ вечной любви. Финал: экран переходит в мягко освещенную розовую студию, бутылочка на деревянном столе, молоко льется в замедленной съемке, сверкающие капли и слоган: 'Berry Milk. Капля сладости, память навсегда.'",
+        "Кинематографичный, детализированный стилизованный 3D-мир фруктов. Маленький клубничный мальчик Берри каждое утро готовит клубничное молоко для своей больной мамы. Однажды он входит в её комнату со стаканом молока, но там тихо, а любимое кресло мамы пустует. Берри сидит один на кухне, обнимает старую бутылочку и вспоминает счастливые завтраки с мамой. За окном идёт дождь, в его выразительных глазах появляются слёзы. Контраст холодной комнаты с тёплыми золотистыми воспоминаниями о маминой улыбке. Плавный переход в премиальную розовую рекламную студию: бутылочка Berry Milk на деревянном столе, свежая клубника, капли молока в замедленной съёмке и мягкий золотистый контровой свет. Голос за кадром: «Иногда самые маленькие вещи хранят самые сладкие воспоминания. Berry Milk — сладость, которая остаётся в сердце». Сохранять единый дизайн персонажей, естественные движения и эмоциональную непрерывность.",
     },
     {
-      label: '💔 Клубника и Авокадо (3D Pixar)',
+      label: '💔 Разбитое сердце Клубники (Новое начало и реклама духов)',
       prompt:
-        "Fruit Movie Maker в стиле 3D Pixar: Плачущая клубника ловит своего мужа авокадо на измене в кафе. Буря эмоций, живые глаза, слезы, драматический конфликт и неожиданный финал!",
+        "Кинематографичная стилизованная 3D-драма в мире фруктов. Женщина-клубника узнаёт, что её партнёр-авокадо тайно встречается с другим фруктом. Подарок медленно выпадает из её рук, глаза наполняются слезами, и она уходит одна под дождём. Через несколько дней она убирает старые фотографии и решает начать новую жизнь. В элегантном наряде она уверенно идёт по роскошному саду на закате. Эмоциональная сцена плавно переходит в премиальную рекламу духов: изящный стеклянный флакон, лёгкий туман, золотистый контровой свет и медленные макрокадры. Голос за кадром: «Иногда конец становится началом чего-то прекрасного». Выразительная мимика, дождливые улицы, неизменный дизайн персонажей и плавный переход к рекламе.",
     },
     {
-      label: '💔 Предательство и Слёзы (AirPods Max)',
+      label: '🥛 Последний завтрак маленького Банана (Реклама шоколадного молока)',
       prompt:
-        "Драматическое предательство и слезы: меня обманули с дешевой подделкой, но настоящие AirPods Max только на Uzum Market со скидкой 30%! Неожиданный финал и триумф.",
+        "Кинематографичная стилизованная 3D-история в мире фруктов. Маленький банан каждое утро завтракает с дедушкой. Дедушка наливает ему шоколадное молоко и напоминает, что любовь — самое ценное в жизни. Однажды дедушка уезжает в долгое путешествие, и дом становится тихим. На следующее утро мальчик готовит два стакана молока, но садится один напротив нетронутого стакана. Он смотрит на старую фотографию дедушки, вытирает слёзы и слегка улыбается. Тёплый утренний свет, плавные движения камеры, выразительные глаза и нежная музыка. Затем плавный переход к премиальной рекламе шоколадного молока: бутылка на деревянном столе, густое шоколадное молоко медленно льётся в стакан. Голос за кадром: «Каждый день, начавшийся с любви, становится воспоминанием, которое хочется сохранить». Сохранять единый дизайн персонажей и продукта.",
     },
     {
-      label: '😢 Ревность и Золотые Часы (Smart Watch)',
+      label: '🌧️ Одинокое Яблоко и забытый подарок (Реклама умных часов)',
       prompt:
-        "Высокое эмоциональное напряжение: она отвергла мой подарок из-за недоверия. Но увидев Smart Watch Ultra, слезы раскаяния изменили всё. Акция 1+1!",
+        "Кинематографичная стилизованная 3D-драма. Молодой мужчина-яблоко идёт один по дождливым улицам, не получив поздравлений с днём рождения. Просматривая старые фотографии на телефоне, он чувствует себя забытым. Дома он находит небольшой подарок и искреннее письмо от человека, которому он по-прежнему дорог. Письмо напоминает ему, что он не одинок, и на его лице появляется улыбка. Плавный переход к премиальной рекламе умных часов: экран загорается, герой застёгивает часы на запястье, а изящные макрокадры показывают экран, корпус и ремешок в мягком студийном свете. Голос за кадром: «Цените каждое мгновение, которое действительно важно». Эмоциональная история, отражения на мокрой улице, тёплый интерьер и плавное появление продукта.",
     },
     {
-      label: '🔥 Месть и Восхождение (Nike Pegasus)',
+      label: '🏃 Последний шаг Апельсина (Реклама Nike Pegasus)',
       prompt:
-        "Драматическое падение и триумфальный подъем: преданный герой встает на ноги в кроссовках Nike Pegasus 40 и первым пересекает финишную черту.",
+        "Кинематографичная стилизованная 3D-спортивная драма в мире фруктов. Молодой апельсин проигрывает важный забег и один сидит на ступенях стадиона, держа старую медаль и размышляя, стоит ли продолжать. На следующее утро, ещё до рассвета, он возвращается к тренировкам. День за днём он бежит всё увереннее. Наконец наступает день соревнований. Пересекая финишную черту, он понимает, что главная победа — не первое место, а возвращённая вера в себя. Плавный переход к премиальной рекламе Nike Pegasus: кроссовки на тёмном фоне, драматический боковой свет, медленное вращение камеры и детальные макрокадры подошвы и материала. Голос за кадром: «Каждый шаг открывает новую возможность». Сохранить настоящий дизайн обуви, динамику спортивных сцен и эмоциональный финал.",
     },
   ],
 };

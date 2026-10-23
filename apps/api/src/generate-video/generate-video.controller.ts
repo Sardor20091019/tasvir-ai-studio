@@ -10,7 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import * as path from 'path';
 import { GenerateVideoService, AspectRatioType, DramaScene } from './generate-video.service';
+import { FfmpegConcatService } from './ffmpeg-concat.service';
 import { InMemoryRateLimiter } from '../auth/rate-limiter';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -19,7 +21,10 @@ const JOB_ID_REGEX = /^[a-zA-Z0-9_-]{4,64}$/;
 
 @Controller('generate-video')
 export class GenerateVideoController {
-  constructor(@Inject(GenerateVideoService) private readonly generateVideoService: GenerateVideoService) {}
+  constructor(
+    @Inject(GenerateVideoService) private readonly generateVideoService: GenerateVideoService,
+    @Inject(FfmpegConcatService) private readonly ffmpegConcatService: FfmpegConcatService,
+  ) {}
 
   @Post('plan-scenes')
   @UseGuards(AuthGuard)
@@ -101,6 +106,39 @@ export class GenerateVideoController {
       includeBackgroundMusic: body.includeBackgroundMusic,
       dramaLevel: body.dramaLevel,
     });
+  }
+
+  @Post('concat')
+  async concatClips(
+    @Body()
+    body: {
+      sceneClipPaths: string[];
+      outputPath?: string;
+      backgroundMusicPath?: string;
+      includeBackgroundMusic?: boolean;
+      totalDurationSeconds: number;
+      resolution?: string;
+    },
+  ) {
+    if (!body.sceneClipPaths || body.sceneClipPaths.length === 0) {
+      throw new BadRequestException('Birlashtirish uchun kamida 1 ta video klip kerak');
+    }
+    const filename = `editor-export-${Date.now()}.mp4`;
+    const outputPath = path.join(process.cwd(), 'apps/web/public/generated-videos', filename);
+
+    await this.ffmpegConcatService.concatScenes({
+      sceneClipPaths: body.sceneClipPaths,
+      outputPath,
+      backgroundMusicPath: body.backgroundMusicPath,
+      includeBackgroundMusic: !!body.includeBackgroundMusic,
+      totalDurationSeconds: body.totalDurationSeconds || 15,
+      resolution: body.resolution || '360p',
+    });
+
+    return {
+      success: true,
+      videoUrl: `/generated-videos/${filename}`,
+    };
   }
 
   @Get(':jobId')

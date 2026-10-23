@@ -632,4 +632,27 @@ export const api = {
     const err = await res.json().catch(() => null);
     throw new Error(err?.message || `Video holatini olishda xatolik yuz berdi (HTTP ${res.status})`);
   },
+
+  async concatVideos(params: {
+    sceneClipPaths: string[];
+    includeBackgroundMusic?: boolean;
+    backgroundMusicPath?: string;
+    totalDurationSeconds: number;
+    resolution?: string;
+  }): Promise<{ videoUrl: string }> {
+    const res = await fetch(`${API_BASE}/generate-video/concat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || 'Video yigʻishda xatolik yuz berdi');
+  },
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Film,
   Layers,
@@ -35,6 +36,7 @@ import { api } from '../lib/api';
    ────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [locale, setLocale] = useState<LocaleType>('en');
   const [activeTab, setActiveTab] = useState<NavTabType | 'landing'>('landing' as any);
@@ -663,7 +665,13 @@ export default function HomePage() {
      ────────────────────────────────────────────── */
 
   const studioContent = (
-    <main className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8 pb-24 lg:pb-12 min-h-screen">
+    <main
+      className={
+        activeTab === 'editor'
+          ? 'w-full h-[calc(100vh-64px)] p-0 overflow-hidden flex flex-col'
+          : 'max-w-[1600px] mx-auto px-6 lg:px-10 py-8 pb-24 lg:pb-12 min-h-screen'
+      }
+    >
       {(activeTab === 'prompt' || activeTab === ('studio' as any)) && (
         <div className="animate-in fade-in duration-200">
           <PromptVideoGenerator
@@ -681,8 +689,10 @@ export default function HomePage() {
             onJobStarted={handleJobStarted}
             onEditInCapCut={(proj) => {
               setCurrentEditorProject(proj);
-              setActiveTab('editor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('tasvir_editor_current_project', JSON.stringify(proj));
+              }
+              router.push('/editor');
             }}
             onVideoCreated={(videoUrl) => {
               const newPromptJob: VideoJob = {
@@ -708,7 +718,7 @@ export default function HomePage() {
       )}
 
       {activeTab === 'editor' && (
-        <div className="animate-in fade-in duration-200">
+        <div className="flex-1 w-full h-full animate-in fade-in duration-200 overflow-hidden flex flex-col">
           <CapCutEditor
             locale={locale}
             user={user}
@@ -771,8 +781,38 @@ export default function HomePage() {
                   textTransform: 'uppercase',
                 },
               });
-              setActiveTab('editor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(
+                  'tasvir_editor_current_project',
+                  JSON.stringify({
+                    id: `job-${job.id}`,
+                    title: job.script_text?.slice(0, 30) || 'Tayyor Video',
+                    videoUrl: job.output_video_url || '',
+                    duration: 15,
+                    subtitles: [
+                      {
+                        id: 'sub-1',
+                        startSec: 0,
+                        endSec: 15,
+                        text: job.script_text || '',
+                      },
+                    ],
+                    style: {
+                      preset: 'capcut_yellow',
+                      fontSize: 32,
+                      position: 'bottom',
+                      textColor: '#FFFFFF',
+                      highlightColor: '#FACC15',
+                      bgColor: 'rgba(0,0,0,0.4)',
+                      bgOpacity: 0.4,
+                      fontFamily: 'heading',
+                      animation: 'karaoke_active',
+                      textTransform: 'uppercase',
+                    },
+                  })
+                );
+              }
+              router.push('/editor');
             }}
           />
         </div>

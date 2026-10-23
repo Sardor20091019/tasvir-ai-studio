@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Film,
   Layers,
@@ -44,7 +45,16 @@ export function Navbar({
   onOpenProfile,
   libraryCount,
 }: NavbarProps) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleNavClick = (tabKey: NavTabType) => {
+    if (tabKey === 'editor') {
+      router.push('/editor');
+    } else {
+      setActiveTab(tabKey);
+    }
+  };
 
   const t = {
     uz: {
@@ -134,7 +144,7 @@ export function Navbar({
               {navItems.map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => setActiveTab(item.key)}
+                  onClick={() => handleNavClick(item.key)}
                   className={`
                     px-3.5 py-1.5 text-[11px] font-mono font-medium tracking-[0.12em] transition-all relative
                     ${activeTab === item.key
@@ -276,7 +286,7 @@ export function Navbar({
             {navItems.map((item) => (
               <button
                 key={item.key}
-                onClick={() => { setActiveTab(item.key); setMobileOpen(false); }}
+                onClick={() => { setMobileOpen(false); handleNavClick(item.key); }}
                 className={`
                   flex items-center justify-between py-4 border-b border-stroke/50 text-left
                   ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}
@@ -372,7 +382,7 @@ export function Navbar({
             <button
               key={item.key}
               type="button"
-              onClick={() => setActiveTab(item.key)}
+              onClick={() => handleNavClick(item.key)}
               className={`
                 flex flex-col items-center gap-0.5 py-1 px-2 transition-all
                 ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}

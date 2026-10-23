@@ -5,7 +5,7 @@ import { Navbar, NavTabType } from '../../components/Navbar';
 import { CapCutEditor } from '../../components/CapCutEditor';
 import { AuthModal } from '../../components/AuthModal';
 import { ProfileModal } from '../../components/ProfileModal';
-import { User, LocaleType, VideoJob } from '../../types';
+import { User, LocaleType, VideoJob, VideoEditorProject } from '../../types';
 import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -16,6 +16,18 @@ export default function EditorPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [jobs, setJobs] = useState<VideoJob[]>([]);
+  const [initialProject, setInitialProject] = useState<VideoEditorProject | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('tasvir_editor_current_project');
+      if (saved) {
+        setInitialProject(JSON.parse(saved));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     api.getMe().then((u) => {
@@ -37,7 +49,7 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian text-ink flex flex-col font-sans">
+    <div className="h-screen max-h-screen bg-obsidian text-ink flex flex-col font-sans overflow-hidden">
       <Navbar
         user={user}
         locale={locale}
@@ -50,10 +62,11 @@ export default function EditorPage() {
         libraryCount={jobs.length}
       />
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-6 flex flex-col">
+      <main className="flex-1 w-full flex flex-col overflow-hidden min-h-0">
         <CapCutEditor
           locale={locale}
           user={user}
+          initialProject={initialProject}
           onBackToStudio={() => router.push('/?tab=prompt')}
         />
       </main>
