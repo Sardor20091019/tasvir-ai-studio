@@ -27,6 +27,7 @@ import {
   TRANSITION_PRESETS,
 } from '../../constants/stockAssets';
 import { AssetItem, FilterPreset, TextPresetItem } from '../../types';
+import { LocaleType } from '../../../../types';
 
 type AssetTabType = 'media' | 'stock' | 'audio' | 'text' | 'effects';
 
@@ -40,7 +41,62 @@ interface UploadedLocalMedia {
 }
 
 export function AssetPanel() {
-  const { addClip, activeFilter, setActiveFilter, currentTime } = useEditor();
+  const { addClip, activeFilter, setActiveFilter, currentTime, locale } = useEditor();
+
+  const t = ({
+    uz: {
+      tabMedia: 'Fayllar',
+      tabStock: 'Videolar',
+      tabAudio: 'Audio',
+      tabText: 'Matn',
+      tabEffects: 'Filtrlar',
+      uploadTitle: 'Fayl yuklash (MP4, MP3, PNG)',
+      uploadSub: 'Kompyuteringizdan tortib tashlang yoki bosing',
+      uploadedFiles: 'Yuklangan fayllar',
+      noFiles: 'Hali hech qanday fayl yuklanmadi. Yuqoridagi tugma orqali MP4 yoki MP3 qoʻshing.',
+      stockTitle: 'Tayyor HD B-Roll Videolari',
+      audioTitle: 'Ovoz Effektlari & Musiqa',
+      textTitle: 'CapCut & Reels Matn Shablonlari',
+      filterTitle: 'Kinematik Rang Filtrlari (LUTs)',
+      stickersTitle: 'E-Commerce Stikerlar & Nishonlar',
+      add: 'Qoʻshish',
+    },
+    en: {
+      tabMedia: 'Files',
+      tabStock: 'Videos',
+      tabAudio: 'Audio',
+      tabText: 'Text',
+      tabEffects: 'Filters',
+      uploadTitle: 'Upload file (MP4, MP3, PNG)',
+      uploadSub: 'Drag and drop from your computer or click',
+      uploadedFiles: 'Uploaded files',
+      noFiles: 'No files uploaded yet. Click above to upload MP4 or MP3.',
+      stockTitle: 'Stock HD B-Roll Videos',
+      audioTitle: 'Sound Effects & Music',
+      textTitle: 'CapCut & Reels Caption Presets',
+      filterTitle: 'Cinematic Color Filters (LUTs)',
+      stickersTitle: 'E-Commerce Stickers & Badges',
+      add: 'Add',
+    },
+    ru: {
+      tabMedia: 'Файлы',
+      tabStock: 'Видео',
+      tabAudio: 'Аудио',
+      tabText: 'Текст',
+      tabEffects: 'Фильтры',
+      uploadTitle: 'Загрузить файл (MP4, MP3, PNG)',
+      uploadSub: 'Перетащите с компьютера или нажмите',
+      uploadedFiles: 'Загруженные файлы',
+      noFiles: 'Файлы еще не загружены. Нажмите выше для загрузки MP4 или MP3.',
+      stockTitle: 'Готовые HD B-Roll Видео',
+      audioTitle: 'Звуковые эффекты и музыка',
+      textTitle: 'Стили субтитров CapCut и Reels',
+      filterTitle: 'Кинематографичные фильтры (LUTs)',
+      stickersTitle: 'E-Commerce Стикеры и значки',
+      add: 'Добавить',
+    },
+  } as Record<LocaleType, any>)[(locale as LocaleType) || 'uz'];
+
   const [activeTab, setActiveTab] = useState<AssetTabType>('media');
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadedMedia, setUploadedMedia] = useState<UploadedLocalMedia[]>([]);
@@ -120,10 +176,10 @@ export function AssetPanel() {
               ? 'bg-surface-raised text-accent-warm shadow-2xs font-semibold'
               : 'text-ink-muted hover:text-ink hover:bg-surface/50'
           }`}
-          title="Fayllar yuklash"
+          title={t.tabMedia}
         >
           <FolderOpen className="w-4 h-4" />
-          <span>Fayllar</span>
+          <span>{t.tabMedia}</span>
         </button>
 
         <button
@@ -133,10 +189,10 @@ export function AssetPanel() {
               ? 'bg-surface-raised text-accent-warm shadow-2xs font-semibold'
               : 'text-ink-muted hover:text-ink hover:bg-surface/50'
           }`}
-          title="Stok videolar"
+          title={t.tabStock}
         >
           <Film className="w-4 h-4" />
-          <span>Videolar</span>
+          <span>{t.tabStock}</span>
         </button>
 
         <button
@@ -146,10 +202,10 @@ export function AssetPanel() {
               ? 'bg-surface-raised text-accent-warm shadow-2xs font-semibold'
               : 'text-ink-muted hover:text-ink hover:bg-surface/50'
           }`}
-          title="Musiqa va ovoz effektlari"
+          title={t.tabAudio}
         >
           <Music className="w-4 h-4" />
-          <span>Audio</span>
+          <span>{t.tabAudio}</span>
         </button>
 
         <button
@@ -159,10 +215,10 @@ export function AssetPanel() {
               ? 'bg-surface-raised text-accent-warm shadow-2xs font-semibold'
               : 'text-ink-muted hover:text-ink hover:bg-surface/50'
           }`}
-          title="Matn va titr shablonlari"
+          title={t.tabText}
         >
           <Type className="w-4 h-4" />
-          <span>Matn</span>
+          <span>{t.tabText}</span>
         </button>
 
         <button
@@ -172,10 +228,10 @@ export function AssetPanel() {
               ? 'bg-surface-raised text-accent-warm shadow-2xs font-semibold'
               : 'text-ink-muted hover:text-ink hover:bg-surface/50'
           }`}
-          title="Filtrlar va stikerlar"
+          title={t.tabEffects}
         >
           <Sparkles className="w-4 h-4" />
-          <span>Filtrlar</span>
+          <span>{t.tabEffects}</span>
         </button>
       </div>
 
@@ -201,21 +257,21 @@ export function AssetPanel() {
                 <Upload className="w-5 h-5" />
               </div>
               <p className="text-xs font-semibold text-ink">
-                Fayl yuklash (MP4, MP3, PNG)
+                {t.uploadTitle}
               </p>
               <p className="text-[10px] text-ink-muted mt-0.5">
-                Kompyuteringizdan tortib tashlang yoki bosing
+                {t.uploadSub}
               </p>
             </div>
 
             <div className="space-y-1.5">
               <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider">
-                Yuklangan fayllar ({uploadedMedia.length})
+                {t.uploadedFiles} ({uploadedMedia.length})
               </span>
 
               {uploadedMedia.length === 0 ? (
                 <div className="p-4 text-center text-ink-muted text-xs bg-canvas/40 rounded-lg border border-stroke/50">
-                  Hali hech qanday fayl yuklanmadi. Yuqoridagi tugma orqali MP4 yoki MP3 qoʻshing.
+                  {t.noFiles}
                 </div>
               ) : (
                 uploadedMedia.map((media) => (
@@ -271,7 +327,7 @@ export function AssetPanel() {
         {activeTab === 'stock' && (
           <div className="space-y-2">
             <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider">
-              Tayyor HD B-Roll Videolari
+              {t.stockTitle}
             </span>
 
             <div className="grid grid-cols-1 gap-2">
@@ -312,7 +368,7 @@ export function AssetPanel() {
                       className="px-2 py-1 rounded bg-accent-warm text-canvas hover:brightness-110 text-[11px] font-bold font-mono flex items-center gap-1 flex-shrink-0 transition-transform active:scale-95"
                     >
                       <Plus className="w-3 h-3" />
-                      <span>Qoʻshish</span>
+                      <span>{t.add}</span>
                     </button>
                   </div>
                 </div>
@@ -325,7 +381,7 @@ export function AssetPanel() {
         {activeTab === 'audio' && (
           <div className="space-y-3">
             <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider">
-              Ovoz Effektlari & Musiqa
+              {t.audioTitle}
             </span>
 
             <div className="space-y-1.5">
@@ -386,7 +442,7 @@ export function AssetPanel() {
         {activeTab === 'text' && (
           <div className="space-y-2">
             <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider">
-              CapCut & Reels Matn Shablonlari
+              {t.textTitle}
             </span>
 
             <div className="space-y-2">
@@ -438,7 +494,7 @@ export function AssetPanel() {
             {/* Color Grading LUTs */}
             <div>
               <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider block mb-2">
-                Kinematik Rang Filtrlari (LUTs)
+                {t.filterTitle}
               </span>
 
               <div className="grid grid-cols-2 gap-2">
@@ -476,7 +532,7 @@ export function AssetPanel() {
             {/* E-commerce Badges & Stickers */}
             <div>
               <span className="text-[10px] font-mono font-bold uppercase text-ink-dim tracking-wider block mb-2">
-                E-Commerce Stikerlar & Nishonlar
+                {t.stickersTitle}
               </span>
 
               <div className="grid grid-cols-2 gap-2">

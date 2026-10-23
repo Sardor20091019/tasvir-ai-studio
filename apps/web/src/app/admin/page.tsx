@@ -8,10 +8,11 @@ import { AdminPanel } from '../../components/AdminPanel';
 import { AuthModal } from '../../components/AuthModal';
 import { User, LocaleType } from '../../types';
 import { api } from '../../lib/api';
+import { useAppLocale } from '../../lib/useAppLocale';
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [locale, setLocale] = useState<LocaleType>('uz');
+  const { locale, setLocale, toggleLocale: handleToggleLocale } = useAppLocale();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function AdminPage() {
       <Navbar
         user={user}
         locale={locale}
-        onToggleLocale={() => setLocale((prev) => (prev === 'uz' ? 'en' : prev === 'en' ? 'ru' : 'uz'))}
+        onToggleLocale={handleToggleLocale}
         onChangeLocale={setLocale}
         activeTab={'studio' as any}
         setActiveTab={() => {}}

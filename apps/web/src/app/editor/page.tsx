@@ -8,11 +8,12 @@ import { ProfileModal } from '../../components/ProfileModal';
 import { User, LocaleType, VideoJob, VideoEditorProject } from '../../types';
 import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
+import { useAppLocale } from '../../lib/useAppLocale';
 
 export default function EditorPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [locale, setLocale] = useState<LocaleType>('uz');
+  const { locale, setLocale, toggleLocale: handleToggleLocale } = useAppLocale();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [jobs, setJobs] = useState<VideoJob[]>([]);
@@ -35,14 +36,6 @@ export default function EditorPage() {
     });
   }, []);
 
-  const handleToggleLocale = () => {
-    setLocale((prev) => {
-      if (prev === 'uz') return 'en';
-      if (prev === 'en') return 'ru';
-      return 'uz';
-    });
-  };
-
   const handleTabSwitch = (tab: NavTabType) => {
     if (tab === 'editor') return;
     router.push(`/?tab=${tab}`);
@@ -54,6 +47,7 @@ export default function EditorPage() {
         user={user}
         locale={locale}
         onToggleLocale={handleToggleLocale}
+        onChangeLocale={setLocale}
         activeTab="editor"
         setActiveTab={handleTabSwitch}
         onOpenCheckout={() => router.push('/?tab=pricing')}

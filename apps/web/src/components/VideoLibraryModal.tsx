@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { VideoJob, LocaleType } from '../types';
 import { api } from '../lib/api';
+import { downloadMediaFile } from '../lib/download';
 
 interface VideoLibraryModalProps {
   jobs: VideoJob[];
@@ -292,16 +293,14 @@ export function VideoLibraryModal({
                         <span>{locale === 'uz' ? 'CapCut da tahrirlash' : locale === 'en' ? 'Edit in CapCut' : 'Редактировать в CapCut'}</span>
                       </button>
                     )}
-                    <a
-                      href={videoSrc}
-                      target="_blank"
-                      rel="noreferrer"
-                      download={`tasvir-${job.id}.mp4`}
-                      className="w-full py-2 px-3 rounded-xl bg-surface border border-border hover:bg-surface-raised text-ink text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs"
+                    <button
+                      type="button"
+                      onClick={() => downloadMediaFile(videoSrc, `tasvir-${job.id}.mp4`)}
+                      className="w-full py-2 px-3 rounded-xl bg-surface border border-border hover:bg-surface-raised text-ink text-xs font-bold flex items-center justify-center gap-1.5 tactile-btn shadow-xs cursor-pointer"
                     >
                       <Download className="h-3.5 w-3.5 text-accent-warm" />
                       <span>{t.download}</span>
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>

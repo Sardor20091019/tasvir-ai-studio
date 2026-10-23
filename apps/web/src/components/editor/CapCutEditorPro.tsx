@@ -61,7 +61,7 @@ export function CapCutEditorPro({
   onSave,
 }: CapCutEditorProProps) {
   return (
-    <EditorProvider initialProject={initialProject}>
+    <EditorProvider initialProject={initialProject} locale={locale}>
       <EditorWorkspace onBackToStudio={onBackToStudio} />
     </EditorProvider>
   );

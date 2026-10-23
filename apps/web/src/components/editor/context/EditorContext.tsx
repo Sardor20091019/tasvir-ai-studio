@@ -10,7 +10,7 @@ import {
   FilterPreset,
 } from '../types';
 import { FILTER_PRESETS, TEXT_PRESETS } from '../constants/stockAssets';
-import { VideoEditorProject, SubtitleCue } from '../../../types';
+import { VideoEditorProject, SubtitleCue, LocaleType } from '../../../types';
 
 interface EditorContextType {
   // State
@@ -31,6 +31,7 @@ interface EditorContextType {
   volume: number;
   isMuted: boolean;
   showSafeZone: boolean;
+  locale: LocaleType;
 
   // Actions
   seek: (timeSec: number) => void;
@@ -114,9 +115,11 @@ const DEFAULT_TRACKS: TimelineTrack[] = [
 export function EditorProvider({
   children,
   initialProject,
+  locale = 'uz',
 }: {
   children: React.ReactNode;
   initialProject?: VideoEditorProject | null;
+  locale?: LocaleType;
 }) {
   const [title, setTitle] = useState<string>('Yangi Video Loyihasi');
   const [tracks, setTracks] = useState<TimelineTrack[]>(DEFAULT_TRACKS);
@@ -637,6 +640,7 @@ export function EditorProvider({
         volume,
         isMuted,
         showSafeZone,
+        locale,
         seek,
         stepFrame,
         play,

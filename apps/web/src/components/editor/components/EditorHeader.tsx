@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useEditor } from '../context/EditorContext';
 import { AspectRatioType } from '../types';
+import { LocaleType } from '../../../types';
 
 interface EditorHeaderProps {
   onBack?: () => void;
@@ -35,7 +36,32 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
     canRedo,
     showSafeZone,
     setShowSafeZone,
+    locale,
   } = useEditor();
+
+  const t = ({
+    uz: {
+      back: 'Qaytish',
+      backTitle: 'Studiyaga qaytish',
+      export: 'Eksport',
+      undo: 'Bekor qilish (Cmd/Ctrl + Z)',
+      redo: 'Qaytarish (Cmd/Ctrl + Shift + Z)',
+    },
+    en: {
+      back: 'Back',
+      backTitle: 'Back to Studio',
+      export: 'Export',
+      undo: 'Undo (Cmd/Ctrl + Z)',
+      redo: 'Redo (Cmd/Ctrl + Shift + Z)',
+    },
+    ru: {
+      back: 'Назад',
+      backTitle: 'Вернуться в Студию',
+      export: 'Экспорт',
+      undo: 'Отменить (Cmd/Ctrl + Z)',
+      redo: 'Повторить (Cmd/Ctrl + Shift + Z)',
+    },
+  } as Record<LocaleType, any>)[(locale as LocaleType) || 'uz'];
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(title);
@@ -53,10 +79,10 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
           <button
             onClick={onBack}
             className="p-1.5 rounded-lg border border-stroke bg-canvas hover:bg-surface-raised text-ink-muted hover:text-ink transition-colors flex items-center gap-1 text-xs font-mono"
-            title="Studiyaga qaytish"
+            title={t.backTitle}
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Qaytish</span>
+            <span className="hidden sm:inline">{t.back}</span>
           </button>
         )}
 
@@ -110,7 +136,7 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
                 ? 'text-ink-muted hover:text-ink hover:bg-surface-raised cursor-pointer'
                 : 'text-ink-dim/40 cursor-not-allowed'
             }`}
-            title="Bekor qilish (Cmd/Ctrl + Z)"
+            title={t.undo}
           >
             <Undo2 className="w-3.5 h-3.5" />
           </button>
@@ -123,7 +149,7 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
                 ? 'text-ink-muted hover:text-ink hover:bg-surface-raised cursor-pointer'
                 : 'text-ink-dim/40 cursor-not-allowed'
             }`}
-            title="Qaytarish (Cmd/Ctrl + Shift + Z)"
+            title={t.redo}
           >
             <Redo2 className="w-3.5 h-3.5" />
           </button>
@@ -177,10 +203,10 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
               ? 'bg-accent-warm/15 border-accent-warm text-accent-warm'
               : 'bg-canvas border-stroke text-ink-muted hover:text-ink'
           }`}
-          title="Reels / TikTok xavfsiz zona chegarasi"
+          title={t.safeZone}
         >
           <Shield className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline text-[11px]">Xavfsiz Zona</span>
+          <span className="hidden lg:inline text-[11px]">{t.safeZone}</span>
         </button>
       </div>
 
@@ -191,7 +217,7 @@ export function EditorHeader({ onBack, onOpenExport }: EditorHeaderProps) {
           className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-accent-warm to-amber-500 hover:brightness-110 text-canvas font-heading font-extrabold text-xs tracking-wide flex items-center gap-1.5 shadow-md shadow-accent-warm/20 transition-all active:scale-95"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Eksport</span>
+          <span>{t.export}</span>
         </button>
       </div>
     </header>

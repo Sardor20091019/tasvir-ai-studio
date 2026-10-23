@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 import { api } from '../../../../lib/api';
+import { downloadMediaFile } from '../../../../lib/download';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -104,12 +105,10 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   const handleDownload = () => {
     if (!downloadUrl) return;
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = `${title.toLowerCase().replace(/\s+/g, '-')}-${resolution}.mp4`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadMediaFile(
+      downloadUrl,
+      `${title.toLowerCase().replace(/\s+/g, '-')}-${resolution}.mp4`
+    );
   };
 
   return (

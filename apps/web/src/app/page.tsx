@@ -30,6 +30,7 @@ import { CapCutEditor } from '../components/CapCutEditor';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { User, VideoJob, LocaleType, VideoEditorProject } from '../types';
 import { api } from '../lib/api';
+import { useAppLocale } from '../lib/useAppLocale';
 
 /* ──────────────────────────────────────────────────────────
    CINEMATIC LANDING PAGE
@@ -38,8 +39,23 @@ import { api } from '../lib/api';
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [locale, setLocale] = useState<LocaleType>('en');
-  const [activeTab, setActiveTab] = useState<NavTabType | 'landing'>('landing' as any);
+  const { locale, setLocale, toggleLocale: handleToggleLocale } = useAppLocale();
+  const [activeTab, setActiveTab] = useState<NavTabType | 'landing'>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab') as NavTabType | null;
+        if (tabParam) {
+          return tabParam === ('studio' as any) ? 'prompt' : tabParam;
+        }
+        const savedTab = localStorage.getItem('tasvir_active_tab') as (NavTabType | 'landing') | null;
+        if (savedTab) {
+          return savedTab === ('studio' as any) ? 'prompt' : savedTab;
+        }
+      } catch {}
+    }
+    return 'landing';
+  });
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutPlanId, setCheckoutPlanId] = useState('shop_pro');
@@ -70,18 +86,51 @@ export default function HomePage() {
     }
   }, [jobs]);
 
+  // Keep activeTab synced with URL query and localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('tasvir_active_tab', activeTab);
+      const currentParam = new URLSearchParams(window.location.search).get('tab');
+      if (activeTab === 'landing') {
+        if (currentParam) {
+          const newUrl = window.location.pathname;
+          window.history.replaceState(null, '', newUrl);
+        }
+      } else {
+        if (currentParam !== activeTab) {
+          const newUrl = `${window.location.pathname}?tab=${activeTab}`;
+          window.history.replaceState(null, '', newUrl);
+        }
+      }
+    } catch {}
+  }, [activeTab]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handlePopState = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab') as NavTabType | null;
+        if (tabParam) {
+          setActiveTab(tabParam === ('studio' as any) ? 'prompt' : tabParam);
+        } else {
+          const saved = localStorage.getItem('tasvir_active_tab') as (NavTabType | 'landing') | null;
+          setActiveTab(saved || 'landing');
+        }
+      } catch {
+        setActiveTab('landing');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     api.getMe().then((u) => {
       if (u) setUser(u);
     });
-
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab') as NavTabType | null;
-      if (tabParam) {
-        setActiveTab(tabParam === ('studio' as any) ? 'prompt' : tabParam);
-      }
-    }
   }, []);
 
   useEffect(() => {
@@ -90,13 +139,6 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleToggleLocale = () => {
-    setLocale((prev) => {
-      if (prev === 'uz') return 'en';
-      if (prev === 'en') return 'ru';
-      return 'uz';
-    });
-  };
 
   const handleOpenCheckoutWithPlan = (planId: string) => {
     setCheckoutPlanId(planId);

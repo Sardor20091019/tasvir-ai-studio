@@ -31,6 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { downloadMediaFile } from '../lib/download';
 import { KaraokeWord, DramaScene, DramaVideoJob, LocaleType, User, VideoEditorProject, VideoJob } from '../types';
 import { KaraokeSubtitles } from './KaraokeSubtitles';
 import { SUBTITLE_PRESETS } from './CapCutEditor';
@@ -1162,16 +1163,19 @@ export function PromptVideoGenerator({
                     <span>{t.openVideo}</span>
                   </a>
 
-                  <a
-                    href={resultVideo.downloadUrl}
-                    download="veo-3.1-dramatic-product-ad.mp4"
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      downloadMediaFile(
+                        resultVideo.downloadUrl || resultVideo.videoUrl,
+                        'veo-3.1-dramatic-product-ad.mp4'
+                      )
+                    }
                     className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
                   >
                     <Download className="h-3.5 w-3.5" />
                     <span>{t.downloadBtn}</span>
-                  </a>
+                  </button>
                 </div>
 
                 {/* Edit in CapCut Studio Button */}

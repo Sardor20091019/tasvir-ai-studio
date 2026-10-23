@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { User, LocaleType } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+import { setStoredLocale } from '../lib/useAppLocale';
 
 export type NavTabType = 'studio' | 'prompt' | 'editor' | 'templates' | 'pricing' | 'library' | 'admin';
 
@@ -53,6 +54,15 @@ export function Navbar({
       router.push('/editor');
     } else {
       setActiveTab(tabKey);
+    }
+  };
+
+  const handleLanguageChange = (lang: LocaleType) => {
+    setStoredLocale(lang);
+    if (onChangeLocale) {
+      onChangeLocale(lang);
+    } else if (lang !== locale) {
+      onToggleLocale();
     }
   };
 
@@ -122,7 +132,13 @@ export function Navbar({
           {/* LEFT — Brand mark */}
           <div className="flex items-center gap-8">
             <button
-              onClick={() => setActiveTab('prompt')}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.location.pathname.startsWith('/editor')) {
+                  router.push('/?tab=prompt');
+                } else {
+                  handleNavClick('prompt');
+                }
+              }}
               className="flex items-center gap-3 group"
             >
               {/* Logomark — sharp square */}
@@ -234,7 +250,7 @@ export function Navbar({
                 <button
                   key={lang}
                   type="button"
-                  onClick={() => onChangeLocale ? onChangeLocale(lang) : (lang !== locale && onToggleLocale())}
+                  onClick={() => handleLanguageChange(lang)}
                   className={`
                     px-2 py-1 text-[10px] font-mono font-bold tracking-widest transition-all
                     ${locale === lang
@@ -332,10 +348,7 @@ export function Navbar({
                 <button
                   key={lang}
                   type="button"
-                  onClick={() => {
-                    if (onChangeLocale) onChangeLocale(lang);
-                    else if (lang !== locale) onToggleLocale();
-                  }}
+                  onClick={() => handleLanguageChange(lang)}
                   className={`
                     px-3 py-2 text-[11px] font-mono font-bold tracking-widest transition-all
                     ${locale === lang ? 'bg-surface-raised text-ink' : 'text-ink-dim hover:text-ink-muted'}
