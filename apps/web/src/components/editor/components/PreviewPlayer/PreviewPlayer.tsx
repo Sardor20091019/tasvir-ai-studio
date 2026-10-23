@@ -163,22 +163,22 @@ export function PreviewPlayer() {
     return `${String(m).padStart(2, '0')}:${String(remainingS).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
   };
 
-  // Aspect ratio class
+  // Aspect ratio class with dynamic viewport scaling on mobile
   const aspectClass =
     aspectRatio === '9:16'
-      ? 'aspect-[9/16] max-h-[460px] sm:max-h-[520px]'
+      ? 'aspect-[9/16] max-h-[35vh] sm:max-h-[44vh] lg:max-h-[520px]'
       : aspectRatio === '16:9'
-      ? 'aspect-video max-h-[380px] sm:max-h-[440px]'
-      : 'aspect-square max-h-[420px] sm:max-h-[460px]';
+      ? 'aspect-video max-h-[30vh] sm:max-h-[38vh] lg:max-h-[440px]'
+      : 'aspect-square max-h-[32vh] sm:max-h-[40vh] lg:max-h-[460px]';
 
   return (
     <div
       ref={containerRef}
-      className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 bg-obsidian-card/40 relative select-none overflow-hidden"
+      className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 bg-obsidian-card/40 relative select-none overflow-hidden min-h-0"
     >
       {/* ── STAGE / CANVAS SCREEN ── */}
       <div
-        className={`relative ${aspectClass} w-auto bg-black rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group`}
+        className={`relative ${aspectClass} w-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group shrink-0`}
       >
         {/* Active Video Stream */}
         {activeVideoClip ? (
@@ -324,70 +324,70 @@ export function PreviewPlayer() {
       </div>
 
       {/* ── TRANSPORT CONTROLS BAR ── */}
-      <div className="w-full max-w-xl mt-3 flex items-center justify-between gap-3 bg-canvas/80 border border-stroke rounded-xl px-4 py-2">
+      <div className="w-full max-w-xl mt-2 sm:mt-3 flex items-center justify-between gap-1.5 sm:gap-3 bg-canvas/80 border border-stroke rounded-xl px-2 sm:px-4 py-1.5 sm:py-2 shrink-0">
         {/* Timecode display */}
-        <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-ink">
-          <Clock className="w-3.5 h-3.5 text-accent-warm" />
+        <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-mono font-bold text-ink shrink-0">
+          <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent-warm" />
           <span>{formatTimecode(currentTime)}</span>
           <span className="text-ink-dim">/</span>
           <span className="text-ink-muted">{formatTimecode(duration)}</span>
         </div>
 
         {/* Center Playback Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Step Back 1 Frame */}
           <button
             onClick={() => stepFrame(-1)}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors"
+            className="p-1 sm:p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors cursor-pointer"
             title="Kadr orqaga (←)"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           {/* Play / Pause Toggle */}
           <button
             onClick={togglePlay}
-            className="w-9 h-9 rounded-full bg-accent-warm hover:brightness-110 text-canvas flex items-center justify-center transition-all shadow-md active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent-warm hover:brightness-110 text-canvas flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
             title="Ijro etish / Toʻxtatish (Space)"
           >
             {isPlaying ? (
-              <Pause className="w-4 h-4 fill-current" />
+              <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
             ) : (
-              <Play className="w-4 h-4 fill-current ml-0.5" />
+              <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current ml-0.5" />
             )}
           </button>
 
           {/* Step Forward 1 Frame */}
           <button
             onClick={() => stepFrame(1)}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors"
+            className="p-1 sm:p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors cursor-pointer"
             title="Kadr oldinga (→)"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           {/* Restart Playhead */}
           <button
             onClick={() => seek(0)}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors ml-1"
+            className="p-1 sm:p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors ml-0.5 sm:ml-1 cursor-pointer"
             title="Boshiga qaytarish"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </button>
         </div>
 
         {/* Right Volume & Fullscreen */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Volume Mute */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors"
+            className="p-1 sm:p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors cursor-pointer"
             title={isMuted ? 'Ovozni yoqish' : 'Ovozni oʻchirish'}
           >
             {isMuted || volume === 0 ? (
-              <VolumeX className="w-4 h-4 text-red-400" />
+              <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
             ) : (
-              <Volume2 className="w-4 h-4" />
+              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             )}
           </button>
 
@@ -402,16 +402,16 @@ export function PreviewPlayer() {
               setVolume(parseFloat(e.target.value));
               if (isMuted) setIsMuted(false);
             }}
-            className="w-16 h-1 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-warm hidden sm:block"
+            className="w-12 sm:w-16 h-1 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-warm hidden md:block"
           />
 
           {/* Fullscreen */}
           <button
             onClick={toggleFullscreen}
-            className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors"
+            className="p-1 sm:p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors cursor-pointer"
             title="Toʻliq ekran"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>

@@ -383,44 +383,46 @@ export function Navbar({
       )}
 
       {/* ── MOBILE BOTTOM BAR ────────────────────────── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-obsidian/95 backdrop-blur-sm border-t border-stroke">
-        <div className="flex items-center justify-around px-2 py-2">
-          {[
-            { key: 'studio' as NavTabType, label: t.studio, icon: Film },
-            { key: 'prompt' as NavTabType, label: 'VEO', icon: Layers },
-            { key: 'editor' as NavTabType, label: 'CAPCUT', icon: Scissors },
-            { key: 'templates' as NavTabType, label: t.templates, icon: Layers },
-            { key: 'library' as NavTabType, label: t.library, icon: Video },
-          ].map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => handleNavClick(item.key)}
-              className={`
-                flex flex-col items-center gap-0.5 py-1 px-2 transition-all
-                ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}
-              `}
-            >
-              <item.icon className={`h-4 w-4 ${activeTab === item.key ? 'text-accent-warm' : ''}`} />
-              <span className="text-[8px] font-mono tracking-widest">{item.label}</span>
-              {activeTab === item.key && <span className="w-4 h-px bg-accent-warm mt-0.5" />}
-            </button>
-          ))}
-          {user?.role === 'admin' && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('admin')}
-              className={`
-                flex flex-col items-center gap-0.5 py-1 px-2 transition-all
-                ${activeTab === 'admin' ? 'text-signal-red' : 'text-ink-dim'}
-              `}
-            >
-              <Crown className="h-4 w-4" />
-              <span className="text-[8px] font-mono tracking-widest">ADMIN</span>
-            </button>
-          )}
-        </div>
-      </nav>
+      {activeTab !== 'editor' && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-obsidian/95 backdrop-blur-sm border-t border-stroke pb-[env(safe-area-inset-bottom,0px)]">
+          <div className="flex items-center justify-around px-2 py-2">
+            {[
+              { key: 'studio' as NavTabType, label: t.studio, icon: Film },
+              { key: 'prompt' as NavTabType, label: 'VEO', icon: Layers },
+              { key: 'editor' as NavTabType, label: 'CAPCUT', icon: Scissors },
+              { key: 'templates' as NavTabType, label: t.templates, icon: Layers },
+              { key: 'library' as NavTabType, label: t.library, icon: Video },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleNavClick(item.key)}
+                className={`
+                  flex flex-col items-center gap-0.5 py-1 px-2 transition-all cursor-pointer
+                  ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}
+                `}
+              >
+                <item.icon className={`h-4 w-4 ${activeTab === item.key ? 'text-accent-warm' : ''}`} />
+                <span className="text-[8px] font-mono tracking-widest">{item.label}</span>
+                {activeTab === item.key && <span className="w-4 h-px bg-accent-warm mt-0.5" />}
+              </button>
+            ))}
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('admin')}
+                className={`
+                  flex flex-col items-center gap-0.5 py-1 px-2 transition-all cursor-pointer
+                  ${activeTab === 'admin' ? 'text-signal-red' : 'text-ink-dim'}
+                `}
+              >
+                <Crown className="h-4 w-4" />
+                <span className="text-[8px] font-mono tracking-widest">ADMIN</span>
+              </button>
+            )}
+          </div>
+        </nav>
+      )}
     </>
   );
 }

@@ -30,3 +30,7 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Generated Media
+apps/web/public/generated-videos/
+public/generated-videos/
+

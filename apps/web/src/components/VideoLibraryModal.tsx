@@ -57,6 +57,7 @@ export function VideoLibraryModal({
               progress_percent: statusData.progress ?? (isDone ? 100 : activeJob.progress_percent),
               step_message: statusData.currentStepMessage || activeJob.step_message,
               output_video_url: statusData.videoUrl || statusData.downloadUrl || activeJob.output_video_url,
+              scenes: statusData.scenes || activeJob.scenes,
               completed_at: isDone ? new Date().toISOString() : activeJob.completed_at,
               error_message: isFailed ? (statusData.error || 'Video yaratishda xatolik yuz berdi') : null,
             };
@@ -277,6 +278,36 @@ export function VideoLibraryModal({
                       <p className="text-[10px] font-mono text-ink-muted truncate">
                         {job.step_message || 'Google Gemini Omni 1.1 Flash'}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {isCompleted && job.scenes && job.scenes.some((s) => s.imageUrl) && (
+                  <div className="px-3 pb-2 space-y-1">
+                    <span className="text-[10px] font-mono text-ink-muted">
+                      {locale === 'en' ? 'AI Scene Images:' : 'AI Sahna Kadrlari:'}
+                    </span>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                      {job.scenes.map((sc, scIdx) => {
+                        if (!sc.imageUrl) return null;
+                        return (
+                          <div
+                            key={scIdx}
+                            title={`${sc.actTitle} - ${locale === 'en' ? 'Download JPG' : 'Tasvirni yuklab olish'}`}
+                            onClick={() => downloadMediaFile(sc.imageUrl!, `scene-${sc.sceneIndex}.jpg`)}
+                            className="relative h-12 w-8 shrink-0 rounded-md overflow-hidden border border-border/80 group/img cursor-pointer"
+                          >
+                            <img
+                              src={sc.imageUrl}
+                              alt={sc.actTitle}
+                              className="h-full w-full object-cover group-hover/img:scale-110 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                              <Download className="h-3 w-3 text-white" />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

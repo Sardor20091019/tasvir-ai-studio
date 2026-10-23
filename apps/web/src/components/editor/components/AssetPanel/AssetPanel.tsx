@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FolderOpen,
   Film,
@@ -16,6 +16,7 @@ import {
   Volume2,
   Check,
   Search,
+  X,
 } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 import {
@@ -29,7 +30,14 @@ import {
 import { AssetItem, FilterPreset, TextPresetItem } from '../../types';
 import { LocaleType } from '../../../../types';
 
-type AssetTabType = 'media' | 'stock' | 'audio' | 'text' | 'effects';
+export type AssetTabType = 'media' | 'stock' | 'audio' | 'text' | 'effects';
+
+export interface AssetPanelProps {
+  className?: string;
+  isMobileDrawer?: boolean;
+  forcedTab?: AssetTabType;
+  onCloseMobile?: () => void;
+}
 
 interface UploadedLocalMedia {
   id: string;
@@ -40,7 +48,12 @@ interface UploadedLocalMedia {
   sizeMb: string;
 }
 
-export function AssetPanel() {
+export function AssetPanel({
+  className = '',
+  isMobileDrawer = false,
+  forcedTab,
+  onCloseMobile,
+}: AssetPanelProps = {}) {
   const { addClip, activeFilter, setActiveFilter, currentTime, locale } = useEditor();
 
   const t = ({
@@ -97,12 +110,18 @@ export function AssetPanel() {
     },
   } as Record<LocaleType, any>)[(locale as LocaleType) || 'uz'];
 
-  const [activeTab, setActiveTab] = useState<AssetTabType>('media');
+  const [activeTab, setActiveTab] = useState<AssetTabType>(forcedTab || 'media');
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadedMedia, setUploadedMedia] = useState<UploadedLocalMedia[]>([]);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (forcedTab) {
+      setActiveTab(forcedTab);
+    }
+  }, [forcedTab]);
 
   // File upload handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,10 +184,37 @@ export function AssetPanel() {
     }
   };
 
+  const containerClass = isMobileDrawer
+    ? `w-full h-full bg-obsidian-card flex flex-col select-none overflow-hidden ${className}`
+    : `hidden lg:flex w-72 sm:w-80 h-full bg-obsidian border-r border-stroke flex-col flex-shrink-0 select-none overflow-hidden ${className}`;
+
   return (
-    <aside className="w-72 sm:w-80 h-full bg-obsidian border-r border-stroke flex flex-col flex-shrink-0 select-none overflow-hidden">
+    <aside className={containerClass}>
+      {/* Mobile Drawer Top Bar */}
+      {isMobileDrawer && (
+        <div className="flex items-center justify-between p-3 border-b border-stroke bg-canvas/80 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold font-heading uppercase text-accent-warm">
+              {activeTab === 'media' && t.tabMedia}
+              {activeTab === 'stock' && t.tabStock}
+              {activeTab === 'audio' && t.tabAudio}
+              {activeTab === 'text' && t.tabText}
+              {activeTab === 'effects' && t.tabEffects}
+            </span>
+          </div>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="p-1 rounded-full hover:bg-surface-raised text-ink-muted hover:text-ink transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Tab Navigation Rail */}
-      <div className="flex border-b border-stroke bg-canvas/60 p-1 gap-1 overflow-x-auto scrollbar-none">
+      <div className="flex border-b border-stroke bg-canvas/60 p-1 gap-1 overflow-x-auto scrollbar-none shrink-0">
         <button
           onClick={() => setActiveTab('media')}
           className={`flex-1 py-2 px-1.5 rounded-md text-[11px] font-mono font-medium flex flex-col items-center gap-1 transition-colors ${

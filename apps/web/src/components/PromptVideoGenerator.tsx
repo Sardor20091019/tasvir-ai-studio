@@ -356,6 +356,7 @@ export function PromptVideoGenerator({
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [resultVideo, setResultVideo] = useState<{
     videoUrl: string;
     downloadUrl: string;
@@ -606,9 +607,9 @@ export function PromptVideoGenerator({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start">
         {/* LEFT COLUMN: Prompt Input OR AI Scenario Review & Confirmation */}
-        <div className="lg:col-span-7 bg-surface rounded-3xl p-6 sm:p-7 border border-border shadow-sm space-y-6">
+        <div className="lg:col-span-7 bg-surface rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-7 border border-border shadow-sm space-y-6">
           {!plannedScenes ? (
             /* STEP 1: Enter prompt and generate AI scenario */
             <form onSubmit={handlePlanScenario} className="space-y-6">
@@ -971,7 +972,7 @@ export function PromptVideoGenerator({
         </div>
 
         {/* RIGHT COLUMN: Video Player / Progress / Empty State */}
-        <div className="lg:col-span-5 bg-surface rounded-3xl p-6 border border-border shadow-sm flex flex-col justify-center min-h-[500px]">
+        <div className="lg:col-span-5 bg-surface rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border shadow-sm flex flex-col justify-center min-h-[380px] sm:min-h-[500px]">
           {!isRendering && !resultVideo && !error && (
             <div className="text-center py-14 px-4 space-y-4">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-canvas border border-border flex items-center justify-center text-ink-muted shadow-xs">
@@ -1053,19 +1054,16 @@ export function PromptVideoGenerator({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-ink flex items-center gap-1.5">
                     <Zap className="h-3 w-3 text-coral" />
-                    <span>Veo 3.1 & FFmpeg Pipeline:</span>
+                    <span>AI Image & Motion Pipeline:</span>
                   </span>
                   <span className="font-mono text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded">
                     9:16
                   </span>
                 </div>
                 <div className="space-y-1 text-[11px] text-ink-muted">
-                  <p>• {locale === 'en' ? 'Act 1: Suspicion & Betrayal Tropes (4–8s)' : '1-Akt: Shubhali Koʻz Qarash & Xiyonat Alomati (4–8s)'}</p>
-                  <p>• {locale === 'en' ? 'Act 2: Crying & Climax Confrontation (4–8s)' : '2-Akt: Koʻz Yoshlar & Keskin Kulminatsiya (4–8s)'}</p>
-                  <p>• {locale === 'en' ? 'Act 3: Triumphant Resolution & Hero Shot (4–8s)' : '3-Akt: Gʻolibona Qahramonlik Kadri (4–8s)'}</p>
-                  <p>
-                    • FFmpeg Concat Demuxer + {locale === 'en' ? 'Natural voice dialogue' : 'Tabiiy nutq va ovoz'}
-                  </p>
+                  <p>• {locale === 'en' ? 'Phase 1: High-res AI Scene Images generation (FLUX / Sana)' : '1-Bosqich: Yuqori sifatli 9:16 AI sahna tasvirlari yaratish'}</p>
+                  <p>• {locale === 'en' ? 'Phase 2: Product photography alignment & scene clips' : '2-Bosqich: Mahsulot fotosi va sahna video kliplari shakllantirish'}</p>
+                  <p>• {locale === 'en' ? 'Phase 3: FFmpeg master concatenation & soundtrack blend' : '3-Bosqich: FFmpeg Concat master montaj va ovoz birlashtirish'}</p>
                 </div>
               </div>
             </div>
@@ -1114,7 +1112,7 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              <div className="relative mx-auto rounded-3xl overflow-hidden bg-black shadow-xl border border-border/80 w-[240px] sm:w-[260px] aspect-[9/16] flex items-center justify-center group">
+              <div className="relative mx-auto rounded-3xl overflow-hidden bg-black shadow-xl border border-border/80 w-[210px] xs:w-[240px] sm:w-[260px] aspect-[9/16] flex items-center justify-center group">
                 <video
                   ref={videoRef}
                   key={resultVideo.videoUrl}
@@ -1143,7 +1141,7 @@ export function PromptVideoGenerator({
                 <span className="flex items-center gap-1 text-ink font-medium truncate max-w-[200px]">
                   <Film className="h-3.5 w-3.5 shrink-0 text-coral" />
                   <span className="truncate">
-                    {locale === 'en' ? 'Veo 3.1 • 9:16 Vertical' : 'Veo 3.1 • 9:16 Vertikal'}
+                    {locale === 'en' ? 'AI Vision & Motion • 9:16 Vertical' : 'AI Vision & Motion • 9:16 Vertikal'}
                   </span>
                 </span>
                 <span className="font-mono text-[10px] bg-canvas border border-border px-1.5 py-0.5 rounded shrink-0">
@@ -1168,10 +1166,10 @@ export function PromptVideoGenerator({
                     onClick={() =>
                       downloadMediaFile(
                         resultVideo.downloadUrl || resultVideo.videoUrl,
-                        'veo-3.1-dramatic-product-ad.mp4'
+                        'tasvir-ai-dramatic-product-ad.mp4'
                       )
                     }
-                    className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Download className="h-3.5 w-3.5" />
                     <span>{t.downloadBtn}</span>
@@ -1185,7 +1183,7 @@ export function PromptVideoGenerator({
                     if (onEditInCapCut) {
                       onEditInCapCut({
                         id: jobId || `proj-${Date.now()}`,
-                        title: prompt || 'Veo 3.1 AI Video',
+                        title: prompt || 'AI Story Video',
                         videoUrl: resultVideo.videoUrl || '',
                         duration: resultVideo.totalDurationSeconds || 16,
                         scenes: resultVideo.scenes || [],
@@ -1225,10 +1223,175 @@ export function PromptVideoGenerator({
                   <span>{t.createAnother}</span>
                 </button>
               </div>
+
+              {/* Generated AI Scene Images Gallery */}
+              {resultVideo.scenes && resultVideo.scenes.some((s) => s.imageUrl) && (
+                <div className="pt-4 border-t border-border/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-coral/10 text-coral flex items-center justify-center">
+                        <ImageIcon className="h-3.5 w-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-ink font-heading">
+                          {locale === 'en'
+                            ? 'AI Scene Images (FLUX 9:16)'
+                            : locale === 'ru'
+                            ? 'AI Кадры Сцен (FLUX 9:16)'
+                            : 'Sahna Tasvirlari (AI Kadrlar 9:16)'}
+                        </h4>
+                        <p className="text-[10px] text-ink-muted">
+                          {locale === 'en'
+                            ? 'Generated high-resolution AI vertical images for each story scene'
+                            : locale === 'ru'
+                            ? 'Сгенерированные AI изображения для каждого акта сюжета'
+                            : 'Har bir hikoya sahnasi uchun generatsiya qilingan AI tasvirlar'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono bg-coral/10 text-coral font-bold px-2 py-0.5 rounded-full border border-coral/20">
+                      {resultVideo.scenes.filter((s) => s.imageUrl).length} {locale === 'en' ? 'images' : 'tasvir'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {resultVideo.scenes.map((scene, idx) => {
+                      if (!scene.imageUrl) return null;
+                      return (
+                        <div
+                          key={idx}
+                          className="group relative rounded-2xl overflow-hidden border border-border bg-canvas shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+                        >
+                          <div
+                            onClick={() => setPreviewImageUrl(scene.imageUrl!)}
+                            className="relative aspect-[9/16] w-full bg-black overflow-hidden cursor-pointer"
+                          >
+                            <img
+                              src={scene.imageUrl}
+                              alt={scene.actTitle || `Scene ${scene.sceneIndex}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
+                            {/* Scene Number Badge */}
+                            <div className="absolute top-2 left-2 z-10">
+                              <span className="px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9px] font-mono font-bold">
+                                #{scene.sceneIndex}
+                              </span>
+                            </div>
+
+                            {/* Download button on hover */}
+                            <div className="absolute top-2 right-2 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadMediaFile(
+                                    scene.imageUrl!,
+                                    `scene-${scene.sceneIndex}-${jobId || 'image'}.jpg`
+                                  );
+                                }}
+                                title={locale === 'en' ? 'Download Image' : 'Tasvirni yuklab olish'}
+                                className="p-1.5 rounded-lg bg-black/70 hover:bg-coral text-white backdrop-blur-xs shadow-xs transition-colors cursor-pointer"
+                              >
+                                <Download className="h-3 w-3" />
+                              </button>
+                            </div>
+
+                            {/* Scene Title at bottom */}
+                            <div className="absolute bottom-2 inset-x-2 z-10">
+                              <p className="text-[10px] font-bold text-white line-clamp-1">
+                                {scene.actTitle}
+                              </p>
+                              <p className="text-[9px] text-white/80 line-clamp-1 italic font-sans">
+                                &ldquo;{scene.dialogueScript || scene.caption}&rdquo;
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Card Action footer */}
+                          <div className="p-2 bg-surface flex items-center justify-between border-t border-border/50 text-[10px]">
+                            <span className="font-mono text-ink-muted text-[9px]">
+                              {scene.durationSeconds || 5}s
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadMediaFile(
+                                  scene.imageUrl!,
+                                  `scene-${scene.sceneIndex}-${jobId || 'image'}.jpg`
+                                )
+                              }
+                              className="text-[10px] font-bold text-coral hover:text-coral-hover inline-flex items-center gap-1 transition-colors cursor-pointer"
+                            >
+                              <Download className="h-2.5 w-2.5" />
+                              <span>{locale === 'en' ? 'Download' : 'Yuklash'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal for Full-Size Scene Image Preview */}
+      {previewImageUrl && (
+        <div
+          onClick={() => setPreviewImageUrl(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-sm w-full bg-surface rounded-3xl overflow-hidden border border-border shadow-2xl flex flex-col"
+          >
+            <div className="p-3 border-b border-border flex items-center justify-between">
+              <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+                <ImageIcon className="h-3.5 w-3.5 text-coral" />
+                <span>{locale === 'en' ? 'AI Scene Image Preview' : 'AI Sahna Tasviri'}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="p-1 rounded-full hover:bg-canvas text-ink-muted hover:text-ink transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="relative aspect-[9/16] w-full bg-black overflow-hidden flex items-center justify-center">
+              <img
+                src={previewImageUrl}
+                alt="Scene full preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-3 bg-surface flex items-center justify-end gap-2 border-t border-border">
+              <a
+                href={previewImageUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="py-1.5 px-3 rounded-xl border border-border bg-canvas hover:bg-surface-raised text-xs font-semibold text-ink flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                <span>{locale === 'en' ? 'Open Full' : 'Ochish'}</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => downloadMediaFile(previewImageUrl, 'ai-scene-image.jpg')}
+                className="py-1.5 px-3 rounded-xl bg-coral hover:bg-coral-hover text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Download className="h-3 w-3" />
+                <span>{locale === 'en' ? 'Download' : 'Yuklab olish'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

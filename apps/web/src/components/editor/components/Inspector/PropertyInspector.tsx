@@ -15,12 +15,23 @@ import {
   Move,
   Eye,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 import { FILTER_PRESETS, TEXT_PRESETS, TRANSITION_PRESETS } from '../../constants/stockAssets';
 import { TransitionType } from '../../types';
 
-export function PropertyInspector() {
+export interface PropertyInspectorProps {
+  className?: string;
+  isMobileDrawer?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export function PropertyInspector({
+  className = '',
+  isMobileDrawer = false,
+  onCloseMobile,
+}: PropertyInspectorProps = {}) {
   const {
     selectedClip,
     updateClip,
@@ -35,13 +46,27 @@ export function PropertyInspector() {
   } = useEditor();
 
   if (!selectedClip) {
+    const emptyClass = isMobileDrawer
+      ? `w-full h-full bg-obsidian-card p-4 flex flex-col select-none overflow-y-auto custom-scrollbar ${className}`
+      : `hidden lg:flex w-64 sm:w-72 h-full bg-obsidian border-l border-stroke p-4 flex-col select-none overflow-y-auto custom-scrollbar ${className}`;
+
     return (
-      <aside className="w-64 sm:w-72 h-full bg-obsidian border-l border-stroke p-4 flex flex-col select-none overflow-y-auto custom-scrollbar">
-        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-stroke">
-          <SlidersHorizontal className="w-4 h-4 text-accent-warm" />
-          <span className="text-xs font-bold font-heading uppercase tracking-wider text-ink">
-            Loyiha Xususiyatlari
-          </span>
+      <aside className={emptyClass}>
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-stroke">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-accent-warm" />
+            <span className="text-xs font-bold font-heading uppercase tracking-wider text-ink">
+              Loyiha Xususiyatlari
+            </span>
+          </div>
+          {isMobileDrawer && onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="p-1 rounded-full hover:bg-surface-raised text-ink-muted hover:text-ink cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="space-y-3 text-xs">
@@ -76,10 +101,14 @@ export function PropertyInspector() {
     );
   }
 
+  const panelClass = isMobileDrawer
+    ? `w-full h-full bg-obsidian-card flex flex-col select-none overflow-y-auto ${className}`
+    : `hidden lg:flex w-64 sm:w-72 h-full bg-obsidian border-l border-stroke flex-col select-none overflow-hidden flex-shrink-0 ${className}`;
+
   return (
-    <aside className="w-64 sm:w-72 h-full bg-obsidian border-l border-stroke flex flex-col select-none overflow-hidden flex-shrink-0">
+    <aside className={panelClass}>
       {/* Inspector Header */}
-      <div className="p-3 border-b border-stroke flex items-center justify-between gap-2 bg-canvas/40">
+      <div className="p-3 border-b border-stroke flex items-center justify-between gap-2 bg-canvas/40 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <SlidersHorizontal className="w-4 h-4 text-accent-warm flex-shrink-0" />
           <span className="text-xs font-bold font-heading text-ink truncate">
@@ -91,18 +120,26 @@ export function PropertyInspector() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => splitClipAtPlayhead(selectedClip.id)}
-            className="p-1.5 rounded-md hover:bg-surface-raised text-ink-muted hover:text-accent-warm transition-colors"
+            className="p-1.5 rounded-md hover:bg-surface-raised text-ink-muted hover:text-accent-warm transition-colors cursor-pointer"
             title="Klipni kesish (C)"
           >
             <Scissors className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => removeClip(selectedClip.id)}
-            className="p-1.5 rounded-md hover:bg-red-500/10 text-ink-muted hover:text-red-400 transition-colors"
+            className="p-1.5 rounded-md hover:bg-red-500/10 text-ink-muted hover:text-red-400 transition-colors cursor-pointer"
             title="Klipni oʻchirish (Del)"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+          {isMobileDrawer && onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="p-1.5 rounded-full hover:bg-surface-raised text-ink-muted hover:text-ink transition-colors cursor-pointer ml-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 

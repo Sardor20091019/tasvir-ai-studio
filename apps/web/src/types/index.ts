@@ -50,6 +50,7 @@ export interface VideoJob {
   step_message?: string;
   audio_preview_url: string | null;
   output_video_url: string | null;
+  scenes?: DramaScene[];
   credits_charged: number;
   error_message: string | null;
   created_at: string;
@@ -135,6 +136,7 @@ export interface DramaScene {
   caption: string;
   karaokeSubtitles: KaraokeWord[];
   clipVideoUrl?: string;
+  imageUrl?: string;
 }
 
 export interface DramaVideoJob {

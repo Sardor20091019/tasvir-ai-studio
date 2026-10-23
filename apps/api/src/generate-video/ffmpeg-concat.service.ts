@@ -189,6 +189,139 @@ export class FfmpegConcatService {
     });
   }
 
+  async convertImageToSceneClip(params: {
+    imagePath: string;
+    outputPath: string;
+    durationSeconds: number;
+    sceneIndex: number;
+    caption?: string;
+    resolution?: string;
+  }): Promise<string> {
+    const { imagePath, outputPath, sceneIndex, caption, resolution } = params;
+    const duration = Math.max(3, Math.min(params.durationSeconds || 5, 10));
+    const dims = this.getResolutionDimensions(resolution);
+
+    const outDir = path.dirname(outputPath);
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+
+    let filterString = [
+      `scale=${dims.width}:${dims.height}:force_original_aspect_ratio=increase`,
+      `crop=${dims.width}:${dims.height}`,
+      `setsar=1`,
+      `format=yuv420p`,
+    ].join(',');
+
+    if (caption && caption.trim()) {
+      const safeCaption = caption.replace(/['":\\]/g, ' ').trim().slice(0, 50);
+      filterString += `,drawbox=x=15:y=${dims.boxY}:w=${dims.boxW}:h=${dims.boxH}:color=black@0.65:t=fill,drawtext=text='${safeCaption}':fontcolor=white:fontsize=${dims.fontSize}:x=(w-text_w)/2:y=${dims.captionY}`;
+    }
+
+    const ffmpegArgs: string[] = [
+      '-y',
+      '-loop',
+      '1',
+      '-i',
+      imagePath,
+      '-f',
+      'lavfi',
+      '-i',
+      'anullsrc=r=44100:cl=stereo',
+      '-vf',
+      filterString,
+      '-t',
+      String(duration),
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-c:a',
+      'aac',
+      '-shortest',
+      outputPath,
+    ];
+
+    await this.runFfmpeg(ffmpegArgs, 'convertImageToSceneClip');
+    return outputPath;
+  }
+
+  async createThematicSceneImage(params: {
+    outputPath: string;
+    sceneIndex: number;
+    actTitle?: string;
+    caption?: string;
+    tensionLevel?: number;
+    resolution?: string;
+  }): Promise<string> {
+    const { outputPath, sceneIndex, actTitle, caption, resolution } = params;
+    const dims = this.getResolutionDimensions(resolution);
+
+    const outDir = path.dirname(outputPath);
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+
+    const bgColors = ['0x0B1120', '0x1F0A10', '0x1C1405', '0x1E1B4B', '0x0F172A'];
+    const color = bgColors[(sceneIndex - 1) % bgColors.length];
+
+    const safeTitle = (actTitle || `Sahna ${sceneIndex}`).replace(/['":\\]/g, ' ').trim().slice(0, 40);
+    const safeCaption = (caption || '').replace(/['":\\]/g, ' ').trim().slice(0, 50);
+
+    const titleY = Math.floor(dims.height * 0.35);
+    const vfParts = [
+      'noise=alls=15:allf=t+u',
+      `drawbox=x=15:y=${titleY}:w=${dims.width - 30}:h=50:color=black@0.75:t=fill`,
+      `drawtext=text='${safeTitle}':fontcolor=0xFFD700:fontsize=${dims.fontSize + 3}:x=(w-text_w)/2:y=${titleY + 16}`,
+    ];
+
+    if (safeCaption) {
+      vfParts.push(
+        `drawbox=x=15:y=${dims.boxY}:w=${dims.boxW}:h=${dims.boxH}:color=black@0.65:t=fill`,
+        `drawtext=text='${safeCaption}':fontcolor=white:fontsize=${dims.fontSize}:x=(w-text_w)/2:y=${dims.captionY}`,
+      );
+    }
+
+    const args = [
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      `color=c=${color}:s=${dims.width}x${dims.height}:d=1`,
+      '-vf',
+      vfParts.join(','),
+      '-vframes',
+      '1',
+      outputPath,
+    ];
+
+    await this.runFfmpeg(args, 'createThematicSceneImage');
+    return outputPath;
+  }
+
+  private runFfmpeg(args: string[], opName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.logger.log(`Running FFmpeg [${opName}]: ${ffmpegPath} ${args.join(' ')}`);
+      const proc = spawn(ffmpegPath, args);
+      let stderrOutput = '';
+      proc.stderr.on('data', (d) => {
+        stderrOutput += d.toString();
+      });
+      proc.on('error', (err) => {
+        this.logger.error(`FFmpeg [${opName}] spawn error: ${err.message}`);
+        reject(new Error(`FFmpeg [${opName}] failed: ${err.message}`));
+      });
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          this.logger.error(`FFmpeg [${opName}] exited with code ${code}: ${stderrOutput.slice(-500)}`);
+          reject(new Error(`FFmpeg [${opName}] exited with code ${code}`));
+        }
+      });
+    });
+  }
+
   async synthesizeDramaSceneClip(params: {
     outputPath: string;
     durationSeconds: number; 

@@ -42,19 +42,21 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="h-screen max-h-screen bg-obsidian text-ink flex flex-col font-sans overflow-hidden">
-      <Navbar
-        user={user}
-        locale={locale}
-        onToggleLocale={handleToggleLocale}
-        onChangeLocale={setLocale}
-        activeTab="editor"
-        setActiveTab={handleTabSwitch}
-        onOpenCheckout={() => router.push('/?tab=pricing')}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        libraryCount={jobs.length}
-      />
+    <div className="h-[100dvh] max-h-[100dvh] bg-obsidian text-ink flex flex-col font-sans overflow-hidden">
+      <div className="hidden lg:block flex-shrink-0">
+        <Navbar
+          user={user}
+          locale={locale}
+          onToggleLocale={handleToggleLocale}
+          onChangeLocale={setLocale}
+          activeTab="editor"
+          setActiveTab={handleTabSwitch}
+          onOpenCheckout={() => router.push('/?tab=pricing')}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          libraryCount={jobs.length}
+        />
+      </div>
 
       <main className="flex-1 w-full flex flex-col overflow-hidden min-h-0">
         <CapCutEditor

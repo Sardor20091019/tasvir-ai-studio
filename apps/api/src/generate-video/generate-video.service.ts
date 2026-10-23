@@ -192,157 +192,86 @@ export class GenerateVideoService {
     job.totalDurationSeconds = accumulatedTime;
     job.karaokeTimeline = masterKaraokeTimeline;
     job.progress = 35;
-    const targetModel = job.modelTier || process.env.GEMINI_VIDEO_MODEL || 'gemini-omni-1.1-flash';
     const targetResolution = job.resolution || process.env.GEMINI_VIDEO_RESOLUTION || '360p';
 
-    job.currentStepMessage = `${targetModel} (${targetResolution}) orqali 9:16 sahna kadrlari generatsiya qilinmoqda...`;
-
-    job.status = 'generating_veo_clips';
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `tasvir-veo-${jobId}-`));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `tasvir-ai-${jobId}-`));
     const generatedClipPaths: string[] = [];
 
+    // Ensure public output directory exists for scene images and master videos
+    const candidates = [
+      path.resolve(process.cwd(), 'apps/web/public/generated-videos'),
+      path.resolve(process.cwd(), '../web/public/generated-videos'),
+      path.resolve(process.cwd(), 'public/generated-videos'),
+    ];
+    let publicDir = candidates[0];
+    for (const c of candidates) {
+      if (fs.existsSync(path.dirname(c))) {
+        publicDir = c;
+        break;
+      }
+    }
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+
+    // PHASE 1: Generate high-quality 9:16 vertical AI images for each scene
+    job.status = 'generating_ai_images';
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
-      const sceneDuration = Math.max(4, Math.min(scene.durationSeconds, 8));
+      const sceneDuration = Math.max(3, Math.min(scene.durationSeconds, 8));
       scene.durationSeconds = sceneDuration;
 
-      job.currentStepMessage = `${targetModel}: Sahna ${i + 1}/${scenes.length} ("${scene.actTitle}") render qilinmoqda (${sceneDuration}s, ${targetResolution})...`;
-      job.progress = 40 + Math.floor((i / scenes.length) * 30);
+      job.currentStepMessage = `AI tasvir yaratilmoqda: Sahna ${i + 1}/${scenes.length} ("${scene.actTitle}")...`;
+      job.progress = 35 + Math.floor((i / scenes.length) * 35);
+
+      const imgFilename = `img_${jobId}_scene_${scene.sceneIndex}.jpg`;
+      const publicImgPath = path.join(publicDir, imgFilename);
+
+      await this.generateImageForScene({
+        scene,
+        sceneIndex: scene.sceneIndex,
+        totalScenes: scenes.length,
+        outputPath: publicImgPath,
+        productImageUrl: job.productImageUrl,
+        resolution: targetResolution,
+      });
+
+      scene.localImagePath = publicImgPath;
+      scene.imageUrl = `/generated-videos/${imgFilename}`;
+      this.logger.log(`Scene ${scene.sceneIndex} image ready: ${scene.imageUrl}`);
+    }
+
+    // PHASE 2: Convert images into dynamic vertical 9:16 video clips with FFmpeg
+    job.status = 'rendering_scene_clips';
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      job.currentStepMessage = `Sahna klipi shakllantirilmoqda: Sahna ${i + 1}/${scenes.length}...`;
+      job.progress = 70 + Math.floor((i / scenes.length) * 10);
 
       const clipOutputPath = path.join(tempDir, `scene_${scene.sceneIndex}.mp4`);
-      let clipGenerated = false;
+      await this.ffmpegConcatService.convertImageToSceneClip({
+        imagePath: scene.localImagePath || path.join(publicDir, `img_${jobId}_scene_${scene.sceneIndex}.jpg`),
+        outputPath: clipOutputPath,
+        durationSeconds: scene.durationSeconds,
+        sceneIndex: scene.sceneIndex,
+        caption: scene.caption || scene.dialogueScript,
+        resolution: targetResolution,
+      });
 
-      if (activeKey) {
-        try {
-          this.logger.log(
-            `Calling Google ${targetModel} [resolution: ${targetResolution}, duration: ${sceneDuration}s, aspect: 9:16] for scene ${scene.sceneIndex}`,
-          );
-
-          const videoPrompt = `${scene.cinematicPrompt}, vertical 9:16 aspect ratio, dramatic cinematic lighting, ${targetResolution} quality, cinematic tension, movie cinematography`;
-
-          // 1. Native Gemini Omni 1.1 Flash conversational interactions API
-          if (client.interactions && typeof (client.interactions as any).create === 'function') {
-            try {
-              const interactionRes: any = await (client.interactions as any).create({
-                model: targetModel,
-                input: videoPrompt,
-                response_format: {
-                  type: 'video',
-                  resolution: targetResolution,
-                },
-              });
-
-              const interactionVideo = interactionRes?.output?.video;
-              if (interactionVideo?.videoBytes) {
-                fs.writeFileSync(clipOutputPath, Buffer.from(interactionVideo.videoBytes, 'base64'));
-                clipGenerated = true;
-                scene.localClipPath = clipOutputPath;
-                this.logger.log(`${targetModel} scene ${scene.sceneIndex} saved directly from interaction videoBytes`);
-              } else if (interactionVideo?.uri) {
-                scene.clipVideoUrl = interactionVideo.uri;
-                this.logger.log(`${targetModel} scene ${scene.sceneIndex} produced video URI: ${interactionVideo.uri}`);
-                const downloaded = await this.downloadVeoVideo(interactionVideo.uri, clipOutputPath, activeKey);
-                if (downloaded) {
-                  clipGenerated = true;
-                  scene.localClipPath = clipOutputPath;
-                }
-              }
-            } catch (interactionErr: any) {
-              this.logger.warn(`Interactions API with ${targetModel} notice: ${interactionErr.message}`);
-            }
-          }
-
-          // 2. Standard Models generateVideos interface
-          if (!clipGenerated && client.models && typeof (client.models as any).generateVideos === 'function') {
-            const videoOperation: any = await (client.models as any).generateVideos({
-              model: targetModel,
-              prompt: videoPrompt,
-              config: {
-                aspectRatio: '9:16',
-                resolution: targetResolution,
-                durationSeconds: sceneDuration,
-                numberOfVideos: 1,
-              },
-            });
-
-            if (videoOperation) {
-              let op = videoOperation;
-              let attempts = 0;
-              while (!op.done && attempts < 20) {
-                await sleep(3000);
-                attempts++;
-                try {
-                  if ((client.operations as any)?.getVideosOperation) {
-                    op = await (client.operations as any).getVideosOperation({ operation: op });
-                  } else if (typeof (client.operations as any)?.get === 'function') {
-                    op = await (client.operations as any).get({ operation: op });
-                  } else {
-                    break;
-                  }
-                } catch (opErr) {
-                  break;
-                }
-              }
-
-              const videoResult = op.response?.generatedVideos?.[0]?.video;
-              if (videoResult) {
-                if (videoResult.videoBytes) {
-                  fs.writeFileSync(clipOutputPath, Buffer.from(videoResult.videoBytes, 'base64'));
-                  clipGenerated = true;
-                  scene.localClipPath = clipOutputPath;
-                  this.logger.log(`${targetModel} scene ${scene.sceneIndex} saved directly from videoBytes`);
-                } else if (videoResult.uri) {
-                  scene.clipVideoUrl = videoResult.uri;
-                  this.logger.log(`${targetModel} scene ${scene.sceneIndex} produced video URI: ${videoResult.uri}`);
-                  const downloaded = await this.downloadVeoVideo(videoResult.uri, clipOutputPath, activeKey);
-                  if (downloaded) {
-                    clipGenerated = true;
-                    scene.localClipPath = clipOutputPath;
-                  }
-                }
-              }
-            }
-          }
-        } catch (veoErr: any) {
-          this.logger.warn(`Google ${targetModel} call notice: ${veoErr.message}. Synthesizing 9:16 vertical drama clip at ${targetResolution}.`);
-        }
-      }
-
-      if (!clipGenerated) {
-        try {
-          await this.ffmpegConcatService.synthesizeDramaSceneClip({
-            outputPath: clipOutputPath,
-            durationSeconds: sceneDuration,
-            sceneIndex: scene.sceneIndex,
-            tensionLevel: scene.tensionLevel,
-            caption: scene.caption || scene.dialogueScript,
-            resolution: targetResolution,
-          });
-
-          scene.localClipPath = clipOutputPath;
-          clipGenerated = true;
-        } catch (synthErr: any) {
-          this.logger.error(`Error synthesizing clip for scene ${scene.sceneIndex}: ${synthErr.message}`);
-        }
-      }
-
-      if (clipGenerated && fs.existsSync(clipOutputPath)) {
-        generatedClipPaths.push(clipOutputPath);
-      }
-
-      await sleep(1000);
+      scene.localClipPath = clipOutputPath;
+      generatedClipPaths.push(clipOutputPath);
     }
 
     if (generatedClipPaths.length === 0) {
-      throw new Error('Hech qanday dramatik video sahnalarini shakllantirib boʻlmadi');
+      throw new Error('Hech qanday dramatik sahna kadrlarini shakllantirib boʻlmadi');
     }
 
+    // PHASE 3: Concatenate scenes and blend background music
     job.status = 'concatenating_master_video';
     job.progress = 80;
-    job.currentStepMessage = `FFmpeg concat orqali sahnalar master videoga birlashtirilmoqda (${targetResolution})...`;
+    job.currentStepMessage = `Sahnalar va ovoz yoʻlagi birlashtirilmoqda (${targetResolution})...`;
 
     const masterOutputPath = path.join(tempDir, `master_drama_${jobId}.mp4`);
-
     await this.ffmpegConcatService.concatScenes({
       sceneClipPaths: generatedClipPaths,
       outputPath: masterOutputPath,
@@ -351,48 +280,35 @@ export class GenerateVideoService {
       resolution: targetResolution,
     });
 
+    // PHASE 4: Save master video locally and cloud
     job.progress = 90;
     job.status = 'saving_to_cloud';
-    job.currentStepMessage = 'Master video CDN va doimiy xotiraga yuklanmoqda...';
+    job.currentStepMessage = 'Master video saqlanmoqda...';
 
     let finalCdnUrl: string | null = null;
     try {
       const videoBuffer = fs.readFileSync(masterOutputPath);
       finalCdnUrl = await this.uploadThingService.uploadVideo(
         videoBuffer,
-        `veo-3.1-drama-${jobId}.mp4`,
+        `tasvir-ai-video-${jobId}.mp4`,
       );
       if (finalCdnUrl) {
-        this.logger.log(`Veo 3.1 master drama video uploaded to UploadThing CDN: ${finalCdnUrl}`);
+        this.logger.log(`Master video uploaded to UploadThing CDN: ${finalCdnUrl}`);
       }
     } catch (uploadErr: any) {
       this.logger.warn(`UploadThing upload notice: ${uploadErr.message}`);
     }
 
-    if (!finalCdnUrl) {
-      try {
-        const candidates = [
-          path.resolve(process.cwd(), 'apps/web/public/generated-videos'),
-          path.resolve(process.cwd(), '../web/public/generated-videos'),
-        ];
-        let publicDir = candidates[0];
-        for (const c of candidates) {
-          if (fs.existsSync(path.dirname(c))) {
-            publicDir = c;
-            break;
-          }
-        }
-        if (!fs.existsSync(publicDir)) {
-          fs.mkdirSync(publicDir, { recursive: true });
-        }
-        const localFilename = `veo-3.1-drama-${jobId}.mp4`;
-        const localDestPath = path.join(publicDir, localFilename);
-        fs.copyFileSync(masterOutputPath, localDestPath);
+    const localFilename = `tasvir-ai-video-${jobId}.mp4`;
+    const localDestPath = path.join(publicDir, localFilename);
+    try {
+      fs.copyFileSync(masterOutputPath, localDestPath);
+      if (!finalCdnUrl) {
         finalCdnUrl = `/generated-videos/${localFilename}`;
-        this.logger.log(`Saved master video locally to public directory: ${finalCdnUrl}`);
-      } catch (localSaveErr: any) {
-        this.logger.error(`Failed to save video locally: ${localSaveErr.message}`);
       }
+      this.logger.log(`Saved master video to public directory: /generated-videos/${localFilename}`);
+    } catch (localSaveErr: any) {
+      this.logger.error(`Failed to copy master video to public: ${localSaveErr.message}`);
     }
 
     if (!finalCdnUrl) {
@@ -401,7 +317,7 @@ export class GenerateVideoService {
 
     job.status = 'completed';
     job.progress = 100;
-    job.currentStepMessage = 'Google Veo 3.1 dramatik video roligi muvaffaqiyatli tayyorlandi!';
+    job.currentStepMessage = 'AI sahna tasvirlari va 9:16 master video muvaffaqiyatli tayyorlandi!';
     job.videoUrl = finalCdnUrl;
     job.downloadUrl = finalCdnUrl;
     job.completedAt = new Date().toISOString();
@@ -409,23 +325,127 @@ export class GenerateVideoService {
     this.logger.log(`Job ${jobId} finished with ${scenes.length} scenes, total: ${job.totalDurationSeconds}s`);
   }
 
-  private async downloadVeoVideo(uri: string, outputPath: string, apiKey: string): Promise<boolean> {
+  private async generateImageForScene(params: {
+    scene: DramaScene;
+    sceneIndex: number;
+    totalScenes: number;
+    outputPath: string;
+    productImageUrl?: string;
+    resolution?: string;
+  }): Promise<void> {
+    const { scene, sceneIndex, totalScenes, outputPath, productImageUrl, resolution } = params;
+
+    // 1. If product photo is provided and this is the final/product scene, use the product photo
+    const isProductScene = Boolean(
+      productImageUrl && (
+        sceneIndex === totalScenes || 
+        scene.actTitle.toLowerCase().includes('mahsulot') || 
+        scene.cinematicPrompt.toLowerCase().includes('product')
+      )
+    );
+
+    if (isProductScene && productImageUrl) {
+      const productSaved = await this.saveOrDownloadImage(productImageUrl, outputPath);
+      if (productSaved) {
+        this.logger.log(`Used provided product image for scene ${sceneIndex}`);
+        return;
+      }
+    }
+
+    // 2. Try Pollinations AI (FLUX / Sana) with 12s timeout
+    const promptForImage = `${scene.cinematicPrompt}, vertical 9:16 aspect ratio, dramatic cinematic film still, movie scene, detailed lighting, 8k photographic quality`;
     try {
-      if (uri.startsWith('http://') || uri.startsWith('https://')) {
-        const headers: Record<string, string> = {};
-        if (apiKey) {
-          headers['x-goog-api-key'] = apiKey;
-        }
-        const res = await fetch(uri, { headers });
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptForImage)}?width=720&height=1280&nologo=true&seed=${Math.floor(Math.random() * 999999)}`;
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      try {
+        const res = await fetch(pollinationsUrl, { signal: controller.signal });
         if (res.ok) {
-          const arrayBuffer = await res.arrayBuffer();
-          fs.writeFileSync(outputPath, Buffer.from(arrayBuffer));
+          const buffer = Buffer.from(await res.arrayBuffer());
+          if (buffer.length > 5000 && (buffer[0] === 0xff || buffer[0] === 0x89)) {
+            fs.writeFileSync(outputPath, buffer);
+            this.logger.log(`Generated Pollinations AI image for scene ${sceneIndex} (${buffer.length} bytes)`);
+            return;
+          }
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (pollErr: any) {
+      this.logger.warn(`Pollinations image generation notice for scene ${sceneIndex}: ${pollErr.message}`);
+    }
+
+    // 3. High-Quality Thematic Stock Vertical Photo (Picsum / Curated)
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const picsumUrl = `https://picsum.photos/720/1280?random=${Date.now()}_${sceneIndex}`;
+        const res = await fetch(picsumUrl, { signal: controller.signal, redirect: 'follow' });
+        if (res.ok) {
+          const buffer = Buffer.from(await res.arrayBuffer());
+          if (buffer.length > 5000) {
+            fs.writeFileSync(outputPath, buffer);
+            this.logger.log(`Fetched atmospheric background for scene ${sceneIndex} (${buffer.length} bytes)`);
+            return;
+          }
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (picsumErr: any) {
+      this.logger.warn(`Picsum photo fetch notice for scene ${sceneIndex}: ${picsumErr.message}`);
+    }
+
+    // 4. Guaranteed Local Thematic Studio Graphic Canvas via FFmpeg
+    await this.ffmpegConcatService.createThematicSceneImage({
+      outputPath,
+      sceneIndex,
+      actTitle: scene.actTitle,
+      caption: scene.caption || scene.dialogueScript,
+      tensionLevel: scene.tensionLevel,
+      resolution,
+    });
+    this.logger.log(`Created thematic studio canvas image for scene ${sceneIndex}`);
+  }
+
+  private async saveOrDownloadImage(inputUrlOrPath: string, outputPath: string): Promise<boolean> {
+    try {
+      if (inputUrlOrPath.startsWith('data:image/')) {
+        const base64Data = inputUrlOrPath.split(',')[1];
+        if (base64Data) {
+          fs.writeFileSync(outputPath, Buffer.from(base64Data, 'base64'));
           return true;
         }
       }
+
+      if (inputUrlOrPath.startsWith('http://') || inputUrlOrPath.startsWith('https://')) {
+        const res = await fetch(inputUrlOrPath);
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          fs.writeFileSync(outputPath, buf);
+          return true;
+        }
+      }
+
+      const possiblePaths = [
+        inputUrlOrPath,
+        path.resolve(process.cwd(), 'apps/web/public', inputUrlOrPath.replace(/^\//, '')),
+        path.resolve(process.cwd(), '../web/public', inputUrlOrPath.replace(/^\//, '')),
+        path.resolve(process.cwd(), 'public', inputUrlOrPath.replace(/^\//, '')),
+      ];
+
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+          fs.copyFileSync(p, outputPath);
+          return true;
+        }
+      }
+
       return false;
     } catch (e: any) {
-      this.logger.warn(`Failed to download Veo video from ${uri}: ${e.message}`);
+      this.logger.warn(`Failed to save product image from ${inputUrlOrPath}: ${e.message}`);
       return false;
     }
   }

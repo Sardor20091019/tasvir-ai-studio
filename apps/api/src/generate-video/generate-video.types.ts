@@ -18,6 +18,8 @@ export interface DramaScene {
   karaokeSubtitles: KaraokeWord[];
   clipVideoUrl?: string;
   localClipPath?: string;
+  imageUrl?: string;
+  localImagePath?: string;
 }
 
 export interface DramaVideoGenerationJob {
@@ -34,6 +36,8 @@ export interface DramaVideoGenerationJob {
     | 'queued'
     | 'framing_drama_scenes'
     | 'generating_veo_clips'
+    | 'generating_ai_images'
+    | 'rendering_scene_clips'
     | 'concatenating_master_video'
     | 'mixing_soundtrack'
     | 'saving_to_cloud'

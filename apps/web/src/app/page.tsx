@@ -282,7 +282,7 @@ export default function HomePage() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-[1600px] mx-auto px-6 lg:px-10 py-24 lg:py-0">
+        <div className="relative z-10 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24 lg:py-0">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center min-h-screen">
 
             {/* LEFT — Editorial type block (7 cols) */}
@@ -320,17 +320,17 @@ export default function HomePage() {
               </div>
 
               {/* CTAs */}
-              <div className="opacity-0 animate-fade-up stagger-4 flex items-center gap-4">
+              <div className="opacity-0 animate-fade-up stagger-4 flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => enterStudio('prompt')}
-                  className="group flex items-center gap-3 px-6 py-3 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors"
+                  className="group flex items-center justify-center gap-3 px-5 sm:px-6 py-3 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors w-full sm:w-auto"
                 >
                   {hero.ctaPrimary}
                   <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={() => enterStudio('templates')}
-                  className="group flex items-center gap-3 px-6 py-3 border border-stroke text-ink-muted text-[11px] font-mono font-medium tracking-[0.15em] uppercase hover:border-stroke-hover hover:text-ink transition-all"
+                  className="group flex items-center justify-center gap-3 px-5 sm:px-6 py-3 border border-stroke text-ink-muted text-[11px] font-mono font-medium tracking-[0.15em] uppercase hover:border-stroke-hover hover:text-ink transition-all w-full sm:w-auto"
                 >
                   {hero.ctaSecondary}
                   <Play className="h-3 w-3 fill-current" />
@@ -404,13 +404,13 @@ export default function HomePage() {
         </div>
 
         {/* Bottom stat bar */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-stroke">
-          <div className="max-w-[1600px] mx-auto px-6 lg:px-10">
+        <div className="relative mt-12 lg:mt-0 lg:absolute lg:bottom-0 left-0 right-0 z-10 border-t border-stroke bg-canvas/40 backdrop-blur-xs lg:bg-transparent">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10">
             <div className="grid grid-cols-2 lg:grid-cols-4">
               {hero.statsLabel.map((label, i) => (
                 <div
                   key={i}
-                  className={`py-4 lg:py-5 ${i > 0 ? 'border-l border-stroke' : ''} px-4 lg:px-6 opacity-0 animate-fade-up`}
+                  className={`py-3.5 sm:py-4 lg:py-5 ${i % 2 === 1 ? 'border-l border-stroke' : ''} ${i >= 2 ? 'border-t border-stroke lg:border-t-0' : ''} ${i > 0 ? 'lg:border-l' : ''} px-3 sm:px-4 lg:px-6 opacity-0 animate-fade-up`}
                   style={{ animationDelay: `${0.6 + i * 0.1}s` }}
                 >
                   <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-1">{label}</div>
@@ -426,7 +426,7 @@ export default function HomePage() {
           SECTION 02 — CAPABILITIES
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="relative border-t border-stroke">
-        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24 lg:py-32">
           {/* Section header */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16 lg:mb-24">
             <div className="lg:col-span-5">
@@ -595,7 +595,7 @@ export default function HomePage() {
           SECTION 04 — CTA BAND
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="border-t border-stroke">
-        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-20 lg:py-26">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-14 sm:py-20 lg:py-26">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8">
               <h2 className="text-display font-serif font-bold text-ink leading-[0.95]">
@@ -609,7 +609,7 @@ export default function HomePage() {
             <div className="lg:col-span-4 flex lg:justify-end">
               <button
                 onClick={() => enterStudio('prompt')}
-                className="group flex items-center gap-4 px-8 py-4 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors"
+                className="group flex items-center justify-center gap-4 px-6 sm:px-8 py-3.5 sm:py-4 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors w-full sm:w-auto"
               >
                 {hero.ctaPrimary}
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -623,7 +623,7 @@ export default function HomePage() {
           FOOTER
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <footer className="border-t border-stroke">
-        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-12 lg:py-16">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-12 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Brand */}
             <div className="lg:col-span-4 space-y-4">
@@ -711,7 +711,7 @@ export default function HomePage() {
       className={
         activeTab === 'editor'
           ? 'w-full h-[calc(100vh-64px)] p-0 overflow-hidden flex flex-col'
-          : 'max-w-[1600px] mx-auto px-6 lg:px-10 py-8 pb-24 lg:pb-12 min-h-screen'
+          : 'max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-10 py-6 sm:py-8 pb-24 lg:pb-12 min-h-screen'
       }
     >
       {(activeTab === 'prompt' || activeTab === ('studio' as any)) && (
