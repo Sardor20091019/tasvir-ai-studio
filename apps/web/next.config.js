@@ -9,12 +9,16 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://127.0.0.1:4000/api/:path*',
-      },
-    ];
+    const apiUrl = process.env.API_URL;
+    if (apiUrl && apiUrl.startsWith('http')) {
+      return [
+        {
+          source: '/api/backend/:path*',
+          destination: `${apiUrl}/:path*`,
+        },
+      ];
+    }
+    return [];
   },
 };
 
