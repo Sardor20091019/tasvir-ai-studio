@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
+  Scissors,
   Upload,
   Sparkles,
   Volume2,
@@ -39,6 +40,7 @@ interface StudioProps {
   onOpenCheckout: () => void;
   onOpenAuth?: () => void;
   onJobCreated?: (job: VideoJob) => void;
+  onEditInCapCut?: (project: any) => void;
   initialTemplate?: {
     productTitle: string;
     category: string;
@@ -58,6 +60,7 @@ export function Studio({
   onOpenCheckout,
   onOpenAuth,
   onJobCreated,
+  onEditInCapCut,
   initialTemplate,
 }: StudioProps) {
   const t = {
@@ -368,43 +371,93 @@ export function Studio({
     onUpdateUser(updatedUser);
 
     try {
-      const job = await api.renderVideoJob({
-        userId: user.id,
-        productId: 'demo-prod',
-        avatarId: 'ai-default',
-        platformPreset,
-        scriptTone,
-        scriptText,
+      const prompt = `${productTitle} (${Number(productPrice).toLocaleString('uz-UZ')} so'm, chegirma: ${productDiscount}). ${scriptText}`;
+
+      // 1. Plan scenes with Gemini
+      setRenderStage(1);
+      setRenderProgress(20);
+      const planRes = await api.planScenesFromPrompt({
+        prompt,
+        dramaLevel: 'commercial',
       });
 
-      if (onJobCreated) {
-        onJobCreated(job);
+      // 2. Start rendering real video
+      setRenderStage(2);
+      setRenderProgress(35);
+      const renderRes = await api.generateVideoFromPrompt({
+        prompt,
+        scenes: planRes?.scenes,
+        aspectRatio: '9:16',
+        includeBackgroundMusic: true,
+      });
+
+      if (!renderRes?.jobId) {
+        throw new Error('Video generatsiyasini boshlab boʻlmadi');
       }
 
-      setTimeout(() => {
-        setRenderProgress(35);
-        setRenderStage(2);
-      }, 1600);
-
-      setTimeout(() => {
-        setRenderProgress(70);
-        setRenderStage(3);
-      }, 3400);
-
-      setTimeout(() => {
-        setRenderProgress(100);
-        setRenderStage(4);
-        setIsRendering(false);
-        setRenderedVideoUrl(job.output_video_url || null);
-
+      // 3. Poll for completion
+      const targetJobId = renderRes.jobId;
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
         try {
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        } catch (e) {}
-      }, 5200);
+          const jobData = await api.getPromptVideoStatus(targetJobId);
+          if (jobData.progress) {
+            setRenderProgress(jobData.progress);
+            if (jobData.progress < 50) setRenderStage(2);
+            else if (jobData.progress < 85) setRenderStage(3);
+            else setRenderStage(4);
+          }
+
+          if (jobData.status === 'completed' && jobData.videoUrl) {
+            clearInterval(interval);
+            setIsRendering(false);
+            setRenderedVideoUrl(jobData.videoUrl);
+            if (onJobCreated) {
+              onJobCreated({
+                id: targetJobId,
+                user_id: user.id,
+                product_id: 'demo-prod',
+                platform_preset: platformPreset,
+                script_tone: scriptTone,
+                script_text: scriptText,
+                status: 'completed',
+                progress_percent: 100,
+                audio_preview_url: null,
+                output_video_url: jobData.videoUrl,
+                credits_charged: 1,
+                error_message: null,
+                created_at: new Date().toISOString(),
+                completed_at: new Date().toISOString(),
+              });
+            }
+            try {
+              confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 },
+              });
+            } catch (e) {}
+          } else if (jobData.status === 'failed') {
+            clearInterval(interval);
+            setIsRendering(false);
+            setRenderError(jobData.error || t.errorOccurred || 'Video yaratishda xatolik yuz berdi');
+            onUpdateUser(user);
+          } else if (attempts >= 60) {
+            clearInterval(interval);
+            setIsRendering(false);
+            setRenderError('Video render kutilgandan uzoq vaqt oldi');
+            onUpdateUser(user);
+          }
+        } catch (pollErr: any) {
+          if (attempts >= 10) {
+            clearInterval(interval);
+            setIsRendering(false);
+            setRenderError(pollErr?.message || 'Video statusini olishda xatolik');
+            onUpdateUser(user);
+          }
+        }
+      }, 1500);
     } catch (e: any) {
       console.error('Studio render video error:', e);
       setIsRendering(false);
@@ -927,22 +980,59 @@ export function Studio({
           </div>
 
           {renderedVideoUrl && (
-            <div className="mt-4 p-3.5 rounded-xl bg-bento-mint border border-emerald-500/30 flex flex-col gap-2.5">
+            <div className="mt-4 p-3.5 rounded-xl bg-bento-mint border border-emerald-500/30 flex flex-col gap-2.5 animate-in fade-in duration-200">
               <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>9:16 Video muvaffaqiyatli render qilindi!</span>
+                <span>9:16 Master Video muvaffaqiyatli tayyorlandi!</span>
               </div>
-              <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <a
                   href={renderedVideoUrl}
                   target="_blank"
                   rel="noreferrer"
                   download="tasvir-ad-9-16.mp4"
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-tactile tactile-btn"
+                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-tactile tactile-btn"
                 >
                   <Download className="h-4 w-4" />
-                  <span>MP4 Videoni Yuklab Olish</span>
+                  <span>MP4 Yuklab Olish</span>
                 </a>
+                {onEditInCapCut && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onEditInCapCut({
+                        id: `proj-${Date.now()}`,
+                        title: productTitle || 'Studio Video',
+                        videoUrl: renderedVideoUrl,
+                        duration: 16,
+                        style: {
+                          preset: 'capcut_yellow',
+                          fontSize: 32,
+                          position: 'bottom',
+                          textColor: '#FFFFFF',
+                          highlightColor: '#FDE047',
+                          bgColor: 'rgba(0, 0, 0, 0.75)',
+                          bgOpacity: 0.75,
+                          fontFamily: 'heading',
+                          animation: 'karaoke_active',
+                          textTransform: 'uppercase',
+                        },
+                        subtitles: [
+                          {
+                            id: 'cue-1',
+                            startSec: 0.5,
+                            endSec: 5.0,
+                            text: scriptText || productTitle,
+                          },
+                        ],
+                      });
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-accent-warm hover:bg-accent-warm-hover text-obsidian text-xs font-bold flex items-center justify-center gap-1.5 shadow-tactile tactile-btn"
+                  >
+                    <Scissors className="h-4 w-4" />
+                    <span>CapCut-da tahrirlash</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

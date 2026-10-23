@@ -255,7 +255,17 @@ export class GenerateVideoService {
     job.currentStepMessage = 'FFmpeg concat demuxer orqali sahnalar yagona master videoga birlashtirilmoqda...';
 
     const masterOutputPath = path.join(tempDir, `master_drama_${jobId}.mp4`);
-    const backgroundMusicPath = path.resolve(process.cwd(), 'apps/api/assets/audio/kamin-emin-jony.mp3');
+    const musicCandidates = [
+      path.resolve(process.cwd(), 'apps/api/assets/audio/kamin-emin-jony.mp3'),
+      path.resolve(process.cwd(), 'assets/audio/kamin-emin-jony.mp3'),
+    ];
+    let backgroundMusicPath = musicCandidates[0];
+    for (const m of musicCandidates) {
+      if (fs.existsSync(m)) {
+        backgroundMusicPath = m;
+        break;
+      }
+    }
 
     await this.ffmpegConcatService.concatScenes({
       sceneClipPaths: generatedClipPaths,
@@ -285,7 +295,17 @@ export class GenerateVideoService {
 
     if (!finalCdnUrl) {
       try {
-        const publicDir = path.resolve(process.cwd(), 'apps/web/public/generated-videos');
+        const candidates = [
+          path.resolve(process.cwd(), 'apps/web/public/generated-videos'),
+          path.resolve(process.cwd(), '../web/public/generated-videos'),
+        ];
+        let publicDir = candidates[0];
+        for (const c of candidates) {
+          if (fs.existsSync(path.dirname(c))) {
+            publicDir = c;
+            break;
+          }
+        }
         if (!fs.existsSync(publicDir)) {
           fs.mkdirSync(publicDir, { recursive: true });
         }
