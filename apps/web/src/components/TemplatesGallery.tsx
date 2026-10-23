@@ -169,7 +169,7 @@ export function TemplatesGallery({
         {TEMPLATES.map((tmpl) => (
           <div
             key={tmpl.id}
-            className="group rounded-2xl bg-white border border-border overflow-hidden shadow-tactile hover:shadow-tactile-md transition-all flex flex-col justify-between"
+            className="group rounded-2xl bg-surface border border-border overflow-hidden shadow-tactile hover:shadow-tactile-md transition-all flex flex-col justify-between"
           >
             <div>
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-canvas">

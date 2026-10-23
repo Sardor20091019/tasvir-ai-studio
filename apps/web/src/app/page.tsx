@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Sparkles,
   Film,
   Layers,
   CreditCard,
   Video,
-  ShieldCheck,
-  Zap,
-  Flame,
-  CheckCircle2,
-  ExternalLink,
-  MessageCircle,
+  ArrowRight,
+  ArrowUpRight,
+  Play,
+  Monitor,
+  Aperture,
+  ScanLine,
+  Clock,
+  Cpu,
   Crown,
 } from 'lucide-react';
 import { Navbar, NavTabType } from '../components/Navbar';
@@ -25,13 +26,18 @@ import { AuthModal } from '../components/AuthModal';
 import { ProfileModal } from '../components/ProfileModal';
 import { AdminPanel } from '../components/AdminPanel';
 import { PromptVideoGenerator } from '../components/PromptVideoGenerator';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { User, VideoJob, LocaleType } from '../types';
 import { api } from '../lib/api';
 
+/* ──────────────────────────────────────────────────────────
+   CINEMATIC LANDING PAGE
+   ────────────────────────────────────────────────────────── */
+
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [locale, setLocale] = useState<LocaleType>('uz');
-  const [activeTab, setActiveTab] = useState<NavTabType>('studio');
+  const [locale, setLocale] = useState<LocaleType>('en');
+  const [activeTab, setActiveTab] = useState<NavTabType | 'landing'>('landing' as any);
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutPlanId, setCheckoutPlanId] = useState('shop_pro');
@@ -39,6 +45,9 @@ export default function HomePage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
+
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
 
   const [jobs, setJobs] = useState<VideoJob[]>([
     {
@@ -48,7 +57,7 @@ export default function HomePage() {
       avatar_id: 'malika',
       platform_preset: 'uzum_9_16',
       script_tone: 'discount_hook',
-      script_text: "Salom! Uzum Marketda ulgurib qoling! Aynan bugun mashhur Nike Air Zoom atigi 450,000 so'm bo'lib turibdi...",
+      script_text: "Professional cinematic video generated with Veo 3.1 engine...",
       status: 'completed',
       progress_percent: 100,
       audio_preview_url: null,
@@ -64,6 +73,12 @@ export default function HomePage() {
     api.getMe().then((u) => {
       if (u) setUser(u);
     });
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleToggleLocale = () => {
@@ -89,272 +104,551 @@ export default function HomePage() {
     setJobs((prev) => [newJob, ...prev]);
   };
 
-  const heroContent = {
-    uz: {
-      badge: '🔥 Google Veo 3.1 & Mahalliy AI Diktorlar • 9:16 Vertikal Format',
-      titlePart1: 'Uzum Market, Reels va TikTok uchun',
-      titleHighlight: '1 daqiqada 9:16 Video Reklama',
-      subtitle:
-        'Mahsulot rasmini yuklang yoki Veo 3.1 dramatik gʻoyasini yozing. Oʻzbek tilidagi professional diktorlar, sinxron karaoke subtitrlar va kinematografik vizuallar savdolaringizni oshiradi.',
-      features: [
-        {
-          icon: '⚡',
-          title: '60 soniyada tayyor',
-          desc: 'Avtomatlashgan ssenariy va ovoz sintezi',
-        },
-        {
-          icon: '📱',
-          title: '9:16 Vertikal format',
-          desc: 'Uzum, Reels va TikTok xaridorlari uchun',
-        },
-        {
-          icon: '🎭',
-          title: 'Markaziy Osiyo yuzlari',
-          desc: 'Oʻzbek tilidagi tabiiy AI boshlovchilar',
-        },
-        {
-          icon: '🎵',
-          title: 'Karaoke & "Kamin" OST',
-          desc: 'EMIN & JONY musiqasi va jonli subtitrlar',
-        },
-      ],
-      tabStudio: 'Studiyo: Avatar & Ovoz',
-      tabVeo: 'Veo 3.1 Drama Video',
-      tabTemplates: 'Shablonlar',
-      tabPricing: 'Tariflar & Tokenlar',
-      tabLibrary: 'Videolarim',
-      footerDesc: 'Oʻzbekiston elektron tijorati va marketplace sotuvchilari uchun sunʼiy intellekt video platformasi',
-      adminSupport: 'Admin bilan aloqa: Sardor Sunatullayev',
-    },
-    en: {
-      badge: '🔥 Google Veo 3.1 & Central Asian AI Avatars • 9:16 Vertical Ads',
-      titlePart1: 'High-Converting 9:16 AI Video Ads',
-      titleHighlight: 'Ready in 60 Seconds',
-      subtitle:
-        'Upload product photos or write a dramatic Veo 3.1 storyline. Instant Central Asian AI avatars, natural voiceover, karaoke captions, and cinematic BGM designed for Uzum, Reels, and TikTok.',
-      features: [
-        {
-          icon: '⚡',
-          title: 'Ready in 60s',
-          desc: 'Automated script, audio & video rendering',
-        },
-        {
-          icon: '📱',
-          title: '9:16 Vertical Master',
-          desc: 'Optimized for Uzum, Reels & TikTok buyers',
-        },
-        {
-          icon: '🎭',
-          title: 'Central Asian Avatars',
-          desc: 'Realistic local personas & natural speech',
-        },
-        {
-          icon: '🎵',
-          title: 'Karaoke & "Kamin" OST',
-          desc: 'EMIN & JONY track & real-time subtitles',
-        },
-      ],
-      tabStudio: 'Studio: Avatar & Audio',
-      tabVeo: 'Veo 3.1 Drama Engine',
-      tabTemplates: 'Templates',
-      tabPricing: 'Plans & Tokens',
-      tabLibrary: 'My Videos',
-      footerDesc: 'AI video marketing platform for Uzbekistan e-commerce and marketplace sellers',
-      adminSupport: 'Admin Support: Sardor Sunatullayev',
-    },
-    ru: {
-      badge: '🔥 Google Veo 3.1 и AI Дикторы Узбекистана • Вертикальный формат 9:16',
-      titlePart1: 'Продающая 9:16 AI видео-реклама',
-      titleHighlight: 'всего за 60 секунд',
-      subtitle:
-        'Загрузите фото товара или напишите драматический промпт для Veo 3.1. Реалистичные дикторы Центральной Азии, естественная речь, караоке-субтитры и кинематографичный саундтрек.',
-      features: [
-        {
-          icon: '⚡',
-          title: 'Готово за 60 секунд',
-          desc: 'Автоматический сценарий и озвучка',
-        },
-        {
-          icon: '📱',
-          title: 'Формат 9:16',
-          desc: 'Для Uzum Market, Instagram Reels и TikTok',
-        },
-        {
-          icon: '🎭',
-          title: 'Дикторы Узбекистана',
-          desc: 'Реалистичные локальные лица и речь',
-        },
-        {
-          icon: '🎵',
-          title: 'Караоке и трек «Камин»',
-          desc: 'Песня EMIN & JONY и динамичные субтитры',
-        },
-      ],
-      tabStudio: 'Студия: Аватары и Голос',
-      tabVeo: 'Драма Генератор Veo 3.1',
-      tabTemplates: 'Шаблоны',
-      tabPricing: 'Тарифы и Токены',
-      tabLibrary: 'Мои Видео',
-      footerDesc: 'AI видео студия для e-commerce и продавцов на маркетплейсах Узбекистана',
-      adminSupport: 'Поддержка администратора: Сардор Сунатуллаев',
-    },
-  }[locale] || {
-    badge: '🔥 Google Veo 3.1 & AI Studio',
-    titlePart1: 'High-Converting 9:16 AI Video Ads',
-    titleHighlight: 'Ready in 60 Seconds',
-    subtitle: 'Upload a product photo or write a dramatic Veo 3.1 storyline.',
-    features: [
-      { icon: '⚡', title: 'Ready in 60s', desc: 'Fast rendering' },
-      { icon: '📱', title: '9:16 Vertical', desc: 'Social & Marketplace format' },
-      { icon: '🎭', title: 'AI Avatars', desc: 'Natural local personas' },
-      { icon: '🎵', title: 'Karaoke & OST', desc: 'Synced music and text' },
-    ],
-    tabStudio: 'Studio',
-    tabVeo: 'Veo 3.1 Drama',
-    tabTemplates: 'Templates',
-    tabPricing: 'Pricing',
-    tabLibrary: 'Videos',
-    footerDesc: 'AI video marketing platform',
-    adminSupport: 'Admin Support: Sardor Sunatullayev',
+  const enterStudio = (tab: NavTabType = 'prompt') => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const mainContent = (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-10 pb-24 md:pb-12">
-      <section className="relative text-center space-y-6 pt-2 pb-4">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-full max-w-4xl h-48 bg-gradient-to-b from-orange-400/10 via-amber-200/5 to-transparent blur-3xl -z-10"
-        />
+  /* ── i18n hero content ────────────────────────── */
+  const hero = {
+    uz: {
+      overline: 'KINEMATOGRAFIK AI VIDEO PLATFORMASI',
+      headline: ['Tasvirni', 'Harakatga', 'Keltiring'],
+      subhead: 'Google Veo 3.1 kuchi bilan professional kinematografik video yarating. Bir so\u02BBz — bir film.',
+      ctaPrimary: 'Studiyaga kirish',
+      ctaSecondary: 'Namoyish ko\u02BBrish',
+      statsLabel: ['RENDERING', 'FORMATLAR', 'ENGINE', 'ANIQLIK'],
+      statsValue: ['< 60s', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+    },
+    en: {
+      overline: 'CINEMATIC AI VIDEO PLATFORM',
+      headline: ['Render Your', 'Vision Into', 'Motion'],
+      subhead: 'Professional-grade cinematic video generation powered by Google Veo 3.1. One prompt. One take. Infinite possibilities.',
+      ctaPrimary: 'Enter Studio',
+      ctaSecondary: 'View Reel',
+      statsLabel: ['RENDERING', 'FORMATS', 'ENGINE', 'RESOLUTION'],
+      statsValue: ['< 60s', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+    },
+    ru: {
+      overline: 'КИНЕМАТОГРАФИЧЕСКАЯ AI ВИДЕО ПЛАТФОРМА',
+      headline: ['Превратите', 'Видение в', 'Движение'],
+      subhead: 'Профессиональная генерация кинематографического видео на базе Google Veo 3.1. Один промпт. Один дубль.',
+      ctaPrimary: 'Войти в студию',
+      ctaSecondary: 'Смотреть шоурил',
+      statsLabel: ['РЕНДЕРИНГ', 'ФОРМАТЫ', 'ДВИЖОК', 'РАЗРЕШЕНИЕ'],
+      statsValue: ['< 60с', '9:16 · 16:9', 'Veo 3.1', '1080p+'],
+    },
+  }[locale]!;
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-border text-xs font-mono font-bold tracking-tight shadow-2xs hover:border-coral/40 transition-colors">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="text-ink">{heroContent.badge}</span>
+  const features = {
+    uz: [
+      { label: 'Veo 3.1 Engine', desc: 'Google\u02BCning eng so\u02BBnggi generativ video modeli', num: '01' },
+      { label: 'AI Diktorlar', desc: 'O\u02BBzbek tilidagi tabiiy ovoz va yuz sinxronizatsiyasi', num: '02' },
+      { label: 'Karaoke Subtitrlar', desc: 'Millisekund aniqlikdagi jonli matn animatsiyasi', num: '03' },
+      { label: 'Professional Eksport', desc: '9:16 vertikal va 16:9 keng formatlar', num: '04' },
+    ],
+    en: [
+      { label: 'Veo 3.1 Engine', desc: 'Google\u2019s latest generative video model with cinematic fidelity', num: '01' },
+      { label: 'AI Presenters', desc: 'Central Asian avatars with natural speech and lip-sync', num: '02' },
+      { label: 'Karaoke Captions', desc: 'Millisecond-precise synchronized text animation', num: '03' },
+      { label: 'Professional Export', desc: '9:16 vertical and 16:9 widescreen delivery formats', num: '04' },
+    ],
+    ru: [
+      { label: 'Движок Veo 3.1', desc: 'Новейшая генеративная видеомодель Google', num: '01' },
+      { label: 'AI Дикторы', desc: 'Аватары Центральной Азии с натуральной речью', num: '02' },
+      { label: 'Караоке Субтитры', desc: 'Синхронизированная текстовая анимация с точностью до миллисекунд', num: '03' },
+      { label: 'Профессиональный Экспорт', desc: 'Форматы 9:16 вертикальный и 16:9 широкоэкранный', num: '04' },
+    ],
+  }[locale]!;
+
+  /* ── Tab content labels ────────────────────────── */
+  const tabContent = {
+    uz: {
+      tabStudio: 'Studiyo',
+      tabVeo: 'Veo 3.1',
+      tabTemplates: 'Shablonlar',
+      tabPricing: 'Tariflar',
+      tabLibrary: 'Videolarim',
+      footerDesc: 'O\u02BBzbekiston elektron tijorati uchun sun\u02BBiy intellekt video platformasi',
+    },
+    en: {
+      tabStudio: 'Studio',
+      tabVeo: 'Veo 3.1',
+      tabTemplates: 'Templates',
+      tabPricing: 'Pricing',
+      tabLibrary: 'My Videos',
+      footerDesc: 'Professional AI video generation platform for filmmakers and creators',
+    },
+    ru: {
+      tabStudio: 'Студия',
+      tabVeo: 'Veo 3.1',
+      tabTemplates: 'Шаблоны',
+      tabPricing: 'Тарифы',
+      tabLibrary: 'Мои видео',
+      footerDesc: 'Профессиональная AI видео платформа для кинематографистов и создателей контента',
+    },
+  }[locale]!;
+
+  /* ──────────────────────────────────────────────
+     LANDING PAGE SECTIONS
+     ────────────────────────────────────────────── */
+
+  const isLanding = activeTab === ('landing' as any);
+
+  const landingContent = (
+    <>
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          SECTION 01 — HERO
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section ref={heroRef} className="relative min-h-screen flex flex-col justify-center overflow-hidden">
+
+        {/* Cinematic viewport background */}
+        <div className="absolute inset-0 viewport-frame">
+          {/* Gradient atmospheric depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian via-obsidian/60 to-obsidian z-[4]" />
+          {/* Dark cinematic still / abstract texture */}
+          <div
+            className="absolute inset-0 opacity-[0.07] animate-slow-drift"
+            style={{
+              backgroundImage: `
+                radial-gradient(ellipse 80% 50% at 70% 40%, rgba(212,165,116,0.15), transparent),
+                radial-gradient(ellipse 60% 80% at 20% 60%, rgba(138,155,178,0.08), transparent)
+              `,
+            }}
+          />
+          {/* Horizontal scan line */}
+          <div className="scan-line absolute inset-0" />
         </div>
 
-        <div className="space-y-2 max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-black text-ink tracking-tight leading-[1.12]">
-            {heroContent.titlePart1}
-            <span className="shimmer-text block mt-1.5">
-              {heroContent.titleHighlight}
-            </span>
-          </h1>
-          <p className="text-sm sm:text-base text-ink-muted max-w-2xl mx-auto leading-relaxed pt-2">
-            {heroContent.subtitle}
-          </p>
-        </div>
+        {/* Content */}
+        <div className="relative z-10 max-w-[1600px] mx-auto px-6 lg:px-10 py-24 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center min-h-screen">
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto pt-2">
-          {heroContent.features.map((feat, idx) => (
-            <div
-              key={idx}
-              className="p-3.5 sm:p-4 rounded-2xl bg-white border border-border text-left shadow-2xs interactive-card"
-            >
-              <div className="text-xl mb-1.5">{feat.icon}</div>
-              <h3 className="font-heading font-bold text-xs sm:text-sm text-ink line-clamp-1">
-                {feat.title}
-              </h3>
-              <p className="text-[11px] text-ink-muted leading-tight mt-0.5 line-clamp-2">
-                {feat.desc}
-              </p>
+            {/* LEFT — Editorial type block (7 cols) */}
+            <div className="lg:col-span-7 space-y-8 lg:space-y-10">
+              {/* Overline */}
+              <div className="opacity-0 animate-fade-up stagger-1">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-px bg-accent-warm" />
+                  <span className="text-[10px] font-mono font-medium tracking-[0.3em] text-ink-dim">
+                    {hero.overline}
+                  </span>
+                </div>
+              </div>
+
+              {/* Headline — oversized editorial serif */}
+              <div className="opacity-0 animate-fade-up stagger-2">
+                <h1 className="text-display-xl font-serif font-bold text-ink leading-[0.92]">
+                  {hero.headline.map((line, i) => (
+                    <span key={i} className="block">
+                      {i === hero.headline.length - 1 ? (
+                        <span className="shimmer-text">{line}</span>
+                      ) : (
+                        line
+                      )}
+                    </span>
+                  ))}
+                </h1>
+              </div>
+
+              {/* Subhead */}
+              <div className="opacity-0 animate-fade-up stagger-3">
+                <p className="text-sm lg:text-base text-ink-muted max-w-lg leading-relaxed font-sans font-light">
+                  {hero.subhead}
+                </p>
+              </div>
+
+              {/* CTAs */}
+              <div className="opacity-0 animate-fade-up stagger-4 flex items-center gap-4">
+                <button
+                  onClick={() => enterStudio('prompt')}
+                  className="group flex items-center gap-3 px-6 py-3 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors"
+                >
+                  {hero.ctaPrimary}
+                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => enterStudio('templates')}
+                  className="group flex items-center gap-3 px-6 py-3 border border-stroke text-ink-muted text-[11px] font-mono font-medium tracking-[0.15em] uppercase hover:border-stroke-hover hover:text-ink transition-all"
+                >
+                  {hero.ctaSecondary}
+                  <Play className="h-3 w-3 fill-current" />
+                </button>
+              </div>
             </div>
-          ))}
+
+            {/* RIGHT — Preview viewport (5 cols) */}
+            <div className="lg:col-span-5 opacity-0 animate-fade-up stagger-5">
+              <div className="viewport-frame aspect-[9/14] lg:aspect-[9/16] max-w-sm lg:max-w-none mx-auto relative group">
+                {/* Canvas interior */}
+                <div className="absolute inset-0 bg-gradient-to-br from-surface via-surface-raised to-surface z-[1]" />
+
+                {/* Fake editing UI overlay */}
+                <div className="absolute inset-0 z-[5] flex flex-col justify-between p-3 lg:p-4 pointer-events-none">
+                  {/* Top bar */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-signal-red/60" />
+                      <span className="text-[8px] font-mono text-ink-dim tracking-widest">REC</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-mono text-ink-dim tabular-nums">00:00:00:00</span>
+                      <span className="text-[8px] font-mono text-accent-warm/60">1080p</span>
+                    </div>
+                  </div>
+
+                  {/* Center play indicator */}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="w-14 h-14 border border-stroke/40 flex items-center justify-center opacity-40 group-hover:opacity-70 transition-opacity">
+                      <Play className="h-5 w-5 text-ink fill-current ml-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Bottom timeline */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[7px] font-mono text-ink-dim tracking-widest">TIMELINE</span>
+                      <div className="flex-1 h-px bg-stroke/40" />
+                    </div>
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 24 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 h-1"
+                          style={{
+                            backgroundColor: i < 8
+                              ? 'rgba(212,165,116,0.25)'
+                              : i < 16
+                              ? 'rgba(138,155,178,0.15)'
+                              : 'rgba(42,42,46,0.4)',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA overlay on hover */}
+                <button
+                  onClick={() => enterStudio('prompt')}
+                  className="absolute inset-0 z-[6] flex items-center justify-center opacity-0 group-hover:opacity-100 bg-obsidian/40 transition-all cursor-pointer"
+                >
+                  <span className="text-[10px] font-mono tracking-[0.2em] text-ink border border-stroke/60 px-4 py-2">
+                    OPEN STUDIO
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="pt-3 max-w-2xl mx-auto">
-          <div className="inline-flex p-1.5 rounded-2xl bg-white border border-border shadow-xs w-full sm:w-auto justify-center flex-wrap gap-1">
-            <button
-              onClick={() => setActiveTab('studio')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                activeTab === 'studio'
-                  ? 'bg-bento-peach text-coral shadow-2xs'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>{heroContent.tabStudio}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('prompt')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                activeTab === 'prompt'
-                  ? 'bg-amber-100 text-amber-900 shadow-2xs'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Film className="h-3.5 w-3.5 text-coral" />
-              <span>{heroContent.tabVeo}</span>
-              <span className="text-[9px] font-mono bg-coral text-white px-1.5 py-0.2 rounded font-bold uppercase">
-                Veo 3.1
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('templates')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                activeTab === 'templates'
-                  ? 'bg-bento-mint text-emerald-800 shadow-2xs'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span>{heroContent.tabTemplates}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('pricing')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                activeTab === 'pricing'
-                  ? 'bg-bento-lavender text-purple-800 shadow-2xs'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              <span>{heroContent.tabPricing}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                activeTab === 'library'
-                  ? 'bg-ink text-white shadow-2xs'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Video className="h-3.5 w-3.5 text-coral" />
-              <span>{heroContent.tabLibrary}</span>
-              {jobs.length > 0 && (
-                <span className="h-4 min-w-[16px] px-1 rounded-full bg-coral text-white text-[10px] font-mono font-bold flex items-center justify-center">
-                  {jobs.length}
-                </span>
-              )}
-            </button>
-
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all tactile-btn flex items-center gap-1.5 ${
-                  activeTab === 'admin'
-                    ? 'bg-red-600 text-white shadow-2xs'
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                }`}
-              >
-                <Crown className="h-3.5 w-3.5 text-amber-300" />
-                <span>Admin Panel</span>
-                <span className="text-[9px] font-mono bg-white/20 text-white px-1.5 py-0.2 rounded font-bold uppercase">
-                  role: admin
-                </span>
-              </button>
-            )}
+        {/* Bottom stat bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-stroke">
+          <div className="max-w-[1600px] mx-auto px-6 lg:px-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4">
+              {hero.statsLabel.map((label, i) => (
+                <div
+                  key={i}
+                  className={`py-4 lg:py-5 ${i > 0 ? 'border-l border-stroke' : ''} px-4 lg:px-6 opacity-0 animate-fade-up`}
+                  style={{ animationDelay: `${0.6 + i * 0.1}s` }}
+                >
+                  <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-1">{label}</div>
+                  <div className="text-sm lg:text-base font-mono font-bold text-ink tabular-nums">{hero.statsValue[i]}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          SECTION 02 — CAPABILITIES
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="relative border-t border-stroke">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          {/* Section header */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16 lg:mb-24">
+            <div className="lg:col-span-5">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="w-8 h-px bg-stroke" />
+                <span className="text-[10px] font-mono font-medium tracking-[0.3em] text-ink-dim">
+                  CAPABILITIES
+                </span>
+              </div>
+              <h2 className="text-display font-serif font-bold text-ink">
+                {locale === 'uz' ? 'Professional' : locale === 'ru' ? 'Профессиональный' : 'Professional'}
+                <br />
+                <span className="text-ink-muted italic">
+                  {locale === 'uz' ? 'darajadagi vositalar' : locale === 'ru' ? 'набор инструментов' : 'grade tooling'}
+                </span>
+              </h2>
+            </div>
+            <div className="lg:col-span-5 lg:col-start-8 flex items-end">
+              <p className="text-sm text-ink-dim leading-relaxed font-sans max-w-md">
+                {locale === 'uz'
+                  ? 'Har bir kadr professional sifatda. Har bir ovoz tabiiy. Har bir eksport marketplace-ga tayyor.'
+                  : locale === 'ru'
+                  ? 'Каждый кадр профессионального качества. Каждый голос естественный. Каждый экспорт готов к платформе.'
+                  : 'Every frame rendered at professional fidelity. Every voice naturally articulated. Every export platform-ready.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Feature grid — asymmetric editorial */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-stroke">
+            {features.map((feat, i) => (
+              <div
+                key={i}
+                className="bg-obsidian p-8 lg:p-12 group hover:bg-surface transition-colors"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <span className="text-[10px] font-mono text-ink-dim tracking-[0.2em]">{feat.num}</span>
+                  <ArrowUpRight className="h-4 w-4 text-ink-dim group-hover:text-accent-warm transition-colors" />
+                </div>
+                <h3 className="text-editorial font-serif font-semibold text-ink mb-3">
+                  {feat.label}
+                </h3>
+                <p className="text-sm text-ink-dim leading-relaxed font-sans font-light max-w-sm">
+                  {feat.desc}
+                </p>
+                <div className="mt-8 h-px bg-stroke group-hover:bg-accent-warm/20 transition-colors" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          SECTION 03 — INTERFACE PREVIEW
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="relative border-t border-stroke">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Text */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-px bg-accent-warm" />
+                <span className="text-[10px] font-mono font-medium tracking-[0.3em] text-ink-dim">
+                  WORKSPACE
+                </span>
+              </div>
+              <h2 className="text-display font-serif font-bold text-ink leading-[0.95]">
+                {locale === 'uz' ? (
+                  <>Studiya<br /><span className="text-ink-muted italic">muhiti</span></>
+                ) : locale === 'ru' ? (
+                  <>Студийная<br /><span className="text-ink-muted italic">среда</span></>
+                ) : (
+                  <>Studio<br /><span className="text-ink-muted italic">environment</span></>
+                )}
+              </h2>
+              <p className="text-sm text-ink-dim leading-relaxed font-sans font-light">
+                {locale === 'uz'
+                  ? 'DaVinci Resolve singari professional interfeys. Har bir element aniq maqsadga xizmat qiladi.'
+                  : locale === 'ru'
+                  ? 'Профессиональный интерфейс уровня DaVinci Resolve. Каждый элемент служит конкретной цели.'
+                  : 'An interface engineered like DaVinci Resolve. Every element serves a precise purpose. No decoration — only function.'}
+              </p>
+              <button
+                onClick={() => enterStudio('prompt')}
+                className="group flex items-center gap-3 text-[11px] font-mono tracking-[0.15em] text-ink-muted hover:text-accent-warm transition-colors"
+              >
+                <span>
+                  {locale === 'uz' ? 'STUDIYANI OCHISH' : locale === 'ru' ? 'ОТКРЫТЬ СТУДИЮ' : 'LAUNCH WORKSPACE'}
+                </span>
+                <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
+            {/* Preview panel */}
+            <div className="lg:col-span-8">
+              <div className="viewport-frame aspect-video relative">
+                <div className="absolute inset-0 bg-surface z-[1]" />
+                {/* Simulated workspace UI */}
+                <div className="absolute inset-0 z-[5] p-4 flex flex-col">
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between pb-3 border-b border-stroke/40">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[8px] font-mono text-ink-dim tracking-widest">PROJECT</span>
+                      <span className="text-[8px] font-mono text-accent-warm/60">untitled_sequence.mp4</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Monitor className="h-3 w-3 text-ink-dim" />
+                      <Aperture className="h-3 w-3 text-ink-dim" />
+                      <ScanLine className="h-3 w-3 text-ink-dim" />
+                    </div>
+                  </div>
+                  {/* Main area */}
+                  <div className="flex-1 grid grid-cols-12 gap-3 pt-3">
+                    {/* Left panel */}
+                    <div className="col-span-3 border border-stroke/30 p-2 flex flex-col gap-2">
+                      <span className="text-[7px] font-mono text-ink-dim tracking-widest">PROMPT</span>
+                      <div className="flex-1 space-y-1">
+                        {[88, 72, 94, 78].map((w, i) => (
+                          <div key={i} className="h-1.5 bg-stroke/20 rounded-none" style={{ width: `${w}%` }} />
+                        ))}
+                      </div>
+                      <div className="h-6 bg-accent-warm/10 border border-accent-warm/20 flex items-center justify-center">
+                        <span className="text-[7px] font-mono text-accent-warm tracking-wider">GENERATE</span>
+                      </div>
+                    </div>
+                    {/* Center viewport */}
+                    <div className="col-span-6 border border-stroke/30 flex items-center justify-center relative">
+                      <div className="w-12 h-12 border border-stroke/20 flex items-center justify-center">
+                        <Play className="h-4 w-4 text-ink-dim/40 fill-current ml-0.5" />
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1">
+                        <div className="h-0.5 flex-1 bg-accent-warm/20" />
+                        <div className="h-0.5 flex-[2] bg-stroke/20" />
+                      </div>
+                    </div>
+                    {/* Right panel */}
+                    <div className="col-span-3 border border-stroke/30 p-2 flex flex-col gap-2">
+                      <span className="text-[7px] font-mono text-ink-dim tracking-widest">PROPERTIES</span>
+                      {['Resolution', 'Duration', 'Format', 'Audio'].map((prop) => (
+                        <div key={prop} className="flex items-center justify-between">
+                          <span className="text-[7px] font-mono text-ink-dim">{prop}</span>
+                          <span className="text-[7px] font-mono text-ink-muted">—</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Bottom timeline */}
+                  <div className="pt-3 mt-3 border-t border-stroke/40">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[7px] font-mono text-ink-dim tracking-widest">TIMELINE</span>
+                      <Clock className="h-2.5 w-2.5 text-ink-dim" />
+                    </div>
+                    <div className="timeline-grid h-6 border border-stroke/20 relative">
+                      <div className="absolute top-0 left-0 h-full w-1/3 bg-accent-warm/8 border-r border-accent-warm/20" />
+                      <div className="absolute top-0 left-[33%] h-full w-1/4 bg-accent-cold/5 border-r border-accent-cold/10" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          SECTION 04 — CTA BAND
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="border-t border-stroke">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-20 lg:py-26">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8">
+              <h2 className="text-display font-serif font-bold text-ink leading-[0.95]">
+                {locale === 'uz'
+                  ? 'Birinchi kadrni yarating'
+                  : locale === 'ru'
+                  ? 'Создайте первый кадр'
+                  : 'Render your first frame'}
+              </h2>
+            </div>
+            <div className="lg:col-span-4 flex lg:justify-end">
+              <button
+                onClick={() => enterStudio('prompt')}
+                className="group flex items-center gap-4 px-8 py-4 bg-ink text-obsidian text-[11px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors"
+              >
+                {hero.ctaPrimary}
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          FOOTER
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <footer className="border-t border-stroke">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-12 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Brand */}
+            <div className="lg:col-span-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-6 w-6 border border-stroke flex items-center justify-center">
+                  <div className="w-0 h-0 border-l-[4px] border-l-accent-warm border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5" />
+                </div>
+                <span className="font-sans font-bold text-xs tracking-[0.2em] text-ink uppercase">
+                  TASVIR
+                </span>
+                <span className="text-[9px] font-mono text-ink-dim">.AI</span>
+              </div>
+              <p className="text-xs text-ink-dim leading-relaxed max-w-xs font-sans">
+                {tabContent.footerDesc}
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="lg:col-span-2 lg:col-start-7">
+              <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">PLATFORM</div>
+              <div className="space-y-2">
+                {[
+                  { label: 'Studio', tab: 'studio' as NavTabType },
+                  { label: 'Veo Engine', tab: 'prompt' as NavTabType },
+                  { label: 'Templates', tab: 'templates' as NavTabType },
+                ].map((item) => (
+                  <button
+                    key={item.tab}
+                    onClick={() => enterStudio(item.tab)}
+                    className="block text-xs text-ink-muted hover:text-ink font-sans transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">CONNECT</div>
+              <div className="space-y-2">
+                <a
+                  href="https://t.me/astro_spectrum"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-xs text-ink-muted hover:text-ink font-sans transition-colors"
+                >
+                  Telegram
+                </a>
+                <span className="block text-xs text-ink-dim font-mono">
+                  +998-99-099-11-12
+                </span>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">INFRASTRUCTURE</div>
+              <div className="space-y-2 text-xs text-ink-dim font-mono">
+                <span className="block">Google Veo 3.1</span>
+                <span className="block">Cloudflare</span>
+                <span className="block">UploadThing</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom rule */}
+          <div className="mt-12 pt-6 border-t border-stroke flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-[10px] font-mono text-ink-dim tracking-wider">
+              &copy; 2026 TASVIR TECHNOLOGIES
+            </span>
+            <span className="text-[10px] font-mono text-ink-dim tracking-wider">
+              SARDOR SUNATULLAYEV &middot; TASHKENT
+            </span>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+
+  /* ──────────────────────────────────────────────
+     STUDIO CONTENT (existing components)
+     ────────────────────────────────────────────── */
+
+  const studioContent = (
+    <main className="max-w-[1600px] mx-auto px-6 lg:px-10 py-8 pb-24 lg:pb-12 min-h-screen">
       {activeTab === 'studio' && (
-        <div className="space-y-12 animate-in fade-in duration-200">
+        <div className="animate-in fade-in duration-200">
           <Studio
             user={user}
             onUpdateUser={setUser}
@@ -444,80 +738,88 @@ export default function HomePage() {
         </div>
       )}
 
-      <footer className="pt-12 pb-8 border-t border-border space-y-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1.5 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2.5">
-              <div className="h-7 w-7 rounded-lg bg-coral text-white font-heading font-black text-sm flex items-center justify-center shadow-xs">
-                T
-              </div>
-              <span className="font-heading font-extrabold text-base text-ink tracking-tight">
-                tasvir<span className="text-coral">.ai</span>
-              </span>
-              <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-bento-peach text-coral">
-                v2.5
-              </span>
+      {/* Studio footer */}
+      <footer className="pt-16 pb-8 border-t border-stroke mt-16">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 border border-stroke flex items-center justify-center">
+              <div className="w-0 h-0 border-l-[3px] border-l-accent-warm border-t-[2px] border-t-transparent border-b-[2px] border-b-transparent ml-0.5" />
             </div>
-            <p className="text-xs text-ink-muted max-w-md">
-              {heroContent.footerDesc}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-ink-muted">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-border">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Cloudflare Turnstile</span>
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-border">
-              <Zap className="h-3.5 w-3.5 text-amber-500" />
-              <span>Google Veo 3.1 & Gemini</span>
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-border">
-              <CheckCircle2 className="h-3.5 w-3.5 text-sky-600" />
-              <span>UploadThing Cloud</span>
+            <span className="font-sans font-bold text-[10px] tracking-[0.2em] text-ink-dim uppercase">
+              TASVIR.AI
             </span>
           </div>
-
-          <div className="text-center md:text-right">
-            <a
-              href="https://t.me/astro_spectrum"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-xs font-semibold transition-colors tactile-btn"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              <span>Telegram: @astro_spectrum</span>
-            </a>
-            <div className="text-[11px] font-mono text-ink-muted mt-1">
-              Tel: +998-99-099-11-12
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-ink-muted gap-2">
-          <span>© 2026 Tasvir Technologies Inc. All rights reserved.</span>
-          <span>Sardor Sunatullayev • Oʻzbekiston</span>
+          <span className="text-[10px] font-mono text-ink-dim tracking-wider">
+            &copy; 2026 TASVIR TECHNOLOGIES &middot; SARDOR SUNATULLAYEV
+          </span>
         </div>
       </footer>
     </main>
   );
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <Navbar
-        user={user}
-        locale={locale}
-        onToggleLocale={handleToggleLocale}
-        onChangeLocale={setLocale}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenCheckout={() => setIsCheckoutOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        libraryCount={jobs.length}
-      />
+    <div className="min-h-screen bg-obsidian text-ink">
+      {!isLanding && (
+        <Navbar
+          user={user}
+          locale={locale}
+          onToggleLocale={handleToggleLocale}
+          onChangeLocale={setLocale}
+          activeTab={activeTab as NavTabType}
+          setActiveTab={setActiveTab}
+          onOpenCheckout={() => setIsCheckoutOpen(true)}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          libraryCount={jobs.length}
+        />
+      )}
 
-      {mainContent}
+      {isLanding ? (
+        <>
+          {/* Landing has its own minimal header */}
+          <header className="fixed top-0 left-0 right-0 z-50 bg-obsidian/80 backdrop-blur-sm border-b border-stroke/50">
+            <div className="max-w-[1600px] mx-auto px-6 lg:px-10 h-14 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-6 w-6 border border-stroke flex items-center justify-center">
+                  <div className="w-0 h-0 border-l-[4px] border-l-accent-warm border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5" />
+                </div>
+                <span className="font-sans font-bold text-xs tracking-[0.2em] text-ink uppercase">TASVIR</span>
+                <span className="text-[9px] font-mono text-ink-dim">.AI</span>
+              </div>
+
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* Theme Toggle */}
+                <ThemeToggle align="right" />
+
+                {/* Locale */}
+                <div className="hidden sm:flex items-center border border-stroke/50">
+                  {(['uz', 'en', 'ru'] as LocaleType[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setLocale(lang)}
+                      className={`px-2 py-1 text-[9px] font-mono font-bold tracking-widest transition-all ${
+                        locale === lang ? 'bg-surface-raised text-ink' : 'text-ink-dim hover:text-ink-muted'
+                      }`}
+                    >
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => enterStudio('prompt')}
+                  className="px-4 py-1.5 bg-ink text-obsidian text-[10px] font-mono font-bold tracking-[0.15em] uppercase hover:bg-accent-warm transition-colors"
+                >
+                  {hero.ctaPrimary}
+                </button>
+              </div>
+            </div>
+          </header>
+          {landingContent}
+        </>
+      ) : (
+        studioContent
+      )}
 
       <ProfileModal
         isOpen={isProfileOpen}
@@ -548,4 +850,3 @@ export default function HomePage() {
     </div>
   );
 }
-

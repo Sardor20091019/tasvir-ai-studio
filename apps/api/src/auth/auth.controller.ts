@@ -40,6 +40,10 @@ export class AuthController {
     body: {
       credential?: string;
       turnstileToken?: string;
+      email?: string;
+      name?: string;
+      googleId?: string;
+      avatarUrl?: string;
     },
   ) {
     return this.authService.googleLogin(body);

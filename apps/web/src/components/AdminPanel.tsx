@@ -95,8 +95,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
       const res = await api.adminGrantTokens({
         targetUserId: req.userId,
         targetEmail: req.userEmail,
-        targetPhoneNumber: req.userPhone,
-        tokensToAdd: req.requestedTokens,
+                tokensToAdd: req.requestedTokens,
         requestId: req.requestId,
         reason: req.note || 'Soʻrov tasdiqlandi',
       });
@@ -162,8 +161,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
     (u) =>
       u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.phone_number?.includes(searchQuery) ||
-      u.id?.includes(searchQuery),
+            u.id?.includes(searchQuery),
   );
 
   const pendingRequests = requests.filter((r) => r.status === 'pending');
@@ -326,7 +324,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
           </div>
         </div>
 
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-border p-6 shadow-xs space-y-5">
+        <div className="lg:col-span-5 bg-surface rounded-3xl border border-border p-6 shadow-xs space-y-5">
           <div className="flex items-center gap-2 pb-3 border-b border-border">
             <Coins className="h-5 w-5 text-coral" />
             <h3 className="text-base font-heading font-extrabold text-ink">
@@ -404,7 +402,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-border p-6 shadow-xs space-y-4">
+      <div className="bg-surface rounded-3xl border border-border p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-coral" />
@@ -449,7 +447,7 @@ export function AdminPanel({ user, locale }: AdminPanelProps) {
                     </div>
                   </td>
                   <td className="py-3 px-3 font-mono text-ink-muted">
-                    {u.email || u.phone_number || '—'}
+                    {u.email || '—'}
                   </td>
                   <td className="py-3 px-3">
                     <span

@@ -4,7 +4,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const ffmpegPath: string = require('ffmpeg-static') || 'ffmpeg';
+let ffmpegPath: string = 'ffmpeg';
+try {
+  ffmpegPath = require('ffmpeg-static') || 'ffmpeg';
+} catch {
+  // ffmpeg binary fallback from system PATH
+}
 
 export interface ConcatOptions {
   sceneClipPaths: string[];

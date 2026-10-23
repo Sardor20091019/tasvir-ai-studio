@@ -1,14 +1,37 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '../lib/theme';
 
 export const metadata: Metadata = {
-  title: 'Tasvir — AI Video Reklama & UGC Studiyasi | Uzum, Reels, Telegram',
+  title: 'TASVIR — Cinematic AI Video Engine',
   description:
-    'Oʻzbekiston elektron tijorat doʻkonlari uchun 60 soniyada sunʼiy intellekt orqali 9:16 vertikal video reklamalar va mahalliy UGC roliklar yaratish studiyasi.',
+    'Professional-grade AI video generation platform. Cinematic storytelling powered by Google Veo 3.1. Built for filmmakers, designers, and serious creators.',
   icons: {
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="24" fill="%23EA580C"/><path d="M38 30L72 50L38 70Z" fill="white"/></svg>',
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230F1013"/><path d="M38 30L72 50L38 70Z" fill="%23D4A574"/></svg>',
   },
 };
+
+const themeInitScript = `
+(function() {
+  try {
+    var storedTheme = localStorage.getItem('tasvir-theme');
+    var theme = (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'system') ? storedTheme : 'system';
+    var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.setAttribute('data-theme', 'light');
+      root.style.colorScheme = 'light';
+    }
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -16,11 +39,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uz">
-      <body className="bg-canvas text-ink antialiased selection:bg-coral-light selection:text-coral">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="bg-obsidian text-ink antialiased min-h-screen">
+        <ThemeProvider defaultTheme="system">
+          <div className="film-grain" />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

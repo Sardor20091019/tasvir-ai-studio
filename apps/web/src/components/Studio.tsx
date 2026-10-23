@@ -23,7 +23,6 @@ import {
   Send,
   Smartphone,
   ChevronRight,
-  Music,
   Camera,
   Layers,
   Lock,
@@ -454,7 +453,7 @@ export function Studio({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <div className="lg:col-span-7 space-y-6">
-        <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
+        <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-peach text-coral font-bold text-sm">
@@ -533,7 +532,7 @@ export function Studio({
                   type="text"
                   value={productTitle}
                   onChange={(e) => setProductTitle(e.target.value)}
-                  className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
+                  className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-border bg-surface-raised text-ink focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
                 />
               </div>
 
@@ -546,7 +545,7 @@ export function Studio({
                     type="number"
                     value={productPrice}
                     onChange={(e) => setProductPrice(Number(e.target.value))}
-                    className="w-full font-mono text-xs font-semibold px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
+                    className="w-full font-mono text-xs font-semibold px-3 py-2 rounded-lg border border-border bg-surface-raised text-ink focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
                   />
                 </div>
                 <div>
@@ -557,7 +556,7 @@ export function Studio({
                     type="text"
                     value={productDiscount}
                     onChange={(e) => setProductDiscount(e.target.value)}
-                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
+                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-border bg-surface-raised text-ink focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral"
                   />
                 </div>
               </div>
@@ -565,7 +564,7 @@ export function Studio({
           </div>
         </section>
 
-        <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
+        <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-mint text-emerald-700 font-bold text-sm">
@@ -628,7 +627,7 @@ export function Studio({
           </div>
         </section>
 
-        <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
+        <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-sky text-cobalt font-bold text-sm">
@@ -723,10 +722,10 @@ export function Studio({
               value={scriptText}
               onChange={(e) => setScriptText(e.target.value)}
               placeholder={t.scriptPlaceholder}
-              className="w-full text-xs font-medium leading-relaxed p-3.5 rounded-xl border border-border bg-canvas focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all"
+              className="w-full text-xs font-medium leading-relaxed p-3.5 rounded-xl border border-border bg-surface-raised text-ink focus:bg-surface-overlay focus:outline-none focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all"
             />
             {isGeneratingScript && (
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-xs rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-coral">
+              <div className="absolute inset-0 bg-surface/80 backdrop-blur-xs rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-coral">
                 <Sparkles className="h-4 w-4 animate-spin text-coral" />
                 <span>AI ssenariy qayta yozilmoqda...</span>
               </div>
@@ -747,7 +746,7 @@ export function Studio({
           </div>
         </section>
 
-        <section className="bg-white rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
+        <section className="bg-surface rounded-studio border border-border p-5 sm:p-6 shadow-tactile transition-all hover:shadow-tactile-md">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/60">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-bento-lavender text-purple-700 font-bold text-sm">
@@ -852,7 +851,7 @@ export function Studio({
       </div>
 
       <div className="lg:col-span-5 sticky top-20 space-y-4">
-        <div className="bg-white rounded-studio border border-border p-4 sm:p-5 shadow-tactile">
+        <div className="bg-surface rounded-studio border border-border p-4 sm:p-5 shadow-tactile">
           <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-border/60">
             <div>
               <h3 className="text-sm font-bold text-ink">
@@ -876,7 +875,7 @@ export function Studio({
 
               <button
                 onClick={() => setIsPlayingPreview(!isPlayingPreview)}
-                className="h-7 w-7 rounded-lg border border-border bg-canvas hover:bg-white flex items-center justify-center text-ink"
+                className="h-7 w-7 rounded-lg border border-border bg-surface hover:bg-surface-raised flex items-center justify-center text-ink"
               >
                 {isPlayingPreview ? (
                   <Pause className="h-3.5 w-3.5" />
@@ -988,7 +987,7 @@ export function Studio({
                   </p>
                 </div>
 
-                <div className="bg-white/95 backdrop-blur-md rounded-xl p-2.5 shadow-lg border border-white/40 flex items-center justify-between text-ink">
+                <div className="bg-surface/95 backdrop-blur-md rounded-xl p-2.5 shadow-lg border border-border/40 flex items-center justify-between text-ink">
                   <div>
                     <h4 className="text-xs font-bold truncate max-w-[170px] line-clamp-1">
                       {productTitle}

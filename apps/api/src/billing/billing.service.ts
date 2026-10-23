@@ -88,7 +88,7 @@ export class BillingService {
       .insertInto('token_requests')
       .values({
         user_id: user.id,
-        phone_number: user.phone_number || '',
+        phone_number: null,
         requested_tokens: tokens,
         note: safeNote || null,
         status: 'pending',
@@ -96,7 +96,7 @@ export class BillingService {
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    this.logger.log(`User ${user.email || user.phone_number || user.id} requested ${tokens} tokens (Req ID: ${request.id})`);
+    this.logger.log(`User ${user.email || user.id} requested ${tokens} tokens (Req ID: ${request.id})`);
 
     return {
       success: true,
@@ -144,12 +144,7 @@ export class BillingService {
         targetUserQuery = targetUserQuery.where('id', '=', params.targetUserId);
       } else if (params.targetEmail) {
         targetUserQuery = targetUserQuery.where('email', '=', params.targetEmail.trim().toLowerCase());
-      } else if (params.targetPhoneNumber) {
-        let cleanPhone = params.targetPhoneNumber.replace(/[^\d+]/g, '');
-        if (!cleanPhone.startsWith('+998') && cleanPhone.length === 9) {
-          cleanPhone = '+998' + cleanPhone;
-        }
-        targetUserQuery = targetUserQuery.where('phone_number', '=', cleanPhone);
+      
       } else {
         throw new BadRequestException('Foydalanuvchi ID yoki email kiritilishi shart');
       }
@@ -189,19 +184,19 @@ export class BillingService {
           plan_tier: targetUser.plan_tier,
           amount_uzs: 0,
           credits_added: tokens,
-          phone_number: targetUser.phone_number || '',
+          phone_number: null,
           external_tx_id: `admin_${params.adminId || 'key'}_${Date.now()}`,
           status: 'completed',
         })
         .execute();
 
       this.logger.log(
-        `[ADMIN AUDIT] Granted ${tokens} tokens to user ${targetUser.id} (${targetUser.email || targetUser.phone_number}) by admin ${params.adminId || 'API_KEY'}. Reason: ${params.reason || 'None'}`
+        `[ADMIN AUDIT] Granted ${tokens} tokens to user ${targetUser.id} (${targetUser.email}) by admin ${params.adminId || 'API_KEY'}. Reason: ${params.reason || 'None'}`
       );
 
       return {
         success: true,
-        message: `${targetUser.full_name} (${targetUser.email || targetUser.phone_number || ''}) ga ${tokens} ta token muvaffaqiyatli taqdim etildi. Yangi balans: ${updatedUser.credits_balance}`,
+        message: `${targetUser.full_name} (${targetUser.email || ''}) ga ${tokens} ta token muvaffaqiyatli taqdim etildi. Yangi balans: ${updatedUser.credits_balance}`,
         newBalance: updatedUser.credits_balance,
         user: updatedUser,
       };
@@ -222,7 +217,7 @@ export class BillingService {
         'users.id as userId',
         'users.full_name as userName',
         'users.email as userEmail',
-        'users.phone_number as userPhone',
+        'users.email as userPhone',
         'users.credits_balance as currentBalance',
       ])
       .orderBy('token_requests.created_at', 'desc')
@@ -249,7 +244,7 @@ export class BillingService {
   async listUsersForAdmin(): Promise<any[]> {
     return await this.db
       .selectFrom('users')
-      .select(['id', 'full_name', 'email', 'phone_number', 'role', 'plan_tier', 'credits_balance', 'created_at'])
+      .select(['id', 'full_name', 'email', 'role', 'plan_tier', 'credits_balance', 'created_at'])
       .orderBy('created_at', 'desc')
       .limit(100)
       .execute();

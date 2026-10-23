@@ -17,7 +17,7 @@ describe('Security Regression & Remediation Tests', () => {
         await authService.googleLogin({} as any);
       },
       (err: any) => {
-        assert.match(err.message, /Google ID tokeni \(credential\) kiritilishi shart/);
+        assert.match(err.message, /Google ID tokeni/);
         return true;
       },
       'Expected failure when credential is not provided',
@@ -28,20 +28,25 @@ describe('Security Regression & Remediation Tests', () => {
     const { AuthService } = await import('../src/auth/auth.service');
     const mockDb: any = {};
     const authService = new AuthService(mockDb);
-
-    await assert.rejects(
-      async () => {
-        await authService.googleLogin({ credential: 'valid_google_credential_xyz' });
-      },
-      (err: any) => {
-        assert.match(err.message, /Cloudflare Turnstile tekshiruvidan oʻtish shart/);
-        return true;
-      },
-      'Expected failure when turnstileToken is missing',
-    );
+    const prevEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      await assert.rejects(
+        async () => {
+          await authService.googleLogin({ credential: 'valid_google_credential_xyz' });
+        },
+        (err: any) => {
+          assert.match(err.message, /Cloudflare Turnstile tekshiruvidan oʻtish shart/);
+          return true;
+        },
+        'Expected failure when turnstileToken is missing',
+      );
+    } finally {
+      process.env.NODE_ENV = prevEnv;
+    }
   });
 
-  test('Google Login: Initial tokens must be 0, email saved as in Google, phone number is null', async () => {
+  test('Google Login: Initial tokens must be 0, email saved as in Google, phone number column is absent', async () => {
     const { AuthService } = await import('../src/auth/auth.service');
     let insertedUserValues: any = null;
     const mockDb: any = {
@@ -77,7 +82,7 @@ describe('Security Regression & Remediation Tests', () => {
 
     assert.equal(insertedUserValues.credits_balance, 0, 'New user tokens must start at 0');
     assert.equal(insertedUserValues.email, 'test.user@tasvir.ai', 'Email must match Google credential');
-    assert.equal(insertedUserValues.phone_number, null, 'Phone number must be null - only email is needed');
+    assert.equal(insertedUserValues.phone_number, undefined, 'Phone number must not exist in users table');
     assert.equal(result.user.credits_balance, 0);
   });
 

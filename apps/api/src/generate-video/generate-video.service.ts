@@ -53,7 +53,7 @@ export class GenerateVideoService {
   }): Promise<{ jobId: string; status: string; progress: number; message: string; model: string }> {
     const jobId = `drama_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const aspectRatio: AspectRatioType = '9:16';
-    const includeBackgroundMusic = params.includeBackgroundMusic !== false;
+    const includeBackgroundMusic = params.includeBackgroundMusic === true;
 
     const job: DramaVideoGenerationJob = {
       jobId,

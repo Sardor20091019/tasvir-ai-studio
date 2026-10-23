@@ -129,6 +129,9 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) DEFAULT 'user'`.execute(this._db);
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email varchar(120)`.execute(this._db);
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`.execute(this._db);
+      await sql`ALTER TABLE users DROP COLUMN IF EXISTS phone_number CASCADE`.execute(this._db);
+      await sql`ALTER TABLE users ALTER COLUMN credits_balance SET DEFAULT 0`.execute(this._db);
+      await sql`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'`.execute(this._db);
       await sql`
         CREATE TABLE IF NOT EXISTS token_requests (
           id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -149,42 +152,25 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
 
   private async seedInitialData() {
     try {
-      const existingUser = await this._db
+      const usersCount = await this._db
         .selectFrom('users')
-        .selectAll()
-        .where('email', '=', 'sardor@tasvir.ai')
+        .select(sql`count(*)`.as('count'))
         .executeTakeFirst();
 
-      let defaultUserId: string;
-
-      if (!existingUser) {
-        const newUser = await this._db
+      if (Number(usersCount?.count || 0) === 0) {
+        await this._db
           .insertInto('users')
           .values({
-            email: 'sardor@tasvir.ai',
-            full_name: 'Sardor Sunatullayev',
+            email: 'sardor091019@gmail.com',
+            full_name: 'Sardor Sunnatullayev',
             telegram_id: null,
             locale: 'uz',
             role: 'admin',
             plan_tier: 'agency',
             credits_balance: 100,
           })
-          .returningAll()
-          .executeTakeFirstOrThrow();
-        defaultUserId = newUser.id;
-        this.logger.log(`Seeded default admin user (Sardor Sunatullayev, id: ${defaultUserId}) with 100 credits.`);
-      } else {
-        defaultUserId = existingUser.id;
-        await this._db
-          .updateTable('users')
-          .set({
-            role: 'admin',
-            full_name: 'Sardor Sunatullayev',
-            email: 'sardor@tasvir.ai',
-            credits_balance: 100,
-          })
-          .where('id', '=', defaultUserId)
           .execute();
+        this.logger.log(`Seeded default admin user (sardor091019@gmail.com) with 100 credits.`);
       }
 
       const avatarsCount = await this._db
@@ -238,12 +224,19 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Seeded 4 Central Asian AI presenter avatars.`);
       }
 
+      const firstUser = await this._db
+        .selectFrom('users')
+        .select('id')
+        .limit(1)
+        .executeTakeFirst();
+      const defaultUserId = firstUser?.id;
+
       const productsCount = await this._db
         .selectFrom('products')
         .select(sql`count(*)`.as('count'))
         .executeTakeFirst();
 
-      if (Number(productsCount?.count || 0) === 0) {
+      if (defaultUserId && Number(productsCount?.count || 0) === 0) {
         const demoProducts = [
           {
             user_id: defaultUserId,

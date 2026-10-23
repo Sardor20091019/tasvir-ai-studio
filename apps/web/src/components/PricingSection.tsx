@@ -91,7 +91,7 @@ export function PricingSection({
               className={`relative rounded-2xl p-6 sm:p-7 flex flex-col justify-between transition-all ${
                 isPro
                   ? 'bg-bento-peach border-2 border-coral shadow-tactile-lg ring-1 ring-coral'
-                  : 'bg-white border border-border shadow-tactile hover:shadow-tactile-md'
+                  : 'bg-surface border border-border shadow-tactile hover:shadow-tactile-md'
               }`}
             >
               {p.badge && (

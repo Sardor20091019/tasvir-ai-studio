@@ -206,7 +206,7 @@ export function AskAdminModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-border overflow-hidden">
+      <div className="relative w-full max-w-xl rounded-2xl bg-surface shadow-2xl border border-border overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-border bg-canvas/40">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral shadow-xs">
@@ -467,7 +467,7 @@ export function AskAdminModal({
                         <div>
                           <div className="font-bold text-ink flex items-center gap-1.5">
                             <span>{req.userName || 'Mijoz'}</span>
-                            <span className="font-mono text-ink-muted font-normal">({req.userEmail || req.userPhone || '—'})</span>
+                            <span className="font-mono text-ink-muted font-normal">({req.userEmail || '' || '—'})</span>
                           </div>
                           <div className="text-[11px] text-coral font-bold mt-0.5">
                             Soʻralmoqda: {req.requestedTokens} ta token

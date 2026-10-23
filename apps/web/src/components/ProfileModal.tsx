@@ -153,7 +153,7 @@ export function ProfileModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl border border-border shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-surface rounded-3xl border border-border shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between pb-4 border-b border-border">
           <div className="space-y-1">
             <div className="flex items-center gap-2">

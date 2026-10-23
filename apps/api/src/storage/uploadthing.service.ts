@@ -1,25 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UTApi, UTFile } from 'uploadthing/server';
 import * as fs from 'fs';
 import * as path from 'path';
+
+let UTApiClass: any = null;
+let UTFileClass: any = null;
+try {
+  // Safe dynamic import to prevent crash when uploadthing is optional
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const ut = require('uploadthing/server');
+  UTApiClass = ut.UTApi;
+  UTFileClass = ut.UTFile;
+} catch {
+  // UploadThing is optional in development
+}
 
 @Injectable()
 export class UploadThingService {
   private readonly logger = new Logger(UploadThingService.name);
-  private utapi: UTApi | null = null;
+  private utapi: any = null;
 
   constructor() {
     const rawToken = process.env.UPLOADTHING_TOKEN;
-    if (rawToken && rawToken !== 'YOUR_UPLOADTHING_TOKEN_HERE') {
+    if (rawToken && rawToken !== 'YOUR_UPLOADTHING_TOKEN_HERE' && UTApiClass) {
       try {
         const cleanToken = rawToken.replace(/^['"]|['"]$/g, '').trim();
-        this.utapi = new UTApi({ token: cleanToken });
+        this.utapi = new UTApiClass({ token: cleanToken });
         this.logger.log('UploadThing client initialized successfully with UPLOADTHING_TOKEN.');
       } catch (err: any) {
         this.logger.error(`Failed to initialize UTApi: ${err.message}`);
       }
     } else {
-      this.logger.warn('UPLOADTHING_TOKEN is not set or is a placeholder.');
+      this.logger.warn('UPLOADTHING_TOKEN is not set or UTApi is unavailable. Using local storage fallback.');
     }
   }
 
@@ -27,7 +38,7 @@ export class UploadThingService {
     source: Buffer | string,
     filename: string = 'tasvir-ai-video.mp4',
   ): Promise<string | null> {
-    if (!this.utapi) {
+    if (!this.utapi || !UTFileClass) {
       this.logger.warn('UTApi not configured, skipping UploadThing cloud save.');
       return null;
     }
@@ -57,7 +68,7 @@ export class UploadThingService {
         buffer = source;
       }
 
-      const file = new UTFile([new Uint8Array(buffer)], filename, { type: 'video/mp4' });
+      const file = new UTFileClass([new Uint8Array(buffer)], filename, { type: 'video/mp4' });
       this.logger.log(`Uploading ${filename} (${buffer.byteLength} bytes) to UploadThing...`);
 
       const res = await this.utapi.uploadFiles(file);

@@ -80,7 +80,7 @@ export function VideoLibraryModal({
   };
 
   return (
-    <div className="bg-white rounded-studio border border-border p-6 shadow-tactile space-y-6">
+    <div className="bg-surface rounded-studio border border-border p-6 shadow-tactile space-y-6">
       <div className="flex items-center justify-between pb-4 border-b border-border/70">
         <div>
           <h2 className="text-xl font-heading font-extrabold text-ink">

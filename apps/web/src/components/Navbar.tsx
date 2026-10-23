@@ -1,18 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Sparkles,
+  Film,
   Layers,
   CreditCard,
   Video,
-  Globe,
-  Coins,
-  Film,
   Crown,
   User as UserIcon,
+  Menu,
+  X,
+  ChevronRight,
 } from 'lucide-react';
 import { User, LocaleType } from '../types';
+import { ThemeToggle } from './ThemeToggle';
 
 export type NavTabType = 'studio' | 'prompt' | 'templates' | 'pricing' | 'library' | 'admin';
 
@@ -41,319 +42,351 @@ export function Navbar({
   onOpenProfile,
   libraryCount,
 }: NavbarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const t = {
     uz: {
-      brandSub: 'AI Video Reklama',
-      studio: 'Studiyo',
-      prompt: 'AI Prompt Video',
-      templates: 'Shablonlar',
-      pricing: 'Narxlar',
-      library: 'Videolarim',
-      credits: (count: number) => `${count} ta video qoldi`,
+      studio: 'STUDIYA',
+      prompt: 'VEO ENGINE',
+      templates: 'SHABLONLAR',
+      pricing: 'TARIFLAR',
+      library: 'ARXIV',
+      credits: (count: number) => `${count}`,
       recharge: 'Token soʻrash',
-      login: 'Kirish (Google)',
+      login: 'Kirish',
+      theme: 'Mavzu',
     },
     en: {
-      brandSub: 'AI Video Ads',
-      studio: 'Studio',
-      prompt: 'AI Prompt Video',
-      templates: 'Templates',
-      pricing: 'Pricing',
-      library: 'My Videos',
-      credits: (count: number) => `${count} videos left`,
-      recharge: 'Request tokens',
-      login: 'Sign In (Google)',
+      studio: 'STUDIO',
+      prompt: 'VEO ENGINE',
+      templates: 'TEMPLATES',
+      pricing: 'PRICING',
+      library: 'ARCHIVE',
+      credits: (count: number) => `${count}`,
+      recharge: 'Request',
+      login: 'Sign In',
+      theme: 'Theme',
     },
     ru: {
-      brandSub: 'AI Видео Реклама',
-      studio: 'Студия',
-      prompt: 'AI Промпт Видео',
-      templates: 'Шаблоны',
-      pricing: 'Тарифы',
-      library: 'Мои видео',
-      credits: (count: number) => `Осталось: ${count} видео`,
-      recharge: 'Запросить токены',
-      login: 'Вход (Google)',
+      studio: 'СТУДИЯ',
+      prompt: 'VEO ENGINE',
+      templates: 'ШАБЛОНЫ',
+      pricing: 'ТАРИФЫ',
+      library: 'АРХИВ',
+      credits: (count: number) => `${count}`,
+      recharge: 'Запросить',
+      login: 'Вход',
+      theme: 'Тема',
     },
   }[locale] || {
-    brandSub: 'AI Video Ads',
-    studio: 'Studio',
-    prompt: 'AI Prompt Video',
-    templates: 'Templates',
-    pricing: 'Pricing',
-    library: 'My Videos',
-    credits: (count: number) => `${count} videos left`,
-    recharge: 'Request tokens',
-    login: 'Sign In (Google)',
+    studio: 'STUDIO',
+    prompt: 'VEO ENGINE',
+    templates: 'TEMPLATES',
+    pricing: 'PRICING',
+    library: 'ARCHIVE',
+    credits: (count: number) => `${count}`,
+    recharge: 'Request',
+    login: 'Sign In',
+    theme: 'Theme',
   };
 
-  return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => setActiveTab('studio')}
-            className="flex items-center gap-2.5 text-left group"
-          >
-            <div className="h-9 w-9 rounded-xl bg-coral flex items-center justify-center text-white font-heading font-black text-lg shadow-sm group-hover:scale-105 transition-transform">
-              T
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-heading font-extrabold text-lg text-ink tracking-tight">
-                  tasvir<span className="text-coral">.ai</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-bento-peach text-coral">
-                  Beta
-                </span>
-              </div>
-              <span className="text-[10px] text-ink-muted hidden sm:block -mt-0.5">
-                {t.brandSub}
-              </span>
-            </div>
-          </button>
+  const navItems: { key: NavTabType; label: string; accent?: boolean }[] = [
+    { key: 'studio', label: t.studio },
+    { key: 'prompt', label: t.prompt, accent: true },
+    { key: 'templates', label: t.templates },
+    { key: 'pricing', label: t.pricing },
+  ];
 
-          <nav className="hidden md:flex items-center gap-1">
+  return (
+    <>
+      {/* ── DESKTOP HEADER ────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-obsidian/95 backdrop-blur-sm border-b border-stroke">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 h-14 flex items-center justify-between">
+
+          {/* LEFT — Brand mark */}
+          <div className="flex items-center gap-8">
             <button
               onClick={() => setActiveTab('studio')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'studio'
-                  ? 'bg-bento-peach text-coral font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
+              className="flex items-center gap-3 group"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              {t.studio}
-            </button>
-            <button
-              onClick={() => setActiveTab('prompt')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'prompt'
-                  ? 'bg-amber-100 text-amber-900 font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Film className="h-3.5 w-3.5 text-coral" />
-              <span>{t.prompt}</span>
-              <span className="text-[9px] font-mono bg-coral text-white px-1 rounded-sm font-bold">
-                VEO 3.1
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('templates')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'templates'
-                  ? 'bg-bento-mint text-emerald-700 font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              {t.templates}
-            </button>
-            <button
-              onClick={() => setActiveTab('pricing')}
-              className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === 'pricing'
-                  ? 'bg-bento-lavender text-purple-700 font-semibold'
-                  : 'text-ink-muted hover:text-ink hover:bg-canvas'
-              }`}
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              {t.pricing}
-            </button>
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`px-3 py-1.5 text-xs font-heading font-extrabold rounded-lg transition-all flex items-center gap-1.5 ${
-                  activeTab === 'admin'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                }`}
-              >
-                <Crown className="h-3.5 w-3.5 text-amber-300" />
-                <span>Admin</span>
-              </button>
-            )}
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setActiveTab('library')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl border border-border flex items-center gap-1.5 transition-colors tactile-btn ${
-              activeTab === 'library'
-                ? 'bg-ink text-white'
-                : 'bg-canvas hover:bg-white text-ink'
-            }`}
-          >
-            <Video className="h-3.5 w-3.5 text-coral" />
-            <span className="hidden sm:inline">{t.library}</span>
-            {libraryCount > 0 && (
-              <span className="h-4 min-w-[16px] px-1 rounded-full bg-coral text-white text-[10px] font-mono font-bold flex items-center justify-center">
-                {libraryCount}
-              </span>
-            )}
-          </button>
-
-          {user && (
-            <div className="hidden sm:flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl bg-canvas border border-border text-xs">
-              <div className="flex items-center gap-1.5 font-mono">
-                <Coins className="h-3.5 w-3.5 text-coral" />
-                <span className="font-bold text-ink">
-                  {user.credits_balance}
+              {/* Logomark — sharp square */}
+              <div className="h-7 w-7 border border-stroke group-hover:border-accent-warm transition-colors flex items-center justify-center">
+                <div className="w-0 h-0 border-l-[5px] border-l-accent-warm border-t-[3.5px] border-t-transparent border-b-[3.5px] border-b-transparent ml-0.5" />
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-sans font-bold text-sm tracking-[0.15em] text-ink uppercase">
+                  Tasvir
                 </span>
-                <span className="text-ink-muted text-[11px] hidden lg:inline">
-                  {locale === 'uz' ? 'ta' : locale === 'en' ? 'videos' : 'видео'}
+                <span className="text-[10px] font-mono font-medium text-ink-dim tracking-wider">
+                  .AI
                 </span>
               </div>
-              <button
-                onClick={onOpenCheckout}
-                className="px-2 py-0.5 rounded-lg bg-coral hover:bg-coral-dark text-white text-[11px] font-semibold transition-colors tactile-btn"
-              >
-                +
-              </button>
-            </div>
-          )}
+            </button>
 
-          <button
-            onClick={onOpenCheckout}
-            className="px-3 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white font-heading font-bold text-xs shadow-xs transition-colors tactile-btn flex items-center gap-1.5"
-          >
-            <Coins className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t.recharge}</span>
-          </button>
+            {/* CENTER — Navigation links */}
+            <nav className="hidden lg:flex items-center gap-0.5">
+              {navItems.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className={`
+                    px-3.5 py-1.5 text-[11px] font-mono font-medium tracking-[0.12em] transition-all relative
+                    ${activeTab === item.key
+                      ? 'text-ink'
+                      : 'text-ink-dim hover:text-ink-muted'
+                    }
+                  `}
+                >
+                  {item.label}
+                  {item.accent && (
+                    <span className="ml-1.5 text-[8px] font-mono font-bold tracking-wider text-accent-warm opacity-80">
+                      3.1
+                    </span>
+                  )}
+                  {/* Active underline */}
+                  {activeTab === item.key && (
+                    <span className="absolute bottom-0 left-3.5 right-3.5 h-px bg-accent-warm" />
+                  )}
+                </button>
+              ))}
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className={`
+                    px-3.5 py-1.5 text-[11px] font-mono font-medium tracking-[0.12em] transition-all relative
+                    ${activeTab === 'admin'
+                      ? 'text-signal-red'
+                      : 'text-ink-dim hover:text-ink-muted'
+                    }
+                  `}
+                >
+                  ADMIN
+                  {activeTab === 'admin' && (
+                    <span className="absolute bottom-0 left-3.5 right-3.5 h-px bg-signal-red" />
+                  )}
+                </button>
+              )}
+            </nav>
+          </div>
 
-          <div className="border-l border-border pl-2 sm:pl-3 flex items-center">
-            <div className="flex items-center p-0.5 rounded-lg bg-canvas border border-border">
+          {/* RIGHT — Controls */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Archive */}
+            <button
+              onClick={() => setActiveTab('library')}
+              className={`
+                hidden sm:flex items-center gap-2 px-3 py-1.5 text-[11px] font-mono tracking-wider border transition-all
+                ${activeTab === 'library'
+                  ? 'border-accent-warm/30 text-accent-warm bg-accent-warm/5'
+                  : 'border-stroke text-ink-dim hover:text-ink-muted hover:border-stroke-hover'
+                }
+              `}
+            >
+              {t.library}
+              {libraryCount > 0 && (
+                <span className="h-4 min-w-[16px] px-1 bg-surface-raised text-ink-muted text-[9px] font-mono font-bold flex items-center justify-center">
+                  {libraryCount}
+                </span>
+              )}
+            </button>
+
+            {/* Credits badge */}
+            {user && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-stroke text-[11px] font-mono">
+                <span className="text-ink-dim tracking-wider">CREDITS</span>
+                <span className="text-ink font-bold tabular-nums">{t.credits(user.credits_balance)}</span>
+                <button
+                  onClick={onOpenCheckout}
+                  className="ml-1 px-1.5 py-0.5 text-[10px] border border-stroke hover:border-accent-warm/30 text-ink-dim hover:text-accent-warm transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle align="right" />
+
+            {/* Locale switcher */}
+            <div className="hidden sm:flex items-center border border-stroke">
               {(['uz', 'en', 'ru'] as LocaleType[]).map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => onChangeLocale ? onChangeLocale(lang) : (lang !== locale && onToggleLocale())}
-                  className={`px-2 py-0.5 text-[11px] font-mono font-bold rounded-md transition-all ${
-                    locale === lang
-                      ? 'bg-white text-ink shadow-2xs font-extrabold'
-                      : 'text-ink-muted hover:text-ink'
-                  }`}
-                  title={
-                    lang === 'uz'
-                      ? "O'zbek tili"
-                      : lang === 'en'
-                      ? 'English'
-                      : 'Русский язык'
-                  }
+                  className={`
+                    px-2 py-1 text-[10px] font-mono font-bold tracking-widest transition-all
+                    ${locale === lang
+                      ? 'bg-surface-raised text-ink'
+                      : 'text-ink-dim hover:text-ink-muted'
+                    }
+                  `}
                 >
                   {lang.toUpperCase()}
                 </button>
               ))}
             </div>
-          </div>
 
-          <button
-            onClick={() => {
-              if (user && onOpenProfile) {
-                onOpenProfile();
-              } else {
-                onOpenAuth();
-              }
-            }}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-white text-ink hover:bg-canvas tactile-btn"
-            title={user ? (locale === 'en' ? 'My profile & tokens' : 'Mening profilim va tokenlarim') : (locale === 'en' ? 'Sign in with Google' : 'Google orqali kirish')}
-          >
-            <div className="h-7 w-7 rounded-lg bg-bento-peach text-coral font-bold flex items-center justify-center text-xs">
-              {user?.full_name ? user.full_name[0] : <UserIcon className="h-3.5 w-3.5" />}
-            </div>
-            <div className="hidden lg:flex flex-col text-left leading-tight">
-              <span className="text-xs font-semibold text-ink line-clamp-1">
+            {/* User / Auth */}
+            <button
+              onClick={() => {
+                if (user && onOpenProfile) onOpenProfile();
+                else onOpenAuth();
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 border border-stroke hover:border-stroke-hover transition-colors"
+            >
+              <div className="h-5 w-5 border border-stroke-hover flex items-center justify-center">
+                {user?.full_name ? (
+                  <span className="text-[10px] font-mono font-bold text-ink">{user.full_name[0]}</span>
+                ) : (
+                  <UserIcon className="h-3 w-3 text-ink-dim" />
+                )}
+              </div>
+              <span className="hidden lg:block text-[11px] font-mono text-ink-muted tracking-wider">
                 {user?.full_name || t.login}
               </span>
-              <span className="text-[10px] font-mono text-ink-muted">
-                {user ? `${user.credits_balance} ${locale === 'en' ? 'tokens on DB' : 'token (baza)'}` : (locale === 'en' ? 'Google Account' : 'Google hisob')}
-              </span>
-            </div>
-          </button>
-        </div>
-      </div>
+            </button>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-lg px-2 py-1.5 flex items-center justify-around">
-        <button
-          type="button"
-          onClick={() => setActiveTab('studio')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
-            activeTab === 'studio'
-              ? 'text-coral font-bold bg-bento-peach'
-              : 'text-ink-muted hover:text-ink'
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{t.studio}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('prompt')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
-            activeTab === 'prompt'
-              ? 'text-amber-800 font-bold bg-amber-100'
-              : 'text-ink-muted hover:text-ink'
-          }`}
-        >
-          <Film className="h-4 w-4 text-coral" />
-          <span className="text-[10px] font-medium">Veo 3.1</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('templates')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
-            activeTab === 'templates'
-              ? 'text-emerald-700 font-bold bg-bento-mint'
-              : 'text-ink-muted hover:text-ink'
-          }`}
-        >
-          <Layers className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{t.templates}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('pricing')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
-            activeTab === 'pricing'
-              ? 'text-purple-700 font-bold bg-bento-lavender'
-              : 'text-ink-muted hover:text-ink'
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{t.pricing}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('library')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
-            activeTab === 'library'
-              ? 'text-ink font-bold bg-canvas'
-              : 'text-ink-muted hover:text-ink'
-          }`}
-        >
-          <Video className="h-4 w-4 text-coral" />
-          <span className="text-[10px] font-medium">{t.library}</span>
-          {libraryCount > 0 && (
-            <span className="absolute top-1 right-2 h-2 w-2 rounded-full bg-coral animate-ping" />
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-2 border border-stroke hover:border-stroke-hover transition-colors"
+            >
+              {mobileOpen ? <X className="h-4 w-4 text-ink" /> : <Menu className="h-4 w-4 text-ink" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── MOBILE SLIDE-DOWN NAV ────────────────────── */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 top-14 z-40 bg-obsidian/98 backdrop-blur-sm border-t border-stroke animate-fade-in">
+          <nav className="flex flex-col p-6 gap-1">
+            {navItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => { setActiveTab(item.key); setMobileOpen(false); }}
+                className={`
+                  flex items-center justify-between py-4 border-b border-stroke/50 text-left
+                  ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}
+                `}
+              >
+                <span className="text-sm font-mono tracking-[0.15em]">{item.label}</span>
+                <ChevronRight className="h-4 w-4 text-ink-dim" />
+              </button>
+            ))}
+            <button
+              onClick={() => { setActiveTab('library'); setMobileOpen(false); }}
+              className={`
+                flex items-center justify-between py-4 border-b border-stroke/50 text-left
+                ${activeTab === 'library' ? 'text-ink' : 'text-ink-dim'}
+              `}
+            >
+              <span className="text-sm font-mono tracking-[0.15em]">{t.library}</span>
+              {libraryCount > 0 && (
+                <span className="h-5 px-2 bg-surface-raised text-ink-muted text-[10px] font-mono font-bold flex items-center justify-center">
+                  {libraryCount}
+                </span>
+              )}
+            </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => { setActiveTab('admin'); setMobileOpen(false); }}
+                className="flex items-center justify-between py-4 border-b border-stroke/50 text-left text-signal-red"
+              >
+                <span className="text-sm font-mono tracking-[0.15em]">ADMIN</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+
+            {/* Mobile theme toggle */}
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-stroke/50">
+              <span className="text-xs font-mono tracking-[0.15em] text-ink-dim uppercase">{t.theme}</span>
+              <ThemeToggle variant="segmented" />
+            </div>
+
+            {/* Mobile locale switcher */}
+            <div className="flex items-center gap-0 mt-4 border border-stroke self-start">
+              {(['uz', 'en', 'ru'] as LocaleType[]).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => {
+                    if (onChangeLocale) onChangeLocale(lang);
+                    else if (lang !== locale) onToggleLocale();
+                  }}
+                  className={`
+                    px-3 py-2 text-[11px] font-mono font-bold tracking-widest transition-all
+                    ${locale === lang ? 'bg-surface-raised text-ink' : 'text-ink-dim hover:text-ink-muted'}
+                  `}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile auth / credits */}
+            <div className="mt-6 flex items-center gap-3">
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-2 border border-stroke text-[11px] font-mono">
+                  <span className="text-ink-dim tracking-wider">CREDITS</span>
+                  <span className="text-ink font-bold">{user.credits_balance}</span>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  if (user && onOpenProfile) onOpenProfile();
+                  else onOpenAuth();
+                  setMobileOpen(false);
+                }}
+                className="px-4 py-2 border border-stroke hover:border-accent-warm/30 text-[11px] font-mono tracking-wider text-ink-muted hover:text-accent-warm transition-colors"
+              >
+                {user?.full_name || t.login}
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
+
+      {/* ── MOBILE BOTTOM BAR ────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-obsidian/95 backdrop-blur-sm border-t border-stroke">
+        <div className="flex items-center justify-around px-2 py-2">
+          {[
+            { key: 'studio' as NavTabType, label: t.studio, icon: Film },
+            { key: 'prompt' as NavTabType, label: 'VEO', icon: Layers },
+            { key: 'templates' as NavTabType, label: t.templates, icon: Layers },
+            { key: 'pricing' as NavTabType, label: t.pricing, icon: CreditCard },
+            { key: 'library' as NavTabType, label: t.library, icon: Video },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setActiveTab(item.key)}
+              className={`
+                flex flex-col items-center gap-0.5 py-1 px-2 transition-all
+                ${activeTab === item.key ? 'text-ink' : 'text-ink-dim'}
+              `}
+            >
+              <item.icon className={`h-4 w-4 ${activeTab === item.key ? 'text-accent-warm' : ''}`} />
+              <span className="text-[8px] font-mono tracking-widest">{item.label}</span>
+              {activeTab === item.key && <span className="w-4 h-px bg-accent-warm mt-0.5" />}
+            </button>
+          ))}
+          {user?.role === 'admin' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('admin')}
+              className={`
+                flex flex-col items-center gap-0.5 py-1 px-2 transition-all
+                ${activeTab === 'admin' ? 'text-signal-red' : 'text-ink-dim'}
+              `}
+            >
+              <Crown className="h-4 w-4" />
+              <span className="text-[8px] font-mono tracking-widest">ADMIN</span>
+            </button>
           )}
-        </button>
-        {user?.role === 'admin' && (
-          <button
-            type="button"
-            onClick={() => setActiveTab('admin')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all relative ${
-              activeTab === 'admin'
-                ? 'text-red-700 font-bold bg-red-100'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            <Crown className="h-4 w-4 text-amber-500" />
-            <span className="text-[10px] font-medium">Admin</span>
-          </button>
-        )}
+        </div>
       </nav>
-    </header>
+    </>
   );
 }
