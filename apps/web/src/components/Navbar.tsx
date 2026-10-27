@@ -117,7 +117,7 @@ export function Navbar({
   };
 
   const navItems: { key: NavTabType; label: string; accent?: boolean; badge?: string }[] = [
-    { key: 'prompt', label: t.prompt, accent: true, badge: 'OMNI 1.1' },
+    { key: 'prompt', label: t.prompt, accent: true, badge: 'version' },
     { key: 'editor', label: t.editor, badge: 'PRO' },
     { key: 'templates', label: t.templates },
     { key: 'pricing', label: t.pricing },
@@ -172,7 +172,7 @@ export function Navbar({
                   {item.label}
                   {item.accent && (
                     <span className="ml-1.5 text-[8px] font-mono font-bold tracking-wider text-accent-warm opacity-80">
-                      3.1
+                      BETA
                     </span>
                   )}
                   {item.badge && (
