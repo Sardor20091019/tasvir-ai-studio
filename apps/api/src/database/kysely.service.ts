@@ -151,6 +151,8 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
           resolved_at timestamptz
         )
       `.execute(this._db);
+      await sql`CREATE INDEX IF NOT EXISTS idx_video_jobs_user_created ON video_jobs (user_id, created_at DESC)`.execute(this._db);
+      await sql`CREATE INDEX IF NOT EXISTS idx_token_requests_user ON token_requests (user_id, status)`.execute(this._db);
     } catch (err: any) {
       this.logger.warn(`Token request schema check notice: ${err.message}`);
     }

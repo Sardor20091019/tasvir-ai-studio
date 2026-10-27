@@ -6,7 +6,7 @@ import * as path from 'path';
 export class CloudflareWorkersAiService {
   private readonly logger = new Logger(CloudflareWorkersAiService.name);
 
-  getCredentials(): { accountId: string; apiToken: string } {
+  getCredentials(): { accountId: string; apiToken: string } | null {
     let accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
     let apiToken = (process.env.CLOUDFLARE_WORKERS_API_TOKEN || '').trim();
 
@@ -37,7 +37,7 @@ export class CloudflareWorkersAiService {
     }
 
     if (!accountId || !apiToken) {
-      throw new Error('Cloudflare Workers AI credentials missing. Please set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_WORKERS_API_TOKEN in your environment variables or .env file.');
+      return null;
     }
 
     return { accountId, apiToken };
@@ -45,7 +45,7 @@ export class CloudflareWorkersAiService {
 
   isAvailable(): boolean {
     const creds = this.getCredentials();
-    return Boolean(creds && creds.accountId && creds.apiToken);
+    return Boolean(creds?.accountId && creds?.apiToken);
   }
 
   async run<T = any>(model: string, input: any): Promise<T> {

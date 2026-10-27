@@ -36,6 +36,16 @@ export class GenerateVideoService {
     @Inject(CloudflareWorkersAiService) private readonly cloudflareWorkersAiService: CloudflareWorkersAiService,
   ) {}
 
+  private setJob(jobId: string, job: DramaVideoGenerationJob): void {
+    if (this.jobs.size >= 100) {
+      const oldestKey = this.jobs.keys().next().value;
+      if (oldestKey) {
+        this.jobs.delete(oldestKey);
+      }
+    }
+    this.jobs.set(jobId, job);
+  }
+
   private getGeminiClient(): { client: GoogleGenAI; activeKey: string } {
     const rawKey =
       process.env.GEMINI_API_KEY ||
@@ -203,7 +213,7 @@ export class GenerateVideoService {
       createdAt: new Date().toISOString(),
     };
 
-    this.jobs.set(jobId, job);
+    this.setJob(jobId, job);
     this.logger.log(
       `Created video job ${jobId} (Resolution: ${resolution}, 9:16, Music: ${includeBackgroundMusic ? 'ON' : 'OFF'}, Pre-confirmed scenes: ${initialScenes.length})`,
     );
