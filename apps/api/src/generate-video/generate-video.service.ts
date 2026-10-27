@@ -719,29 +719,32 @@ export class GenerateVideoService {
   ): Promise<DramaScene[]> {
     const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
 
-    const promptText = `Create the production-ready scenario and scene plan for AI video generation based on: "${cleanPrompt}".
+    const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
+Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
 ${
   productImageUrl
-    ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending.'
-    : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
+    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
+    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
 }
-STRICT LANGUAGE REQUIREMENT:
-All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
-Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
+1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
+2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
+3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
+4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
+5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
 
-Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale).
-Respond strictly with valid JSON without markdown fences.
-Expected format:
+Javobni qatʼiy ravishda valid JSON formatida qaytaring:
 {
   "scenes": [
     {
       "scene_number": 1,
-      "title": "...",
-      "emotion": "...",
-      "tension_level": 8,
+      "title": "Viral Hook Sarlavhasi",
+      "emotion": "Yuqori hayajon va shok",
+      "tension_level": 10,
       "duration": 5,
-      "video_prompt": "Vertical 9:16 cinematic scene...",
-      "dialogue": "..."
+      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
+      "caption": "Kadr ustidagi sarlavha",
+      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
     }
   ]
 }`;
@@ -778,17 +781,35 @@ Expected format:
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
 
-    const promptText = `Create the production-ready scenario and scene plan for AI video generation based on: "${cleanPrompt}".
+    const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
+Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
 ${
   productImageUrl
-    ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending (Mode F).'
-    : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
+    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
+    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
 }
-STRICT LANGUAGE REQUIREMENT:
-All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
-Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
+1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
+2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
+3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
+4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
+5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
 
-Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale). Return strictly valid JSON following the schema in section 11.`;
+Generate 5 to 7 scenes. Return strictly valid JSON:
+{
+  "scenes": [
+    {
+      "scene_number": 1,
+      "title": "Viral Hook Sarlavhasi",
+      "emotion": "Yuqori hayajon va shok",
+      "tension_level": 10,
+      "duration": 5,
+      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
+      "caption": "Kadr ustidagi sarlavha",
+      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
+    }
+  ]
+}`;
 
     const userContent: any[] = [{ type: 'text', text: promptText }];
 
@@ -866,22 +887,39 @@ Generate as many coherent scenes as the story emotionally requires (typically 5 
     );
 
     try {
-      const parts: any[] = [
-        {
-          text: `${AI_STORY_CINEMATIC_DIRECTOR_SYSTEM_PROMPT}
-
-Create the production-ready scenario and scene plan for AI video generation based on: "${cleanPrompt}".
+      const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
+Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
 ${
   productImageUrl
-    ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending (Mode F).'
-    : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
+    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
+    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
 }
-STRICT LANGUAGE REQUIREMENT:
-All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
-Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
+1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
+2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
+3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
+4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
+5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
 
-Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale).
-Respond strictly with valid JSON following the schema provided in section 11. Do NOT wrap in markdown fences.`,
+Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences:
+{
+  "scenes": [
+    {
+      "scene_number": 1,
+      "title": "Viral Hook Sarlavhasi",
+      "emotion": "Yuqori hayajon va shok",
+      "tension_level": 10,
+      "duration": 5,
+      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
+      "caption": "Kadr ustidagi sarlavha",
+      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
+    }
+  ]
+}`;
+
+      const parts: any[] = [
+        {
+          text: `${AI_STORY_CINEMATIC_DIRECTOR_SYSTEM_PROMPT}\n\n${promptText}`,
         },
       ];
 
@@ -976,8 +1014,21 @@ Respond strictly with valid JSON following the schema provided in section 11. Do
       if (!dialogue && s.action) {
         dialogue = s.action;
       }
-      if (!dialogue) {
-        dialogue = s.title || `Sahna ${idx + 1}`;
+
+      const wordCount = dialogue.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount < 6 || dialogue.trim().toLowerCase() === (s.title || '').trim().toLowerCase()) {
+        const topicWords = cleanPrompt.split(/\s+/).filter(Boolean).slice(0, 4).join(' ');
+        if (idx === 0) {
+          dialogue = `Bunga hech kim ishonmagan edi... Ammo aynan shu lahzada ${topicWords} butun hayotimizni oʻzgartirib yubordi!`;
+        } else if (idx === 1) {
+          dialogue = `Har bir soniya keskin sinov edi. Yurakdagi qoʻrquv va mehr bir-biri bilan tinimsiz kurashardi.`;
+        } else if (idx === 2) {
+          dialogue = `Hammasi tugadi deganimda, haqiqiy moʻjiza yuz berdi. Tanlov faqat oʻz qoʻlimizda edi!`;
+        } else if (idx === rawScenes.length - 1) {
+          dialogue = `Eng qimmatli xotiralar — eng samimiy mehrdan boshlanadi. ${topicWords} bilan yangi hayotga qadam qoʻying!`;
+        } else {
+          dialogue = `Har bir nigohda umid, har bir harakatda samimiyat bor edi. Bu lahzalarni hech qachon unutib boʻlmaydi.`;
+        }
       }
 
       let cinematicPrompt = (s.video_prompt || s.cinematicPrompt || '').trim();
@@ -987,12 +1038,16 @@ Respond strictly with valid JSON following the schema provided in section 11. Do
       }
 
       const caption = s.purpose || s.caption || s.action || dialogue;
+      const rawTension = Number(s.tensionLevel || s.tension_level);
+      const tensionLevel = idx === 0
+        ? 10
+        : Math.max(7, Math.min(rawTension || (idx === 1 ? 9 : 8), 10));
 
       return {
         sceneIndex: Number(s.scene_number || s.sceneIndex) || idx + 1,
         actTitle: s.title || s.actTitle || `Sahna ${idx + 1}`,
-        emotion: s.emotion || 'Yuqori emotsional hayajon',
-        tensionLevel: Math.max(1, Math.min(Number(s.tensionLevel || s.tension_level) || (idx === 1 ? 10 : 8), 10)),
+        emotion: s.emotion || (idx === 0 ? 'Shok va keskin hayajon' : 'Yuqori emotsional hayajon'),
+        tensionLevel,
         durationSeconds: duration,
         cinematicPrompt,
         dialogueScript: dialogue,

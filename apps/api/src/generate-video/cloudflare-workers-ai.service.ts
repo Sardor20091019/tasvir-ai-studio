@@ -38,8 +38,8 @@ export class CloudflareWorkersAiService {
   }
 
   async generateText(prompt: string, systemPrompt?: string): Promise<string> {
-    const preferredModel = process.env.CLOUDFLARE_AI_TEXT_MODEL || '@cf/moonshotai/kimi-k2.7-code';
-    const fallbackModel = '@cf/meta/llama-3.1-70b-instruct';
+    const preferredModel = process.env.CLOUDFLARE_AI_TEXT_MODEL || '@cf/meta/llama-3.1-70b-instruct';
+    const fallbackModel = '@cf/meta/llama-3.1-8b-instruct';
 
     const messages: Array<{ role: string; content: string }> = [];
     if (systemPrompt) {
