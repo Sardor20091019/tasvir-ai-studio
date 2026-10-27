@@ -8,6 +8,7 @@ import * as os from 'os';
 import { KyselyService } from '../database/kysely.service';
 import { UploadThingService } from '../storage/uploadthing.service';
 import { FfmpegConcatService } from './ffmpeg-concat.service';
+import { CloudflareWorkersAiService } from './cloudflare-workers-ai.service';
 import {
   AspectRatioType,
   DramaScene,
@@ -32,6 +33,7 @@ export class GenerateVideoService {
     @Inject(UploadThingService) private readonly uploadThingService: UploadThingService,
     @Inject(FfmpegConcatService) private readonly ffmpegConcatService: FfmpegConcatService,
     @Inject(KyselyService) private readonly kyselyService: KyselyService,
+    @Inject(CloudflareWorkersAiService) private readonly cloudflareWorkersAiService: CloudflareWorkersAiService,
   ) {}
 
   private getGeminiClient(): { client: GoogleGenAI; activeKey: string } {
@@ -491,6 +493,19 @@ export class GenerateVideoService {
       .trim();
     const visualPrompt = `${cleanPrompt}, 9:16 vertical orientation, cinematic film still, detailed dramatic lighting, photorealistic, 8k resolution`;
 
+    if (this.cloudflareWorkersAiService.isAvailable()) {
+      try {
+        const imageBuffer = await this.cloudflareWorkersAiService.generateImage(visualPrompt);
+        if (imageBuffer && imageBuffer.length > 5000) {
+          fs.writeFileSync(outputPath, imageBuffer);
+          this.logger.log(`Generated Cloudflare Workers AI FLUX image for scene ${sceneIndex} (${imageBuffer.length} bytes)`);
+          return;
+        }
+      } catch (cfImgErr: any) {
+        this.logger.warn(`Cloudflare Workers AI FLUX notice for scene ${sceneIndex}: ${cfImgErr.message}`);
+      }
+    }
+
     // 2. Google Imagen 3 (via @google/genai)
     const { client, activeKey } = this.getGeminiClient();
     if (activeKey) {
@@ -656,6 +671,21 @@ export class GenerateVideoService {
       .trim()
       .slice(0, 1000);
 
+    if (this.cloudflareWorkersAiService.isAvailable()) {
+      try {
+        this.logger.log(
+          `Invoking Cloudflare Workers AI for story framing on: "${cleanPrompt.slice(0, 60)}" (Lang: ${locale})`,
+        );
+        const scenes = await this.generateDramaScenesWithCloudflareAI(cleanPrompt, productImageUrl, locale);
+        if (scenes && scenes.length >= 2) {
+          this.logger.log(`Cloudflare Workers AI successfully authored ${scenes.length} viral drama scenes.`);
+          return scenes;
+        }
+      } catch (cfErr: any) {
+        this.logger.warn(`Cloudflare Workers AI story notice: ${cfErr.message}. Trying OpenAI/Gemini.`);
+      }
+    }
+
     const openaiKey = this.getOpenAIKey();
 
     if (openaiKey) {
@@ -678,8 +708,65 @@ export class GenerateVideoService {
     }
 
     throw new BadRequestException(
-      'AI ssenariyni yaratish uchun OPENAI_API_KEY yoki GEMINI_API_KEY serverda sozlanishi shart.',
+      'AI ssenariyni yaratish uchun Cloudflare, OpenAI yoki Gemini API kaliti serverda sozlanishi shart.',
     );
+  }
+
+  private async generateDramaScenesWithCloudflareAI(
+    cleanPrompt: string,
+    productImageUrl?: string,
+    locale: string = 'uz',
+  ): Promise<DramaScene[]> {
+    const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
+
+    const promptText = `Create the production-ready scenario and scene plan for AI video generation based on: "${cleanPrompt}".
+${
+  productImageUrl
+    ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending.'
+    : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
+}
+STRICT LANGUAGE REQUIREMENT:
+All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
+Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+
+Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale).
+Respond strictly with valid JSON without markdown fences.
+Expected format:
+{
+  "scenes": [
+    {
+      "scene_number": 1,
+      "title": "...",
+      "emotion": "...",
+      "tension_level": 8,
+      "duration": 5,
+      "video_prompt": "Vertical 9:16 cinematic scene...",
+      "dialogue": "..."
+    }
+  ]
+}`;
+
+    const content = await this.cloudflareWorkersAiService.generateText(
+      promptText,
+      AI_STORY_CINEMATIC_DIRECTOR_SYSTEM_PROMPT,
+    );
+
+    const cleaned = content.replace(/```json|```/gi, '').trim();
+    let parsed: any;
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+    } else {
+      parsed = JSON.parse(cleaned);
+    }
+
+    const scenesArray = Array.isArray(parsed?.scenes)
+      ? parsed.scenes
+      : Array.isArray(parsed?.project?.scenes)
+        ? parsed.project.scenes
+        : [];
+    return this.validateAndFormatScenes(scenesArray, cleanPrompt);
   }
 
   private async generateDramaScenesWithOpenAI(

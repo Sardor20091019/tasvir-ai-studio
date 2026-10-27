@@ -39,7 +39,7 @@ export class GenerateVideoController {
       dramaLevel?: string;
       locale?: string;
     },
-  ) {
+  ): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
     InMemoryRateLimiter.check(
       `plan_scenes:${clientIp}`,
@@ -82,7 +82,14 @@ export class GenerateVideoController {
       dramaLevel?: string;
       locale?: string;
     },
-  ) {
+  ): Promise<{
+    jobId: string;
+    status: string;
+    progress: number;
+    message: string;
+    model: string;
+    remainingCredits?: number;
+  }> {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
     InMemoryRateLimiter.check(
       `generate_video:${clientIp}`,
@@ -124,7 +131,10 @@ export class GenerateVideoController {
       totalDurationSeconds: number;
       resolution?: string;
     },
-  ) {
+  ): Promise<{
+    success: boolean;
+    videoUrl: string;
+  }> {
     if (!body.sceneClipPaths || body.sceneClipPaths.length === 0) {
       throw new BadRequestException('Birlashtirish uchun kamida 1 ta video klip kerak');
     }
@@ -147,7 +157,7 @@ export class GenerateVideoController {
   }
 
   @Get(':jobId')
-  async getJob(@Param('jobId') jobId: string) {
+  async getJob(@Param('jobId') jobId: string): Promise<any> {
     if (!JOB_ID_REGEX.test(jobId)) {
       throw new BadRequestException('Yaroqsiz vazifa ID formati');
     }
@@ -155,7 +165,7 @@ export class GenerateVideoController {
   }
 
   @Get('status/:jobId')
-  async getJobStatus(@Param('jobId') jobId: string) {
+  async getJobStatus(@Param('jobId') jobId: string): Promise<any> {
     if (!JOB_ID_REGEX.test(jobId)) {
       throw new BadRequestException('Yaroqsiz vazifa ID formati');
     }
