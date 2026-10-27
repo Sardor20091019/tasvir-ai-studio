@@ -567,6 +567,7 @@ export const api = {
     imageUrl?: string;
     dramaLevel?: string;
     locale?: string;
+    nonce?: string;
   }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const res = await fetch(`${API_BASE}/generate-video/plan-scenes`, {
       method: 'POST',
@@ -633,6 +634,22 @@ export const api = {
     if (res.ok) return await res.json();
     const err = await res.json().catch(() => null);
     throw new Error(err?.message || `Video holatini olishda xatolik yuz berdi (HTTP ${res.status})`);
+  },
+
+  async listUserJobs(): Promise<VideoJob[]> {
+    try {
+      const res = await fetch(`${API_BASE}/video-jobs`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('API listUserJobs error:', e);
+    }
+    return [];
   },
 
   async concatVideos(params: {

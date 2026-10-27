@@ -360,6 +360,20 @@ export class GenerateVideoService {
 
       scene.localImagePath = publicImgPath;
       scene.imageUrl = `/generated-videos/${imgFilename}`;
+
+      if (fs.existsSync(publicImgPath)) {
+        try {
+          const imgBuffer = fs.readFileSync(publicImgPath);
+          const cdnImageUrl = await this.uploadThingService.uploadImage(imgBuffer, imgFilename);
+          if (cdnImageUrl) {
+            scene.imageUrl = cdnImageUrl;
+            this.logger.log(`Uploaded scene ${scene.sceneIndex} image to UploadThing CDN: ${cdnImageUrl}`);
+          }
+        } catch (imgUpErr: any) {
+          this.logger.warn(`Scene ${scene.sceneIndex} image upload notice: ${imgUpErr.message}`);
+        }
+      }
+
       this.logger.log(`Scene ${scene.sceneIndex} image ready: ${scene.imageUrl}`);
     }
 
@@ -743,8 +757,20 @@ export class GenerateVideoService {
   private buildViralDramaPrompt(cleanPrompt: string, productImageUrl?: string, locale: string = 'uz'): string {
     const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
     const sessionNonce = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const dynamicAngles = [
+      'Kutilmagan fidoiylik va yashirin mehr (Secret Sacrificial Love & Devotion)',
+      'Mag\'lubiyatdan yuksak cho\'qqiga erishish va qasos o\'rniga kechirish (Triumph & Forgiveness)',
+      'Bolalikdagi orzu va yillar o\'tib topilgan aziz inson (Childhood Nostalgia & Reunion)',
+      'Hayotiy xato va so\'nggi soniyalardagi najot (Second Chance & Redemption)',
+      'Oila rishtalari, ko\'z yoshlar va samimiy mehr (Unbreakable Family Bond & Catharsis)',
+      'Zulmatdan yorug\'likka chiqish va buyuk sabr (Patience & Miraculous Victory)',
+      'Kutilmagan sirning fosh bo\'lishi va qalb taskini (Shocking Truth & Inner Peace)',
+      'Do\'stlik sadoqati va har qanday to\'siqni yenguvchi ahd (True Loyalty & Eternal Friendship)',
+    ];
+    const selectedAngle = dynamicAngles[Math.floor(Math.random() * dynamicAngles.length)];
 
     return `[IJODIY SESSIYA ID: #${sessionNonce}]
+[SYUJET RAKURSI: ${selectedAngle}]
 Siz Instagram Reels va TikTok platformalari uchun oʻta kuchli, virusli (viral) va millionlab tomoshabinlarni koʻz yoshlariga yoki chuqur hayratga soluvchi professional dramaturg va kinematografsiz.
 
 FOYDALANUVCHI MAVZUSI / GʻOYASI: "${cleanPrompt}".
@@ -755,7 +781,7 @@ ${
 }
 
 MUTLAQO YANGI VA BETAKRORLIK QOIDASI:
-Oldingi yaratilgan ssenariylar, iboralar yoki standart shablonlarni ASLO takrorlamang! Ushbu prompt boʻyicha mutlaqo yangi, kutilmagan, chuqur dramatizm va yangicha qahramonlar rakursidan yondashing.
+Oldingi yaratilgan ssenariylar, iboralar yoki standart shablonlarni ASLO takrorlamang! Ushbu prompt boʻyicha "${selectedAngle}" dramatik rakursidan yondashib, mutlaqo yangi, kutilmagan, chuqur dramatizm va yangicha qahramonlar bilan yozing. Avvalgi javoblardan birorta jumla ko'chirilmasin.
 
 REELS & TIKTOK MAXIMUM RETENTION & EMOTIONAL IMPACT TALABLARI:
 1. ANIQ 5 TA TOʻLIQ VA KUCHLI SAHNA TUZING (scene_number: 1 dan 5 gacha):

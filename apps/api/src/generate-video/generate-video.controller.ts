@@ -38,6 +38,7 @@ export class GenerateVideoController {
       imageUrl?: string;
       dramaLevel?: string;
       locale?: string;
+      nonce?: string;
     },
   ): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
@@ -81,6 +82,7 @@ export class GenerateVideoController {
       includeBackgroundMusic?: boolean;
       dramaLevel?: string;
       locale?: string;
+      nonce?: string;
     },
   ): Promise<{
     jobId: string;

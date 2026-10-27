@@ -92,7 +92,12 @@ export default function EditorPage(): React.ReactElement {
 
   useEffect(() => {
     api.getMe().then((u) => {
-      if (u) setUser(u);
+      if (u) {
+        setUser(u);
+        api.listUserJobs().then((dbJobs) => {
+          if (Array.isArray(dbJobs)) setJobs(dbJobs);
+        }).catch(() => {});
+      }
     });
   }, []);
 

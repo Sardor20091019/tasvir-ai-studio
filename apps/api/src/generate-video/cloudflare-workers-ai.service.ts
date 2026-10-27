@@ -37,10 +37,7 @@ export class CloudflareWorkersAiService {
     }
 
     if (!accountId || !apiToken) {
-      accountId = '9277c0f660a8135ab637416f2ca8a10d';
-      apiToken = 'cfut_CHWiaI1PCd8yMmpJoJo16yk3zUW2C9npcFSx5kHpce9fb8df';
-      process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
-      process.env.CLOUDFLARE_WORKERS_API_TOKEN = apiToken;
+      throw new Error('Cloudflare Workers AI credentials missing. Please set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_WORKERS_API_TOKEN in your environment variables or .env file.');
     }
 
     return { accountId, apiToken };
@@ -87,7 +84,7 @@ export class CloudflareWorkersAiService {
     const inputPayload = {
       messages,
       max_tokens: 3500,
-      temperature: 0.9,
+      temperature: 0.95,
       top_p: 0.95,
       seed: randomSeed,
     };

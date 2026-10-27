@@ -38,6 +38,14 @@ export function VideoLibraryModal({
 }: VideoLibraryModalProps) {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    api.listUserJobs().then((dbJobs) => {
+      if (Array.isArray(dbJobs) && dbJobs.length > 0) {
+        dbJobs.forEach((job) => onUpdateJob?.(job));
+      }
+    }).catch(() => {});
+  }, [onUpdateJob]);
+
   // Auto-poll any rendering or queued jobs
   useEffect(() => {
     const activeJobs = jobs.filter((j) => j.status !== 'completed' && j.status !== 'failed');
@@ -177,6 +185,7 @@ export function VideoLibraryModal({
                   {isCompleted && videoSrc ? (
                     <video
                       src={videoSrc}
+                      poster={job.scenes?.[0]?.imageUrl}
                       playsInline
                       loop
                       muted

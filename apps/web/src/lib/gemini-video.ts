@@ -33,8 +33,8 @@ export async function generateDramaScenesWithGemini(
     .trim()
     .slice(0, 1000);
 
-  const cfAccount = process.env.CLOUDFLARE_ACCOUNT_ID || '9277c0f660a8135ab637416f2ca8a10d';
-  const cfToken = process.env.CLOUDFLARE_WORKERS_API_TOKEN || 'cfut_CHWiaI1PCd8yMmpJoJo16yk3zUW2C9npcFSx5kHpce9fb8df';
+  const cfAccount = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const cfToken = process.env.CLOUDFLARE_WORKERS_API_TOKEN;
 
   if (cfAccount && cfToken) {
     try {

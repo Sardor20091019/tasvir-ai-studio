@@ -86,6 +86,23 @@ export default function HomePage() {
     }
   }, [jobs]);
 
+  useEffect(() => {
+    if (user?.id) {
+      api.listUserJobs().then((dbJobs) => {
+        if (Array.isArray(dbJobs) && dbJobs.length > 0) {
+          setJobs((prev) => {
+            const map = new Map<string, VideoJob>();
+            prev.forEach((j) => map.set(j.id, j));
+            dbJobs.forEach((j) => map.set(j.id, { ...map.get(j.id), ...j }));
+            return Array.from(map.values()).sort(
+              (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+            );
+          });
+        }
+      }).catch(() => {});
+    }
+  }, [user?.id]);
+
   // Keep activeTab synced with URL query and localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -757,6 +774,22 @@ export default function HomePage() {
                 completed_at: new Date().toISOString(),
               };
               handleJobCreated(newPromptJob);
+              if (user?.id) {
+                setTimeout(() => {
+                  api.listUserJobs().then((dbJobs) => {
+                    if (Array.isArray(dbJobs) && dbJobs.length > 0) {
+                      setJobs((prev) => {
+                        const map = new Map<string, VideoJob>();
+                        prev.forEach((j) => map.set(j.id, j));
+                        dbJobs.forEach((j) => map.set(j.id, { ...map.get(j.id), ...j }));
+                        return Array.from(map.values()).sort(
+                          (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+                        );
+                      });
+                    }
+                  }).catch(() => {});
+                }, 1000);
+              }
             }}
           />
         </div>

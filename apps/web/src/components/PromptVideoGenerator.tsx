@@ -409,7 +409,7 @@ export function PromptVideoGenerator({
   }, []);
 
   // STEP 1: AI generates custom drama scenario from user's prompt
-  const handlePlanScenario = async (e?: React.FormEvent) => {
+  const handlePlanScenario = async (e?: React.FormEvent, forceFresh = false) => {
     if (e) e.preventDefault();
     if (!prompt.trim()) return;
 
@@ -428,6 +428,9 @@ export function PromptVideoGenerator({
     setIsPlanningScenario(true);
     setError(null);
     setResultVideo(null);
+    if (forceFresh) {
+      setPlannedScenes(null);
+    }
 
     try {
       const res = await api.planScenesFromPrompt({
@@ -435,6 +438,7 @@ export function PromptVideoGenerator({
         productImageUrl: productImage || undefined,
         dramaLevel: 'high_tension',
         locale,
+        nonce: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       });
 
       if (!res?.scenes || res.scenes.length === 0) {
@@ -1003,19 +1007,19 @@ export function PromptVideoGenerator({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => handlePlanScenario()}
-                    disabled={isRendering}
-                    className="py-2.5 px-3 rounded-xl border border-border bg-surface hover:bg-surface-raised text-ink text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    onClick={() => handlePlanScenario(undefined, true)}
+                    disabled={isPlanningScenario || isRendering}
+                    className="py-2.5 px-3 rounded-xl border border-border bg-surface hover:bg-surface-raised disabled:opacity-50 text-ink text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <RefreshCw className="h-3.5 w-3.5 text-ink-muted" />
-                    <span>{t.regenerateScenarioBtn}</span>
+                    <RefreshCw className={`h-3.5 w-3.5 ${isPlanningScenario ? 'animate-spin text-coral' : 'text-ink-muted'}`} />
+                    <span>{isPlanningScenario ? (locale === 'en' ? 'Writing story...' : locale === 'ru' ? 'Пишем сценарий...' : 'Ssenariy yozilmoqda...') : t.regenerateScenarioBtn}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPlannedScenes(null)}
-                    disabled={isRendering}
-                    className="py-2.5 px-3 rounded-xl border border-border bg-surface hover:bg-surface-raised text-ink-muted hover:text-ink text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    disabled={isPlanningScenario || isRendering}
+                    className="py-2.5 px-3 rounded-xl border border-border bg-surface hover:bg-surface-raised disabled:opacity-50 text-ink-muted hover:text-ink text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
                     <span>{t.backToPromptBtn}</span>
@@ -1178,6 +1182,7 @@ export function PromptVideoGenerator({
                   ref={videoRef}
                   key={resultVideo.videoUrl}
                   src={resultVideo.videoUrl}
+                  poster={resultVideo.scenes?.[0]?.imageUrl}
                   controls
                   autoPlay
                   playsInline
