@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createDramaVideoJob } from '@/lib/gemini-video';
 
-const API_BASE = process.env.API_URL;
+const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api';
 
 export async function POST(req: NextRequest) {
   try {

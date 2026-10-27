@@ -27,11 +27,99 @@ export async function generateDramaScenesWithGemini(
   dramaLevel = 'high_tension',
   productImageUrl?: string,
 ): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
-  const cleanPrompt = (userPrompt || 'Mahsulot  reklamasi')
+  const cleanPrompt = (userPrompt || 'Mahsulot reklamasi')
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/[<>{}\\]/g, '')
     .trim()
     .slice(0, 1000);
+
+  const cfAccount = process.env.CLOUDFLARE_ACCOUNT_ID || '9277c0f660a8135ab637416f2ca8a10d';
+  const cfToken = process.env.CLOUDFLARE_WORKERS_API_TOKEN || 'cfut_CHWiaI1PCd8yMmpJoJo16yk3zUW2C9npcFSx5kHpce9fb8df';
+
+  if (cfAccount && cfToken) {
+    try {
+      const dynamicNonce = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const promptText = `[SESSIYA: #${dynamicNonce}]
+Siz Instagram Reels va TikTok uchun professional dramaturgsiz. Ushbu mavzu bo'yicha mutlaqo yangi, ta'sirli 5 ta sahnadan iborat virusli ssenariy yozing: "${cleanPrompt}".
+Format: faqat valid JSON:
+{
+  "scenes": [
+    {
+      "sceneIndex": 1,
+      "actTitle": "1-Sahna: ...",
+      "emotion": "...",
+      "tensionLevel": 10,
+      "durationSeconds": 5,
+      "cinematicPrompt": "Vertical 9:16 cinematic film still...",
+      "dialogueScript": "...",
+      "caption": "...",
+      "karaokeSubtitles": []
+    }
+  ]
+}`;
+
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/@cf/meta/llama-3.1-70b-instruct`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cfToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an elite drama scriptwriter. Output strictly valid JSON with 5 scenes in Uzbek language.',
+              },
+              { role: 'user', content: promptText },
+            ],
+            max_tokens: 3000,
+            temperature: 0.95,
+            seed: Math.floor(Math.random() * 2147483647),
+          }),
+        }
+      );
+
+      if (cfRes.ok) {
+        const cfData: any = await cfRes.json();
+        const rawText = cfData?.result?.response || cfData?.result?.choices?.[0]?.message?.content;
+        if (rawText) {
+          const cleaned = rawText.replace(/```json|```/gi, '').trim();
+          const firstBrace = cleaned.indexOf('{');
+          const lastBrace = cleaned.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            const parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+            const arr = Array.isArray(parsed?.scenes) ? parsed.scenes : [];
+            if (arr.length >= 2) {
+              const scenes: DramaScene[] = arr.map((s: any, idx: number) => {
+                const duration = Math.max(4, Math.min(Number(s.durationSeconds) || 5, 8));
+                return {
+                  sceneIndex: idx + 1,
+                  actTitle: s.actTitle || s.title || `${idx + 1}-Sahna`,
+                  emotion: s.emotion || 'Hayajon',
+                  tensionLevel: Math.max(1, Math.min(Number(s.tensionLevel || s.tension_level) || 8, 10)),
+                  durationSeconds: duration,
+                  cinematicPrompt: s.cinematicPrompt || s.video_prompt || `Vertical 9:16 cinematic scene for ${cleanPrompt}`,
+                  dialogueScript: s.dialogueScript || s.dialogue || s.caption || '',
+                  caption: s.caption || s.dialogueScript || '',
+                  karaokeSubtitles: generateFallbackKaraoke(s.dialogueScript || s.dialogue || '', duration),
+                };
+              });
+
+              return {
+                prompt: cleanPrompt,
+                scenes,
+                totalDurationSeconds: scenes.reduce((a, s) => a + s.durationSeconds, 0),
+              };
+            }
+          }
+        }
+      }
+    } catch (cfErr) {
+      console.warn('Cloudflare Workers AI direct call warning:', cfErr);
+    }
+  }
 
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
