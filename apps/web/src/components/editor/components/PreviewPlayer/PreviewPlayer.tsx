@@ -58,12 +58,15 @@ export function PreviewPlayer(): React.ReactElement {
     isMuted,
     setIsMuted,
     showSafeZone,
+    setSelectedClipId,
+    setReplaceModalClipId,
   } = useEditor();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   // Find active video clip at currentTime
   const activeVideoClip = useMemo(() => {
@@ -202,18 +205,45 @@ export function PreviewPlayer(): React.ReactElement {
     >
       <div className="flex-1 min-h-0 w-full flex items-center justify-center p-1">
         <div
-          className={`relative ${aspectClass} h-full max-h-full w-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group`}
+          onClick={() => {
+            if (activeVideoClip) setSelectedClipId(activeVideoClip.id);
+          }}
+          className={`relative ${aspectClass} h-full max-h-full w-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group cursor-pointer`}
         >
+          {activeVideoClip && (activeVideoClip.thumbnailUrl || isImg) && (
+            <img
+              src={activeVideoClip.thumbnailUrl || activeVideoClip.sourceUrl}
+              alt={activeVideoClip.title || 'Preview'}
+              className="absolute inset-0 w-full h-full object-cover select-none"
+              style={{
+                filter: activeFilter.cssFilter,
+                opacity: activeVideoClip.opacity ?? 1,
+              }}
+            />
+          )}
+
           <video
             ref={videoElementRef}
-            className={`w-full h-full object-cover ${activeVideoClip && !isImg ? 'block' : 'hidden'}`}
+            className={`w-full h-full object-cover relative z-10 ${
+              activeVideoClip && !isImg && !videoLoadError ? 'block' : 'hidden'
+            }`}
             style={{
               filter: activeFilter.cssFilter,
               opacity: activeVideoClip?.opacity ?? 1,
             }}
+            poster={activeVideoClip?.thumbnailUrl}
+            preload="auto"
+            crossOrigin="anonymous"
             playsInline
             muted={isMuted}
+            onError={() => {
+              setVideoLoadError(true);
+            }}
+            onLoadedData={() => {
+              setVideoLoadError(false);
+            }}
             onLoadedMetadata={(e) => {
+              setVideoLoadError(false);
               if (activeVideoClip) {
                 const offset = currentTime - activeVideoClip.startSec + (activeVideoClip.trimStartSec || 0);
                 e.currentTarget.currentTime = Math.max(0, offset);
@@ -221,16 +251,26 @@ export function PreviewPlayer(): React.ReactElement {
             }}
           />
 
-          {activeVideoClip && isImg && (
-            <img
-              src={activeVideoClip.sourceUrl}
-              alt={activeVideoClip.title || 'Preview'}
-              className="w-full h-full object-cover select-none"
-              style={{
-                filter: activeFilter.cssFilter,
-                opacity: activeVideoClip.opacity ?? 1,
-              }}
-            />
+          {activeVideoClip && (
+            <div className="absolute top-2.5 inset-x-2.5 z-30 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
+              <span className="px-2 py-1 rounded-md bg-black/75 backdrop-blur-xs text-[10px] font-mono font-bold text-white shadow-sm flex items-center gap-1.5 border border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-warm animate-pulse" />
+                {activeVideoClip.title}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedClipId(activeVideoClip.id);
+                  setReplaceModalClipId(activeVideoClip.id);
+                }}
+                className="px-2.5 py-1 rounded-md bg-accent-warm hover:bg-accent-warm-hover text-obsidian text-[11px] font-bold font-mono shadow-md flex items-center gap-1 transition-transform active:scale-95 cursor-pointer"
+                title="Videoni yoki rasmni almashtirish"
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Almashtirish</span>
+              </button>
+            </div>
           )}
 
           {!activeVideoClip && (

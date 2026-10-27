@@ -54,7 +54,15 @@ export function AssetPanel({
   forcedTab,
   onCloseMobile,
 }: AssetPanelProps = {}) {
-  const { addClip, activeFilter, setActiveFilter, currentTime, locale } = useEditor();
+  const {
+    addClip,
+    activeFilter,
+    setActiveFilter,
+    currentTime,
+    locale,
+    selectedClip,
+    replaceClipMedia,
+  } = useEditor();
 
   const t = ({
     uz: {

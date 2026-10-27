@@ -8,6 +8,7 @@ import { PreviewPlayer } from './components/PreviewPlayer/PreviewPlayer';
 import { PropertyInspector } from './components/Inspector/PropertyInspector';
 import { Timeline } from './components/Timeline/Timeline';
 import { ExportModal } from './components/ExportModal/ExportModal';
+import { ReplaceMediaModal } from './components/ReplaceMediaModal/ReplaceMediaModal';
 import { VideoEditorProject, LocaleType, User } from '../../types';
 import {
   FolderOpen,
@@ -148,6 +149,8 @@ function EditorWorkspace({ onBackToStudio }: { onBackToStudio?: () => void }) {
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
       />
+
+      <ReplaceMediaModal />
     </div>
   );
 }

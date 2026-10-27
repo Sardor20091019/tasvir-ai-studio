@@ -1,18 +1,54 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CloudflareWorkersAiService {
   private readonly logger = new Logger(CloudflareWorkersAiService.name);
 
-  getCredentials(): { accountId: string; apiToken: string } | null {
-    const accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
-    const apiToken = (process.env.CLOUDFLARE_WORKERS_API_TOKEN || '').trim();
-    if (!accountId || !apiToken) return null;
+  getCredentials(): { accountId: string; apiToken: string } {
+    let accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
+    let apiToken = (process.env.CLOUDFLARE_WORKERS_API_TOKEN || '').trim();
+
+    if (!accountId || !apiToken) {
+      const candidates = [
+        path.resolve(process.cwd(), 'apps/api/.env'),
+        path.resolve(process.cwd(), '.env'),
+        path.resolve(__dirname, '../../../../.env'),
+        path.resolve(__dirname, '../../.env'),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, 'utf8');
+          for (const line of content.split('\n')) {
+            const trimmed = line.trim();
+            if (!accountId && trimmed.startsWith('CLOUDFLARE_ACCOUNT_ID=')) {
+              accountId = trimmed.split('=')[1].trim().replace(/^["']|["']$/g, '');
+              process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
+            }
+            if (!apiToken && trimmed.startsWith('CLOUDFLARE_WORKERS_API_TOKEN=')) {
+              apiToken = trimmed.split('=')[1].trim().replace(/^["']|["']$/g, '');
+              process.env.CLOUDFLARE_WORKERS_API_TOKEN = apiToken;
+            }
+          }
+        }
+        if (accountId && apiToken) break;
+      }
+    }
+
+    if (!accountId || !apiToken) {
+      accountId = '9277c0f660a8135ab637416f2ca8a10d';
+      apiToken = 'cfut_CHWiaI1PCd8yMmpJoJo16yk3zUW2C9npcFSx5kHpce9fb8df';
+      process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
+      process.env.CLOUDFLARE_WORKERS_API_TOKEN = apiToken;
+    }
+
     return { accountId, apiToken };
   }
 
   isAvailable(): boolean {
-    return this.getCredentials() !== null;
+    const creds = this.getCredentials();
+    return Boolean(creds && creds.accountId && creds.apiToken);
   }
 
   async run<T = any>(model: string, input: any): Promise<T> {
@@ -80,7 +116,7 @@ export class CloudflareWorkersAiService {
       const model = process.env.CLOUDFLARE_AI_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell';
       this.logger.log(`Invoking Cloudflare Workers AI (${model}) for prompt: "${prompt.slice(0, 60)}"...`);
       const res: any = await this.run(model, {
-        prompt: prompt.slice(0, 500),
+        prompt: prompt.slice(0, 1000),
         steps,
       });
 

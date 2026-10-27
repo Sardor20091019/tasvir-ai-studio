@@ -16,6 +16,7 @@ import {
   Eye,
   ChevronDown,
   X,
+  RefreshCw,
 } from 'lucide-react';
 import { useEditor } from '../../context/EditorContext';
 import { FILTER_PRESETS, TEXT_PRESETS, TRANSITION_PRESETS } from '../../constants/stockAssets';
@@ -43,6 +44,7 @@ export function PropertyInspector({
     aspectRatio,
     activeFilter,
     currentTime,
+    setReplaceModalClipId,
   } = useEditor();
 
   if (!selectedClip) {
@@ -187,6 +189,37 @@ export function PropertyInspector({
         {/* ── VIDEO PROPERTIES ── */}
         {selectedClip.type === 'video' && (
           <div className="space-y-3">
+            <div className="p-3 rounded-xl bg-canvas border border-stroke space-y-2.5">
+              <span className="text-[10px] font-mono font-bold text-ink-dim uppercase tracking-wider block">
+                Asosiy Media (Video / Rasm)
+              </span>
+              <div className="flex items-center gap-2.5">
+                {(selectedClip.thumbnailUrl || selectedClip.sourceUrl) && (
+                  <img
+                    src={selectedClip.thumbnailUrl || selectedClip.sourceUrl}
+                    alt=""
+                    className="w-12 h-14 rounded-lg object-cover border border-stroke flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-ink truncate">
+                    {selectedClip.title}
+                  </p>
+                  <p className="text-[10px] font-mono text-ink-muted truncate">
+                    {selectedClip.sourceUrl}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplaceModalClipId(selectedClip.id)}
+                className="w-full py-2 px-3 rounded-lg bg-accent-warm hover:bg-accent-warm-hover text-obsidian text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Videoni / Rasmni almashtirish</span>
+              </button>
+            </div>
+
             {/* Speed Control */}
             <div className="p-3 rounded-xl bg-canvas border border-stroke space-y-2">
               <div className="flex items-center justify-between">

@@ -77,6 +77,19 @@ async function bootstrap() {
     logger.log(`Serving static video previews from ${videosPath}`);
   }
 
+  const genCandidates = [
+    path.resolve(process.cwd(), 'apps/web/public/generated-videos'),
+    path.resolve(process.cwd(), '../web/public/generated-videos'),
+    path.resolve(process.cwd(), 'public/generated-videos'),
+  ];
+  for (const p of genCandidates) {
+    if (fs.existsSync(p)) {
+      app.use('/generated-videos', express.static(p));
+      logger.log(`Serving static generated videos from ${p}`);
+      break;
+    }
+  }
+
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');
   logger.log(`Tasvir NestJS API running on http://127.0.0.1:${port}/api`);

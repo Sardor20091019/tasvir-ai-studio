@@ -10,7 +10,7 @@ import {
   FilterPreset,
 } from '../types';
 import { FILTER_PRESETS, TEXT_PRESETS } from '../constants/stockAssets';
-import { VideoEditorProject, SubtitleCue, LocaleType } from '../../../types';
+import { VideoEditorProject, SubtitleCue, LocaleType, DramaScene } from '../../../types';
 
 function isImageUrl(url?: string): boolean {
   if (!url) return false;
@@ -78,6 +78,12 @@ interface EditorContextType {
   // History
   undo: () => void;
   redo: () => void;
+
+  // Media Replacement
+  replaceModalClipId: string | null;
+  setReplaceModalClipId: (clipId: string | null) => void;
+  replaceClipMedia: (clipId: string, newSourceUrl: string, newTitle?: string, newThumbnailUrl?: string) => void;
+  scenesList: DramaScene[];
 
   // Importers / Exporters
   loadProjectFromGenerated: (proj: VideoEditorProject) => void;
@@ -150,6 +156,8 @@ export function EditorProvider({
   const [volume, setVolume] = useState<number>(1);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [showSafeZone, setShowSafeZone] = useState<boolean>(false);
+  const [replaceModalClipId, setReplaceModalClipId] = useState<string | null>(null);
+  const [scenesList, setScenesList] = useState<DramaScene[]>([]);
 
   // Undo / Redo history stack
   const [history, setHistory] = useState<TimelineTrack[][]>([DEFAULT_TRACKS]);
@@ -300,6 +308,29 @@ export function EditorProvider({
         clips: t.clips.map((c) => (c.id === clipId ? { ...c, ...updates } : c)),
       }));
       pushHistory(newTracks);
+    },
+    [tracks, pushHistory]
+  );
+
+  const replaceClipMedia = useCallback(
+    (clipId: string, newSourceUrl: string, newTitle?: string, newThumbnailUrl?: string) => {
+      const isImg = isImageUrl(newSourceUrl);
+      const newTracks = tracks.map((t) => ({
+        ...t,
+        clips: t.clips.map((c) => {
+          if (c.id !== clipId) return c;
+          return {
+            ...c,
+            sourceUrl: newSourceUrl,
+            thumbnailUrl: newThumbnailUrl || (isImg ? newSourceUrl : c.thumbnailUrl),
+            title: newTitle || c.title,
+            trimStartSec: 0,
+            trimEndSec: c.durationSec,
+          };
+        }),
+      }));
+      pushHistory(newTracks);
+      setReplaceModalClipId(null);
     },
     [tracks, pushHistory]
   );
@@ -527,6 +558,7 @@ export function EditorProvider({
     let currentClipStart = 0;
 
     if (proj.scenes && proj.scenes.length > 0) {
+      setScenesList(proj.scenes);
       proj.scenes.forEach((scene, idx) => {
         const sceneDur = scene.durationSeconds || 5;
         const isIndividual = Boolean(scene.clipVideoUrl);
@@ -702,6 +734,10 @@ export function EditorProvider({
         reorderTracks,
         undo,
         redo,
+        replaceModalClipId,
+        setReplaceModalClipId,
+        replaceClipMedia,
+        scenesList,
         loadProjectFromGenerated,
         getManifest,
       }}

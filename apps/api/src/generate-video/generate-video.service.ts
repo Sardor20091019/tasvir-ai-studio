@@ -63,12 +63,13 @@ export class GenerateVideoService {
     dramaLevel?: string;
     locale?: string;
   }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
+    const hasCloudflare = this.cloudflareWorkersAiService.isAvailable();
     const { client, activeKey } = this.getGeminiClient();
     const openaiKey = this.getOpenAIKey();
 
-    if (!activeKey && !openaiKey) {
+    if (!hasCloudflare && !activeKey && !openaiKey) {
       throw new BadRequestException(
-        'AI ssenariyni yaratish uchun serverda OPENAI_API_KEY yoki GEMINI_API_KEY sozlanishi shart.',
+        'AI ssenariyni yaratish uchun serverda CLOUDFLARE_WORKERS_API_TOKEN, OPENAI_API_KEY yoki GEMINI_API_KEY sozlanishi shart.',
       );
     }
 
@@ -331,7 +332,9 @@ export class GenerateVideoService {
       fs.mkdirSync(publicDir, { recursive: true });
     }
 
-    // PHASE 1: Generate high-quality 9:16 vertical AI images for each scene
+    const storyTheme = job.prompt.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 120);
+    const visualAnchor = `Consistent character appearance, recurring actors, consistent wardrobe, identical room setting and realistic visual continuity across all scenes. ${storyTheme}`;
+
     job.status = 'generating_ai_images';
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
@@ -351,6 +354,8 @@ export class GenerateVideoService {
         outputPath: publicImgPath,
         productImageUrl: job.productImageUrl,
         resolution: targetResolution,
+        storyPrompt: job.prompt,
+        visualAnchor,
       });
 
       scene.localImagePath = publicImgPath;
@@ -459,6 +464,33 @@ export class GenerateVideoService {
     this.logger.log(`Job ${jobId} finished with ${scenes.length} scenes, total: ${job.totalDurationSeconds}s`);
   }
 
+  private buildSceneVisualPrompt(params: {
+    scene: DramaScene;
+    sceneIndex: number;
+    totalScenes: number;
+    storyPrompt?: string;
+    visualAnchor?: string;
+  }): string {
+    const { scene, sceneIndex, totalScenes, storyPrompt, visualAnchor } = params;
+
+    let basePrompt = (scene.cinematicPrompt || '').trim();
+
+    const isUzbekText = /[ʻʼ'`]|(?:bolajon|bobo|ona|ota|mehribon|sog'in|tong|nonushta|yolg'iz|xotira|hayot|ko'z|mehr|bilan|har|kun|qulupnay|oshxona|stul|yurak)/i.test(basePrompt);
+    if (!basePrompt || isUzbekText || basePrompt.length < 20) {
+      basePrompt = `Scene ${sceneIndex} of ${totalScenes}: Highly detailed vertical 9:16 cinematic film still. Visual scene: ${scene.actTitle}. Emotion: ${scene.emotion}. Authentic human facial expressions and dramatic cinematic composition.`;
+    }
+
+    const anchorParts: string[] = [];
+    if (visualAnchor) {
+      anchorParts.push(visualAnchor);
+    }
+    anchorParts.push(basePrompt);
+    anchorParts.push('vertical 9:16 aspect ratio');
+    anchorParts.push('cinematic 35mm photograph, natural dramatic lighting, Kodak Portra color tone, highly detailed faces, 8k resolution, authentic realistic cinematography');
+
+    return anchorParts.join(', ').slice(0, 1000);
+  }
+
   private async generateImageForScene(params: {
     scene: DramaScene;
     sceneIndex: number;
@@ -466,10 +498,11 @@ export class GenerateVideoService {
     outputPath: string;
     productImageUrl?: string;
     resolution?: string;
+    storyPrompt?: string;
+    visualAnchor?: string;
   }): Promise<void> {
     const { scene, sceneIndex, totalScenes, outputPath, productImageUrl, resolution } = params;
 
-    // 1. If product photo is provided and this is the final/product scene, use the product photo
     const isProductScene = Boolean(
       productImageUrl && (
         sceneIndex === totalScenes || 
@@ -486,12 +519,7 @@ export class GenerateVideoService {
       }
     }
 
-    // Build focused cinematic image prompt from scene.cinematicPrompt
-    const cleanPrompt = (scene.cinematicPrompt || scene.actTitle || 'cinematic film still')
-      .replace(/[\r\n\t]+/g, ' ')
-      .replace(/["'\\]/g, '')
-      .trim();
-    const visualPrompt = `${cleanPrompt}, 9:16 vertical orientation, cinematic film still, detailed dramatic lighting, photorealistic, 8k resolution`;
+    const visualPrompt = this.buildSceneVisualPrompt(params);
 
     if (this.cloudflareWorkersAiService.isAvailable()) {
       try {
@@ -510,7 +538,7 @@ export class GenerateVideoService {
     const { client, activeKey } = this.getGeminiClient();
     if (activeKey) {
       try {
-        this.logger.log(`Invoking Google Imagen 3 for Scene ${sceneIndex}: "${cleanPrompt.slice(0, 60)}"...`);
+        this.logger.log(`Invoking Google Imagen 3 for Scene ${sceneIndex}: "${visualPrompt.slice(0, 60)}"...`);
         const imagenRes = await client.models.generateImages({
           model: 'imagen-3.0-generate-002',
           prompt: visualPrompt.slice(0, 480),
@@ -537,7 +565,7 @@ export class GenerateVideoService {
     const openaiKey = this.getOpenAIKey();
     if (openaiKey) {
       try {
-        this.logger.log(`Invoking OpenAI DALL-E for Scene ${sceneIndex}: "${cleanPrompt.slice(0, 60)}"...`);
+        this.logger.log(`Invoking OpenAI DALL-E for Scene ${sceneIndex}: "${visualPrompt.slice(0, 60)}"...`);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 22000);
         try {
@@ -743,60 +771,62 @@ REELS & TIKTOK MAXIMUM RETENTION & EMOTIONAL IMPACT TALABLARI:
    - Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
 
 3. VIZUAL FLUX PROMPT (video_prompt):
-   - Faqat 'video_prompt' maydoni ingliz tilida: "Vertical 9:16 cinematic photorealistic film still, 8k, dramatic lighting, detailed emotional facial expression..."
+   - Har bir sahna uchun 'video_prompt' maydoni FAQAT INGLIZ TILIDA (100% English) boʻlishi SHART! Hech qachon oʻzbekcha soʻz qoʻshmang, chunki FLUX faqat inglizcha promptlarni tushunadi.
+   - QAHRAMONLAR VA LOKATSIYA KONSISTENTLIGI (ENG MUHIM): Barcha sahnalarda ASOSIY QAHRAMONLAR TASHQI KOʻRINISHI (yoshi, jinsi, kiyimi, soch turmagi, yuz tuzilishi) bir xil qilib takrorlansin! (Masalan: "The same elderly grandfather with kind wrinkled eyes and white beard wearing a brown cardigan" va "the same 8-year-old grandson with dark hair in a warm sweater").
+   - SAHNAGA AYNAN MOSLIK: Prompt sahna matnida nima yozilgan boʻlsa, AYNAN OʻSHA HARAKAT, LOKATSIYA VA PREDMETLARNI tasvirlasin (masalan: birga nonushta qilish, boʻsh stulga qarab yolgʻiz oʻtirish, xotira rasmini ushlab yigʻlash)! Hech qachon mavhum gap yozmang.
 
 Javobni qatʼiy ravishda valid JSON formatida qaytaring:
 {
   "scenes": [
     {
       "scene_number": 1,
-      "title": "Sahna 1: Kutilmagan Zarba va Sir",
-      "emotion": "Shok, kuchli hayajon va sir",
+      "title": "Sahna 1: Mehr bilan toʻla nonushta",
+      "emotion": "Iliqlik, baxt va mehr",
       "tension_level": 10,
       "duration": 5,
-      "dialogue": "Oʻsha kuni uning koʻzlarida birinchi marta qoʻrquvni koʻrdim. Hech kim bu sir ochilishini kutmagandi, ammo haqiqat barcha orzularimizni bir lahzada ostin-ustun qilib yubordi.",
-      "caption": "Birinchi 2 soniyadagi shok",
-      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic side lighting, emotional tear in eye, high detail 8k film still"
+      "dialogue": "Har tong bobomning issiq non ushatishi va samimiy duosi bilan boshlanardi. Oʻsha lahzalardagi xotirjamlik va mehr hayotimizning eng buyuk tayanchi ekanini endi tushundim.",
+      "caption": "Mehrli tonggi an'ana",
+      "video_prompt": "Vertical 9:16 cinematic film still. An elderly Uzbek grandfather with gentle wrinkled smile and white beard sitting at a wooden kitchen table with his 8-year-old grandson in a cozy sweater, sharing traditional bread and tea, warm morning sunbeams through window, photorealistic 8k, emotional intimate medium shot"
     },
     {
       "scene_number": 2,
-      "title": "Sahna 2: Jimjitlik va Ogʻir Sinov",
-      "emotion": "Qaygʻu, sogʻinch va azob",
+      "title": "Sahna 2: Jimjit tong va yolgʻizlik",
+      "emotion": "Sogʻinch, qaygʻu va yolgʻizlik",
       "tension_level": 9,
       "duration": 5,
-      "dialogue": "Xonadagi sukunat quloqlarni qomatga keltirardi. Yillar davomida toʻplangan mehr bir tomchi koʻz yoshi bilan birga erib borar, najot esa hech qayerdan koʻrinmasdi.",
-      "caption": "Ayriliq va sukunat",
-      "video_prompt": "Vertical 9:16 cinematic medium shot, cold blue shadows, melancholic atmosphere, photorealistic film still"
+      "dialogue": "Bugun esa oshxonada ogʻir sukunat hukmron. Bobomning boʻsh qolgan oʻrindigʻiga qarab, uning iliq ovozi va mehribon nigohlarini qanchalik sogʻinganimni his qildim.",
+      "caption": "Boʻsh qolgan stol",
+      "video_prompt": "Vertical 9:16 cinematic film still. The same 8-year-old grandson sitting alone at the kitchen table, gazing sadly at his grandfather's empty chair and untouched tea bowl, soft moody morning shadows, emotional longing facial expression, photorealistic 8k, cinematic medium shot"
     },
     {
       "scene_number": 3,
-      "title": "Sahna 3: Hissiyotlar Portlashi",
-      "emotion": "Keskin umidsizlik va faryod",
+      "title": "Sahna 3: Xotiralar va Koʻz Yoshlar",
+      "emotion": "Hissiyotlar portlashi va sogʻinch",
       "tension_level": 10,
       "duration": 5,
-      "dialogue": "Ketma, iltimos, mendan yuz oʻgirma! Hamma narsamni yoʻqotishim mumkin, ammo sening mehringdan ayrilish — bu butun dunyom barbod boʻlishi demakdir!",
-      "caption": "Yurakdagi faryod",
-      "video_prompt": "Vertical 9:16 intense cinematic extreme close-up, trembling hands, rain on window, dramatic rim lighting"
+      "dialogue": "Uning qadrdon koʻzoynagi va qoʻlyozmalarini bagʻrimga bosdim. Bobo, siz bergan mehr qalbimda mangu yashaydi, ammo bugun sizsiz oʻtgan har bir daqiqa qalbimni tilka-pora qilmoqda!",
+      "caption": "Yurakdagi sogʻinch",
+      "video_prompt": "Vertical 9:16 cinematic film still. Close-up of the 8-year-old grandson crying with glistening tears, clutching his grandfather's vintage glasses and old worn photo album to his chest, dramatic side lighting, photorealistic 8k, deep emotional intensity"
     },
     {
       "scene_number": 4,
-      "title": "Sahna 4: Bir Chimdim Mehr Uchquni",
-      "emotion": "Iliqlik, tavba va qutqaruv",
+      "title": "Sahna 4: Qalbdagi Yangi Umid",
+      "emotion": "Iliqlik, tasalli va najot",
       "tension_level": 9,
       "duration": 5,
-      "dialogue": "Qorongʻulik qanchalik quyuq boʻlmasin, bitta samimiy nigoh hammasini oʻzgartira oladi. U qoʻlimdan mahkam tutdi va barcha ogʻriqlar bir zumda chekindi.",
-      "caption": "Mehrning qaytishi",
-      "video_prompt": "Vertical 9:16 cinematic warm lighting, golden hour glow, touching hands, genuine smile, 8k"
+      "dialogue": "Bobom doim aytardi: 'Mehr hech qachon yoʻqolmaydi, u boshqa qalblarga koʻchadi'. Men oʻrnimdan turdim va bobom oʻrgatganidek yangi non yopishga, yaxshilik ulashishga ahd qildim.",
+      "caption": "Mehrning davomi",
+      "video_prompt": "Vertical 9:16 cinematic film still. The 8-year-old grandson standing by the sunlit kitchen counter with a gentle, determined smile, wiping his tears and holding fresh dough, warm golden hour sunbeams streaming in, photorealistic 8k, inspiring medium shot"
     },
     {
       "scene_number": 5,
-      "title": "Sahna 5: Abadiy Muhrlangan Baxt",
+      "title": "Sahna 5: Mangu Yashovchi Mehr",
       "emotion": "Katarsis, cheksiz mehr va xotirjamlik",
       "tension_level": 10,
       "duration": 5,
-      "dialogue": "Endi tushundim: eng qimmatli narsa bu boylik emas, har kuni ertalab seni mehr bilan kutib oladigan insonning borligidir. Bu tuygʻuni asrang, u hech qachon eskirmaydi.",
-      "caption": "Unutilmas buyuk xulosa",
-      "video_prompt": "Vertical 9:16 cinematic epic finale, warm sunset rays, peaceful harmony, emotional slow camera push-in"
+      "dialogue": "Endi bildim: aziz insonlarimiz yonimizda boʻlmasa-da, ular qoldirgan mehr har bir nafsimizda yashaydi. Bu mehrni asraylik, chunki samimiyat va muhabbat abadiydir.",
+      "caption": "Unutilmas abadiy xulosa",
+      "video_prompt": "Vertical 9:16 cinematic film still. The grandson smiling peacefully towards the golden sunset window, carrying on his grandfather's legacy with serene pride, cinematic atmospheric glow, soft warm lighting, photorealistic 8k, epic slow push-in shot"
     }
   ]
 }`;
