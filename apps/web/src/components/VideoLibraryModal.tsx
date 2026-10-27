@@ -78,7 +78,7 @@ export function VideoLibraryModal({
       title: 'Mening Videolarim (Render Tarixi)',
       sub: 'Tayyorlangan va navbatdagi 9:16 video reklamalar arxivi',
       emptyTitle: 'Hozircha videolar yoʻq',
-      emptySub: 'Veo Engine orqali birinchi kinematografik AI videongizni yarating!',
+      emptySub: 'AI Studio orqali birinchi kinematografik AI videongizni yarating!',
       createFirst: 'Birinchi videoni yaratish',
       download: 'MP4 Yuklash',
       preview: 'Koʻrish',
@@ -90,7 +90,7 @@ export function VideoLibraryModal({
       title: 'My Videos (Render History)',
       sub: 'Archive of generated and in-progress 9:16 video advertisements',
       emptyTitle: 'No videos created yet',
-      emptySub: 'Create your first cinematic AI video in Veo Engine!',
+      emptySub: 'Create your first cinematic AI video in AI Studio!',
       createFirst: 'Create your first video',
       download: 'Download MP4',
       preview: 'Preview',
@@ -102,7 +102,7 @@ export function VideoLibraryModal({
       title: 'Мои видео (История рендеров)',
       sub: 'Архив готовых и обрабатываемых 9:16 видео-роликов',
       emptyTitle: 'Видео пока нет',
-      emptySub: 'Создайте свой первый кинематографический AI ролик в Veo Engine!',
+      emptySub: 'Создайте свой первый кинематографический AI ролик в AI Studio!',
       createFirst: 'Создать первое видео',
       download: 'Скачать MP4',
       preview: 'Смотреть',
@@ -114,7 +114,7 @@ export function VideoLibraryModal({
     title: 'My Videos',
     sub: 'Archive of generated 9:16 video advertisements',
     emptyTitle: 'No videos yet',
-    emptySub: 'Generate your first AI video with Veo Engine!',
+    emptySub: 'Generate your first AI video with AI Studio!',
     createFirst: 'Create first video',
     download: 'Download MP4',
     preview: 'Preview',
@@ -276,7 +276,7 @@ export function VideoLibraryModal({
                         <span>{job.progress_percent || 15}%</span>
                       </div>
                       <p className="text-[10px] font-mono text-ink-muted truncate">
-                        {job.step_message || 'Google Gemini Omni 1.1 Flash'}
+                        {job.step_message || 'AI Video Engine'}
                       </p>
                     </div>
                   </div>

@@ -175,47 +175,47 @@ export default function HomePage() {
     uz: {
       overline: 'KINEMATOGRAFIK AI VIDEO PLATFORMASI',
       headline: ['Tasvirni', 'Harakatga', 'Keltiring'],
-      subhead: 'Google Veo 3.1 kuchi bilan professional kinematografik video yarating. Bir so\u02BBz — bir film.',
+      subhead: 'Sunʼiy intellekt kuchi bilan professional kinematografik video yarating. Bir so\u02BBz — bir film.',
       ctaPrimary: 'Studiyaga kirish',
       ctaSecondary: 'Namoyish ko\u02BBrish',
       statsLabel: ['RENDERING', 'FORMATLAR', 'ENGINE', 'ANIQLIK'],
-      statsValue: ['< 60s', '9:16 ', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60s', '9:16 ', 'AI Studio', '1080p+'],
     },
     en: {
       overline: 'CINEMATIC AI VIDEO PLATFORM',
       headline: ['Render Your', 'Vision Into', 'Motion'],
-      subhead: 'Professional-grade cinematic video generation powered by Google Veo 3.1. One prompt. One take. Infinite possibilities.',
+      subhead: 'Professional-grade cinematic video generation powered by AI. One prompt. One take. Infinite possibilities.',
       ctaPrimary: 'Enter Studio',
       ctaSecondary: 'View Reel',
       statsLabel: ['RENDERING', 'FORMATS', 'ENGINE', 'RESOLUTION'],
-      statsValue: ['< 60s', '9:16', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60s', '9:16', 'AI Studio', '1080p+'],
     },
     ru: {
       overline: 'КИНЕМАТОГРАФИЧЕСКАЯ AI ВИДЕО ПЛАТФОРМА',
       headline: ['Превратите', 'Видение в', 'Движение'],
-      subhead: 'Профессиональная генерация кинематографического видео на базе Google Veo 3.1. Один промпт. Один дубль.',
+      subhead: 'Профессиональная генерация кинематографического видео на базе AI. Один промпт. Один дубль.',
       ctaPrimary: 'Войти в студию',
       ctaSecondary: 'Смотреть шоурил',
       statsLabel: ['РЕНДЕРИНГ', 'ФОРМАТЫ', 'ДВИЖОК', 'РАЗРЕШЕНИЕ'],
-      statsValue: ['< 60с', '9:16 ', 'Veo 3.1', '1080p+'],
+      statsValue: ['< 60с', '9:16 ', 'AI Studio', '1080p+'],
     },
   }[locale]!;
 
   const features = {
     uz: [
-      { label: 'Veo 3.1 Engine', desc: 'Google\u02BCning eng so\u02BBnggi generativ video modeli', num: '01' },
+      { label: 'AI Video Engine', desc: 'Eng so\u02BBnggi generativ video arxitekturasi', num: '01' },
       { label: 'CapCut Video Studio', desc: 'Soniyama-soniya subtitrlarni professional tahrirlash', num: '02' },
       { label: 'Karaoke Subtitrlar', desc: 'Millisekund aniqlikdagi jonli matn animatsiyasi', num: '03' },
       { label: 'Professional Eksport', desc: '9:16 vertikal formatlar', num: '04' },
     ],
     en: [
-      { label: 'Veo 3.1 Engine', desc: 'Google\u2019s latest generative video model with cinematic fidelity', num: '01' },
+      { label: 'AI Video Engine', desc: 'Latest generative video architecture with cinematic fidelity', num: '01' },
       { label: 'CapCut Video Editor', desc: 'Frame-accurate subtitle editing and dynamic karaoke styles', num: '02' },
       { label: 'Karaoke Captions', desc: 'Millisecond-precise synchronized text animation', num: '03' },
       { label: 'Professional Export', desc: '9:16 vertical delivery formats', num: '04' },
     ],
     ru: [
-      { label: 'Движок Veo 3.1', desc: 'Новейшая генеративная видеомодель Google', num: '01' },
+      { label: 'AI Видео Движок', desc: 'Новейшая генеративная видеоархитектура', num: '01' },
       { label: 'CapCut Видео Редактор', desc: 'Посекундное редактирование субтитров и стили караоке', num: '02' },
       { label: 'Караоке Субтитры', desc: 'Синхронизированная текстовая анимация с точностью до миллисекунд', num: '03' },
       { label: 'Профессиональный Экспорт', desc: 'Форматы 9:16 вертикальный', num: '04' },
@@ -226,7 +226,7 @@ export default function HomePage() {
   const tabContent = {
     uz: {
       tabStudio: 'Studiyo',
-      tabVeo: 'Veo 3.1',
+      tabVeo: 'AI Video',
       tabTemplates: 'Shablonlar',
       tabPricing: 'Tariflar',
       tabLibrary: 'Videolarim',
@@ -234,7 +234,7 @@ export default function HomePage() {
     },
     en: {
       tabStudio: 'Studio',
-      tabVeo: 'Veo 3.1',
+      tabVeo: 'AI Video',
       tabTemplates: 'Templates',
       tabPricing: 'Pricing',
       tabLibrary: 'My Videos',
@@ -242,7 +242,7 @@ export default function HomePage() {
     },
     ru: {
       tabStudio: 'Студия',
-      tabVeo: 'Veo 3.1',
+      tabVeo: 'AI Video',
       tabTemplates: 'Шаблоны',
       tabPricing: 'Тарифы',
       tabLibrary: 'Мои видео',
@@ -646,7 +646,7 @@ export default function HomePage() {
               <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">PLATFORM</div>
               <div className="space-y-2">
                 {[
-                  { label: 'Veo Engine', tab: 'prompt' as NavTabType },
+                  { label: 'AI Video Studio', tab: 'prompt' as NavTabType },
                   { label: 'Templates', tab: 'templates' as NavTabType },
                   { label: 'Pricing', tab: 'pricing' as NavTabType },
                 ].map((item) => (
@@ -681,7 +681,6 @@ export default function HomePage() {
             <div className="lg:col-span-2">
               <div className="text-[9px] font-mono text-ink-dim tracking-[0.2em] mb-4">INFRASTRUCTURE</div>
               <div className="space-y-2 text-xs text-ink-dim font-mono">
-                <span className="block">Google Veo 3.1</span>
                 <span className="block">Cloudflare</span>
                 <span className="block">UploadThing</span>
               </div>
@@ -747,7 +746,7 @@ export default function HomePage() {
                 product_id: 'p-prompt',
                 platform_preset: 'uzum_9_16',
                 script_tone: 'discount_hook',
-                script_text: 'Gemini Omni 1.1 Flash Video Ad',
+                script_text: 'Kinematografik Video',
                 status: 'completed',
                 progress_percent: 100,
                 audio_preview_url: null,

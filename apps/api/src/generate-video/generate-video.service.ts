@@ -195,7 +195,7 @@ export class GenerateVideoService {
       bgMusicTrack: '',
       status: 'queued',
       progress: 5,
-      currentStepMessage: `${modelTier} (${resolution}) video generatsiyasi navbatga qoʻyildi...`,
+      currentStepMessage: `Kinematografik (${resolution}) video generatsiyasi navbatga qoʻyildi...`,
       scenes: initialScenes,
       totalDurationSeconds,
       locale: params.locale || 'uz',
@@ -204,7 +204,7 @@ export class GenerateVideoService {
 
     this.jobs.set(jobId, job);
     this.logger.log(
-      `Created video job ${jobId} (Model: ${modelTier}, Resolution: ${resolution}, 9:16, Music: ${includeBackgroundMusic ? 'ON' : 'OFF'}, Pre-confirmed scenes: ${initialScenes.length})`,
+      `Created video job ${jobId} (Resolution: ${resolution}, 9:16, Music: ${includeBackgroundMusic ? 'ON' : 'OFF'}, Pre-confirmed scenes: ${initialScenes.length})`,
     );
 
     this.processJobAsync(jobId).catch(async (err) => {
@@ -249,8 +249,8 @@ export class GenerateVideoService {
       jobId,
       status: job.status,
       progress: job.progress,
-      message: `${modelTier} (${resolution}) video generatsiyasi boshlandi`,
-      model: modelTier,
+      message: `Kinematografik (${resolution}) video generatsiyasi boshlandi`,
+      model: 'ai-video-engine',
       remainingCredits: userRemainingCredits,
     };
   }

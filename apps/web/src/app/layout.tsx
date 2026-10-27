@@ -5,7 +5,7 @@ import { ThemeProvider } from '../lib/theme';
 export const metadata: Metadata = {
   title: 'TASVIR — Cinematic AI Video Engine',
   description:
-    'Professional-grade AI video generation platform. Cinematic storytelling powered by Google Veo 3.1. Built for filmmakers, designers, and serious creators.',
+    'Professional-grade AI video generation platform. Cinematic storytelling powered by next-generation AI. Built for filmmakers, designers, and serious creators.',
   icons: {
     icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230F1013"/><path d="M38 30L72 50L38 70Z" fill="%23D4A574"/></svg>',
   },

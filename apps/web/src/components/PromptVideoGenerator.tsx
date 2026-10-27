@@ -150,31 +150,31 @@ export function PromptVideoGenerator({
 }: PromptVideoGeneratorProps) {
   const t = {
     uz: {
-      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
-      title: 'Kinematografik AI Video (Gemini Omni 1.1)',
+      badge: 'AI Video Engine',
+      title: 'Kinematografik AI Video',
       subtitle:
-        'Google Gemini Omni 1.1 Flash orqali yuqori emotsional ziddiyat, mahsulot integratsiyasi va 9:16 vertikal master video yarating.',
-      promptLabel: ' reklama gʻoyasi (Prompt)',
+        'Yuqori emotsional ziddiyat, mahsulot integratsiyasi va 9:16 vertikal formatda professional master video yarating.',
+      promptLabel: 'Reklama gʻoyasi (Prompt)',
       promptPlaceholder:
-        'Masalan: Xiyonat tufayli yigʻlayotgan qahramon va uning hayotini oʻzgartirgan kutilmagan sovgʻa...',
-      suggestionsLabel: '🎭  ssenariy gʻoyalari:',
+        'Masalan: Qulupnayli sut berry milk va ona-bola mehri haqida emotsional viral video...',
+      suggestionsLabel: '🎭 Tavsiya etilgan ssenariy gʻoyalari:',
       aspectRatioLabel: 'Video formati va Aniqligi:',
-      ratioLockedNote: 'Gemini Omni 1.1 Flash vertikal 9:16 (360p).',
+      ratioLockedNote: 'Vertikal 9:16 (360p) formati.',
       durationBadge: '3–8 sahna • Har biri 4–8 soniya',
-      planScenarioBtn: '🧠 AI Ssenariy Yaratish (Gemini)',
-      planningScenarioBtn: 'Gemini ssenariyni shakllantirmoqda...',
+      planScenarioBtn: '🧠 AI Ssenariy Yaratish',
+      planningScenarioBtn: 'AI ssenariyni shakllantirmoqda...',
       scenarioReviewTitle: '🎬 AI Ssenariy Tayyorlandi (Tasdiqlang yoki Tahrirlang)',
       scenarioReviewSub:
         'AI har bir sahna uchun kadr va dialoglarni yaratdi. Matnlarni xohishingizga koʻra oʻzgartirishingiz mumkin. Tasdiqlangach, video render boshlanadi.',
-      confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Gemini Omni 1.1)',
-      renderingBtn: 'Gemini Omni 1.1 videoni render qilmoqda...',
+      confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish',
+      renderingBtn: 'AI videoni render qilmoqda...',
       regenerateScenarioBtn: '🔄 Qayta Ssenariy Yozish',
       backToPromptBtn: '✏️ Promptni Oʻzgartirish',
       sceneNumber: 'Sahna',
       dialogueLabel: 'Ovozli dialog (Subtitr):',
       captionLabel: 'Kadr ustidagi sarlavha:',
       durationLabel: 'Davomiyligi:',
-      progressTitle: 'Gemini Omni 1.1 Flash Video Ishlab Chiqarilmoqda',
+      progressTitle: 'AI Video Ishlab Chiqarilmoqda',
       completedTitle: 'Kinematografik Master Video Tayyorlandi!',
       downloadBtn: 'MP4 Master Yuklab Olish',
       createAnother: 'Yangi video yaratish',
@@ -186,75 +186,75 @@ export function PromptVideoGenerator({
       errorTitle: 'Xatolik yuz berdi',
       tryAgain: 'Qayta urinish',
       openVideo: 'Videoni ochish',
-      placeholderTitle: '9:16 Video korinishi',
-      placeholderSub: 'prompt kiriting va AI orqali ssenariy tuzing yoki ozingiz keyin tahrirlab chiqishingiz mmumkin.',
+      placeholderTitle: '9:16 Video koʻrinishi',
+      placeholderSub: 'Prompt kiriting va AI orqali ssenariy tuzing yoki oʻzingiz keyin tahrirlab chiqishingiz mumkin.',
     },
     en: {
-      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
-      title: 'Cinematic AI Video Ads (Gemini Omni 1.1 Flash)',
+      badge: 'AI Video Engine',
+      title: 'Cinematic AI Video Ads',
       subtitle:
-        'Generate high-stakes 9:16 vertical video ads with Google Gemini Omni 1.1 Flash featuring emotional continuity, product finale, and resolution controls.',
-      promptLabel: ' Ad Idea (Prompt)',
+        'Generate high-stakes 9:16 vertical video ads featuring emotional continuity, product finale, and resolution controls.',
+      promptLabel: 'Ad Idea (Prompt)',
       promptPlaceholder:
         'E.g., A protagonist crying after finding out they were betrayed, but a surprise product turns everything into victory...',
-      suggestionsLabel: '🎭  storyline concepts:',
+      suggestionsLabel: '🎭 Recommended storyline concepts:',
       aspectRatioLabel: 'Video Format:',
-      ratioLockedNote: 'Gemini Omni 1.1 Flash vertical 9:16 (360p).',
+      ratioLockedNote: 'Vertical 9:16 (360p) format.',
       durationBadge: '3–8 scenes • 4–8 seconds each',
-      planScenarioBtn: '🧠 Generate AI Storyline (Gemini)',
-      planningScenarioBtn: 'Gemini is framing scenes...',
+      planScenarioBtn: '🧠 Generate AI Storyline',
+      planningScenarioBtn: 'AI is framing scenes...',
       scenarioReviewTitle: '🎬 AI Storyline Ready (Review & Confirm)',
       scenarioReviewSub:
-        'AI drafted the  scenes and dialogue. You can tweak any script or caption before launching the video render.',
-      confirmAndRenderBtn: '✅ Confirm Scenario & Render Video (Gemini Omni 1.1)',
-      renderingBtn: 'Gemini Omni 1.1 rendering video...',
+        'AI drafted the scenes and dialogue. You can tweak any script or caption before launching the video render.',
+      confirmAndRenderBtn: '✅ Confirm Scenario & Render Video',
+      renderingBtn: 'AI rendering video...',
       regenerateScenarioBtn: '🔄 Regenerate Storyline',
       backToPromptBtn: '✏️ Edit Prompt',
       sceneNumber: 'Scene',
       dialogueLabel: 'Dialogue / Voiceover Script:',
       captionLabel: 'Screen Caption:',
       durationLabel: 'Duration:',
-      progressTitle: 'Creating Video with Google Gemini Omni 1.1 Flash',
+      progressTitle: 'Creating Video with AI',
       completedTitle: 'Cinematic Master Video Ready!',
       downloadBtn: 'Download Master MP4',
-      createAnother: 'Create another  video',
+      createAnother: 'Create another video',
       karaokeTitle: 'Karaoke Subtitle Mode:',
       karaokeDomMode: 'Dynamic Reels Text',
       karaokeCanvasMode: 'Canvas Layer',
-      actsTitle: ' Scenes Breakdown (FFmpeg Concat):',
+      actsTitle: 'Scenes Breakdown (FFmpeg Concat):',
       errorOccurred: 'An error occurred while creating the video. Please try again.',
       errorTitle: 'Error occurred',
       tryAgain: 'Try again',
       openVideo: 'Open video',
-      placeholderTitle: '9:16  Master Video Preview',
+      placeholderTitle: '9:16 Master Video Preview',
       placeholderSub: 'Enter a prompt and generate the AI scenes first.',
     },
     ru: {
-      badge: 'Gemini Omni 1.1 Flash & Vision Engine',
-      title: 'Кинематографический AI Видео Движок (Gemini Omni 1.1)',
+      badge: 'AI Video Engine',
+      title: 'Кинематографический AI Видео Движок',
       subtitle:
-        'Создайте вертикальный 9:16 ролик через Google Gemini Omni 1.1 Flash с высоким накалом страстей, слезами и студийным финалом.',
-      promptLabel: 'Драматическая идея рекламы (Промпт)',
+        'Создайте вертикальный 9:16 ролик с высоким накалом страстей, эмоциями и студийным финалом.',
+      promptLabel: 'Идея рекламы (Промпт)',
       promptPlaceholder:
         'Например: Герой плачет из-за предательства партнера, но спасение приходит в виде неожиданного товара...',
       suggestionsLabel: '🎭 Идеи драматических сюжетов:',
       aspectRatioLabel: 'Формат видео:',
-      ratioLockedNote: 'Gemini Omni 1.1 Flash 9:16 (360p).',
+      ratioLockedNote: 'Вертикальный формат 9:16 (360p).',
       durationBadge: '3–8 сцен • 4–8 сек каждая',
-      planScenarioBtn: '🧠 Сгенерировать AI Сценарий (Gemini)',
-      planningScenarioBtn: 'Gemini пишет драматический сценарий...',
+      planScenarioBtn: '🧠 Сгенерировать AI Сценарий',
+      planningScenarioBtn: 'AI пишет драматический сценарий...',
       scenarioReviewTitle: '🎬 AI Сценарий Готов (Проверьте и Подтвердите)',
       scenarioReviewSub:
         'AI составил сцены с диалогами. Вы можете отредактировать фразы перед запуском финального рендера.',
-      confirmAndRenderBtn: '✅ Подтвердить Сценарий & Рендерить Видео (Gemini Omni 1.1)',
-      renderingBtn: 'Gemini Omni 1.1 рендерит сцены...',
+      confirmAndRenderBtn: '✅ Подтвердить Сценарий & Рендерить Видео',
+      renderingBtn: 'AI рендерит сцены...',
       regenerateScenarioBtn: '🔄 Переписать Сценарий',
       backToPromptBtn: '✏️ Изменить Промпт',
       sceneNumber: 'Сцена',
       dialogueLabel: 'Озвучка / Диалог (Субтитры):',
       captionLabel: 'Текст на кадре:',
       durationLabel: 'Длительность:',
-      progressTitle: 'Идет создание видео в Google Gemini Omni 1.1 Flash',
+      progressTitle: 'Идет создание AI видео',
       completedTitle: 'Кинематографический Мастер-Ролик Готов!',
       downloadBtn: 'Скачать Мастер MP4',
       createAnother: 'Создать новый ролик',
@@ -270,20 +270,20 @@ export function PromptVideoGenerator({
       placeholderSub: 'Введите промпт и сначала сгенерируйте AI сценарий.',
     },
   }[locale] || {
-    badge: 'gemini',
-    title: 'Kinematografik AI Video (Gemini Omni 1.1)',
-    subtitle: 'Google Gemini Omni 1.1 Flash orqali 9:16 vertikal video yarating.',
-    promptLabel: ' reklama gʻoyasi (Prompt)',
+    badge: 'AI Video Engine',
+    title: 'Kinematografik AI Video',
+    subtitle: '9:16 vertikal formatda professional master video yarating.',
+    promptLabel: 'Reklama gʻoyasi (Prompt)',
     promptPlaceholder: 'Mahsulot haqida maʼlumot kiriting...',
     suggestionsLabel: '🎭 Tavsiya etilgan gʻoyalar:',
     aspectRatioLabel: 'Format: 9:16',
     ratioLockedNote: '9:16 Vertikal format (360p).',
     durationBadge: '3–8 sahna • 15–30 soniya',
-    planScenarioBtn: '🧠 AI Ssenariy Yaratish (Gemini)',
-    planningScenarioBtn: 'Gemini ssenariyni shakllantirmoqda...',
+    planScenarioBtn: '🧠 AI Ssenariy Yaratish',
+    planningScenarioBtn: 'AI ssenariyni shakllantirmoqda...',
     scenarioReviewTitle: '🎬 AI Ssenariy Tayyorlandi',
     scenarioReviewSub: 'Matnlarni tahrirlab, tasdiqlang.',
-    confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish (Gemini Omni 1.1)',
+    confirmAndRenderBtn: '✅ Ssenariyni Tasdiqlash & Video Yaratish',
     renderingBtn: 'Video render qilinmoqda...',
     regenerateScenarioBtn: '🔄 Qayta Ssenariy Yozish',
     backToPromptBtn: '✏️ Promptni Oʻzgartirish',
@@ -492,10 +492,10 @@ export function PromptVideoGenerator({
     setProgress(10);
     setStatusMessage(
       locale === 'en'
-        ? `Launching Gemini Omni 1.1 Flash (${resolution}) &  scene rendering...`
+        ? `Launching scene rendering (${resolution})...`
         : locale === 'ru'
-        ? `Запуск Gemini Omni 1.1 Flash (${resolution}) и рендеринга сцен...`
-        : `Gemini Omni 1.1 Flash (${resolution}) orqali video generatsiyasi boshlanmoqda...`,
+        ? `Запуск рендеринга сцен (${resolution})...`
+        : `Video generatsiyasi boshlanmoqda (${resolution})...`,
     );
     setResultVideo(null);
     setCurrentTime(0);
@@ -524,16 +524,16 @@ export function PromptVideoGenerator({
       const initialStepMsg =
         res.message ||
         (locale === 'en'
-          ? `Generating scenes with Gemini Omni 1.1 Flash (${resolution})...`
-          : `Gemini Omni 1.1 Flash (${resolution}) sahnalari tayyorlanmoqda...`);
+          ? `Generating scenes (${resolution})...`
+          : `Sahnalar tayyorlanmoqda (${resolution})...`);
       setStatusMessage(initialStepMsg);
 
       const newJob: VideoJob = {
         id: res.jobId,
         user_id: user?.id || 'usr_demo',
-        product_id: 'p-drama',
+        product_id: null,
         platform_preset: '9:16 (360p)',
-        script_tone: 'gemini_omni',
+        script_tone: 'dramatic_ad',
         script_text: prompt.trim().slice(0, 100),
         status: res.status || 'queued',
         progress_percent: res.progress || 10,
@@ -570,8 +570,8 @@ export function PromptVideoGenerator({
         setStatusMessage(
           jobData.currentStepMessage ||
             (locale === 'en'
-              ? 'Processing Google Veo 3.1  video...'
-              : 'Google Veo 3.1 video qayta ishlanmoqda...'),
+              ? 'Processing video...'
+              : 'Video qayta ishlanmoqda...'),
         );
 
         if (jobData.status === 'completed' && jobData.videoUrl) {
@@ -780,7 +780,7 @@ export function PromptVideoGenerator({
                     <span>{t.aspectRatioLabel}</span>
                   </label>
                   <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-mono font-bold uppercase">
-                    Gemini Omni 1.1 • 9:16 ({resolution})
+                    AI Studio • 9:16 ({resolution})
                   </span>
                 </div>
                 <p className="text-[11px] text-ink-muted">
