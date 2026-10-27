@@ -349,27 +349,41 @@ export function AssetPanel({
                       </div>
                     </div>
 
-                    <button
-                      onClick={() =>
-                        addClip(
-                          media.type === 'video'
-                            ? 'track-video'
-                            : media.type === 'audio'
-                            ? 'track-audio-bgm'
-                            : 'track-effect',
-                          {
-                            title: media.name,
-                            sourceUrl: media.url,
-                            durationSec: media.durationSec || 5,
-                            startSec: currentTime,
+                    <div className="flex items-center gap-1 shrink-0">
+                      {selectedClip?.type === 'video' && (media.type === 'video' || media.type === 'image') && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            replaceClipMedia(selectedClip.id, media.url, media.name)
                           }
-                        )
-                      }
-                      className="p-1.5 rounded-md bg-accent-warm/15 hover:bg-accent-warm text-accent-warm hover:text-canvas transition-colors flex items-center gap-1 text-[11px] font-mono"
-                      title="Trekka qoʻshish"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+                          className="px-2 py-1 rounded bg-accent-warm/20 hover:bg-accent-warm text-accent-warm hover:text-canvas transition-colors text-[10px] font-mono font-bold cursor-pointer"
+                          title="Tanlangan klipni almashtirish"
+                        >
+                          Almashtirish
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          addClip(
+                            media.type === 'video'
+                              ? 'track-video'
+                              : media.type === 'audio'
+                              ? 'track-audio-bgm'
+                              : 'track-effect',
+                            {
+                              title: media.name,
+                              sourceUrl: media.url,
+                              durationSec: media.durationSec || 5,
+                              startSec: currentTime,
+                            }
+                          )
+                        }
+                        className="p-1.5 rounded-md bg-accent-warm/15 hover:bg-accent-warm text-accent-warm hover:text-canvas transition-colors flex items-center gap-1 text-[11px] font-mono cursor-pointer"
+                        title="Trekka qoʻshish"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -409,21 +423,40 @@ export function AssetPanel({
                     <p className="text-xs font-semibold text-ink truncate">
                       {stock.title}
                     </p>
-                    <button
-                      onClick={() =>
-                        addClip('track-video', {
-                          title: stock.title,
-                          sourceUrl: stock.url,
-                          thumbnailUrl: stock.thumbnailUrl,
-                          durationSec: stock.durationSec || 5,
-                          startSec: currentTime,
-                        })
-                      }
-                      className="px-2 py-1 rounded bg-accent-warm text-canvas hover:brightness-110 text-[11px] font-bold font-mono flex items-center gap-1 flex-shrink-0 transition-transform active:scale-95"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>{t.add}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {selectedClip?.type === 'video' && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            replaceClipMedia(
+                              selectedClip.id,
+                              stock.url,
+                              stock.title,
+                              stock.thumbnailUrl
+                            )
+                          }
+                          className="px-2 py-1 rounded bg-accent-warm/20 hover:bg-accent-warm text-accent-warm hover:text-canvas text-[11px] font-bold font-mono transition-colors cursor-pointer"
+                          title="Tanlangan klipni almashtirish"
+                        >
+                          Almashtirish
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          addClip('track-video', {
+                            title: stock.title,
+                            sourceUrl: stock.url,
+                            thumbnailUrl: stock.thumbnailUrl,
+                            durationSec: stock.durationSec || 5,
+                            startSec: currentTime,
+                          })
+                        }
+                        className="px-2 py-1 rounded bg-accent-warm text-canvas hover:brightness-110 text-[11px] font-bold font-mono flex items-center gap-1 shrink-0 transition-transform active:scale-95 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>{t.add}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
