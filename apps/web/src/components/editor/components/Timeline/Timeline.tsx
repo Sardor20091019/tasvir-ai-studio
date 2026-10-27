@@ -21,11 +21,29 @@ import {
 import { useEditor } from '../../context/EditorContext';
 import { TimelineClip, TimelineTrack, TrackType } from '../../types';
 
-export function Timeline() {
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  return (
+    clean.endsWith('.png') ||
+    clean.endsWith('.jpg') ||
+    clean.endsWith('.jpeg') ||
+    clean.endsWith('.webp') ||
+    clean.endsWith('.gif') ||
+    clean.endsWith('.svg') ||
+    clean.endsWith('.avif') ||
+    url.includes('images.unsplash.com') ||
+    url.includes('cdn.midjourney.com')
+  );
+}
+
+export function Timeline(): React.ReactElement {
   const {
     tracks,
     currentTime,
     duration,
+    isPlaying,
     seek,
     zoomLevel,
     setZoomLevel,
@@ -62,10 +80,25 @@ export function Timeline() {
       const scrollLeft = lanesScrollRef.current.scrollLeft;
       const relativeX = clientX - rect.left + scrollLeft;
       const sec = Math.max(0, relativeX / pxPerSec);
-      return Math.min(sec, duration + 10);
+      return Math.min(sec, duration);
     },
     [pxPerSec, duration]
   );
+
+  useEffect(() => {
+    if (!isPlaying || !lanesScrollRef.current) return;
+    const container = lanesScrollRef.current;
+    const playheadPx = currentTime * pxPerSec;
+    const visibleLeft = container.scrollLeft;
+    const visibleRight = visibleLeft + container.clientWidth;
+
+    if (playheadPx > visibleRight - 40 || playheadPx < visibleLeft) {
+      container.scrollTo({
+        left: Math.max(0, playheadPx - container.clientWidth / 3),
+        behavior: 'smooth',
+      });
+    }
+  }, [currentTime, isPlaying, pxPerSec]);
 
   // Ruler scrub mouse & touch handlers
   const handleRulerMouseDown = (e: React.MouseEvent) => {
@@ -321,12 +354,19 @@ export function Timeline() {
               </div>
             </div>
 
-            {/* ── TRACK LANES ── */}
-            <div className="space-y-0">
+            <div
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('timeline-lane-row')) {
+                  const sec = getSecondsFromMouseX(e.clientX);
+                  seek(sec);
+                }
+              }}
+              className="space-y-0"
+            >
               {tracks.map((track) => (
                 <div
                   key={track.id}
-                  className={`h-12 border-b border-stroke/40 relative flex items-center ${
+                  className={`h-12 border-b border-stroke/40 relative flex items-center timeline-lane-row ${
                     track.isLocked ? 'bg-black/40 pointer-events-none' : 'hover:bg-surface/10'
                   }`}
                 >
@@ -429,9 +469,9 @@ export function Timeline() {
                           }}
                           className="flex items-center gap-1.5 min-w-0 flex-1 truncate pr-2 touch-none"
                         >
-                          {clip.thumbnailUrl && (
+                          {(clip.thumbnailUrl || isImageUrl(clip.sourceUrl)) && (
                             <img
-                              src={clip.thumbnailUrl}
+                              src={clip.thumbnailUrl || clip.sourceUrl}
                               alt=""
                               className="w-5 h-5 sm:w-6 sm:h-6 object-cover rounded flex-shrink-0"
                             />

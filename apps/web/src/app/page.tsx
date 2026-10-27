@@ -800,19 +800,28 @@ export default function HomePage() {
             onUpdateJob={handleUpdateJob}
             onOpenStudio={() => setActiveTab('prompt')}
             onEditJob={(job) => {
-              setCurrentEditorProject({
-                id: job.id,
-                title: job.script_text ? job.script_text.slice(0, 45) : 'AI Video Ad',
+              const projectData: VideoEditorProject = {
+                id: `job-${job.id}`,
+                title: job.script_text ? job.script_text.slice(0, 45) : 'AI Video',
                 videoUrl: job.output_video_url || '',
-                duration: 16,
-                subtitles: [
-                  {
-                    id: `cue-${job.id}-1`,
-                    startSec: 0.5,
-                    endSec: 5.0,
-                    text: job.script_text ? job.script_text.slice(0, 60) : 'Tasvir AI video subtitri',
-                  },
-                ],
+                duration: 15,
+                scenes: job.scenes || [],
+                subtitles: job.scenes && job.scenes.length > 0
+                  ? job.scenes.map((s, idx) => ({
+                      id: `cue-${idx}`,
+                      startSec: idx * 5,
+                      endSec: (idx + 1) * 5,
+                      text: s.dialogueScript || s.caption || '',
+                      words: s.karaokeSubtitles || [],
+                    }))
+                  : [
+                      {
+                        id: 'sub-1',
+                        startSec: 0,
+                        endSec: 15,
+                        text: job.script_text || '',
+                      },
+                    ],
                 style: {
                   preset: 'capcut_yellow',
                   fontSize: 32,
@@ -825,37 +834,11 @@ export default function HomePage() {
                   animation: 'karaoke_active',
                   textTransform: 'uppercase',
                 },
-              });
+              };
+
+              setCurrentEditorProject(projectData);
               if (typeof window !== 'undefined') {
-                localStorage.setItem(
-                  'tasvir_editor_current_project',
-                  JSON.stringify({
-                    id: `job-${job.id}`,
-                    title: job.script_text?.slice(0, 30) || 'Tayyor Video',
-                    videoUrl: job.output_video_url || '',
-                    duration: 15,
-                    subtitles: [
-                      {
-                        id: 'sub-1',
-                        startSec: 0,
-                        endSec: 15,
-                        text: job.script_text || '',
-                      },
-                    ],
-                    style: {
-                      preset: 'capcut_yellow',
-                      fontSize: 32,
-                      position: 'bottom',
-                      textColor: '#FFFFFF',
-                      highlightColor: '#FACC15',
-                      bgColor: 'rgba(0,0,0,0.4)',
-                      bgOpacity: 0.4,
-                      fontFamily: 'heading',
-                      animation: 'karaoke_active',
-                      textTransform: 'uppercase',
-                    },
-                  })
-                );
+                localStorage.setItem('tasvir_editor_current_project', JSON.stringify(projectData));
               }
               router.push('/editor');
             }}

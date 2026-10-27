@@ -712,42 +712,102 @@ export class GenerateVideoService {
     );
   }
 
-  private async generateDramaScenesWithCloudflareAI(
-    cleanPrompt: string,
-    productImageUrl?: string,
-    locale: string = 'uz',
-  ): Promise<DramaScene[]> {
+  private buildViralDramaPrompt(cleanPrompt: string, productImageUrl?: string, locale: string = 'uz'): string {
     const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
+    const sessionNonce = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-    const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
-Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
+    return `[IJODIY SESSIYA ID: #${sessionNonce}]
+Siz Instagram Reels va TikTok platformalari uchun oʻta kuchli, virusli (viral) va millionlab tomoshabinlarni koʻz yoshlariga yoki chuqur hayratga soluvchi professional dramaturg va kinematografsiz.
+
+FOYDALANUVCHI MAVZUSI / GʻOYASI: "${cleanPrompt}".
 ${
   productImageUrl
-    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
-    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
+    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va 5-sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
+    : 'Agar mavzu mahsulotga oid boʻlsa, 5-sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
 }
-VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
-1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
-2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
-3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
-4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
-5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
+
+MUTLAQO YANGI VA BETAKRORLIK QOIDASI:
+Oldingi yaratilgan ssenariylar, iboralar yoki standart shablonlarni ASLO takrorlamang! Ushbu prompt boʻyicha mutlaqo yangi, kutilmagan, chuqur dramatizm va yangicha qahramonlar rakursidan yondashing.
+
+REELS & TIKTOK MAXIMUM RETENTION & EMOTIONAL IMPACT TALABLARI:
+1. ANIQ 5 TA TOʻLIQ VA KUCHLI SAHNA TUZING (scene_number: 1 dan 5 gacha):
+   - 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida muzlatib qoʻyuvchi favqulodda hayajonli, shok, sir yoki taʼsirchan savol bilan ochilsin!
+   - 2-SAHNA: EMOTSIONAL SINOV & KELISHMOVCHILIK (Kuchlanish: 9/10). Qahramonlar duch kelgan ogʻir sinov, kutilmagan toʻsiq, sogʻinch yoki yoʻqotish xavfi.
+   - 3-SAHNA: ENG YUQORI KULMINATSIYA & ZAIF NUQTA (Kuchlanish: 10/10). Hissiyotlar portlashi, koʻz yoshlar, yurakni larzaga soluvchi keskin harakat yoki shafqatsiz haqiqat.
+   - 4-SAHNA: UMID UCHQUNI & MEHRNING KUCHI (Kuchlanish: 9/10). Qutqaruvchi yechim, iliqlik, samimiy mehr, tavba yoki sadoqatning gʻalabasi.
+   - 5-SAHNA: QALBGA MUHRLANUVCHI BUYUK XULOSA / KATARSIS (Kuchlanish: 10/10). Tomoshabinga chuqur hayotiy maʼno, koʻz yoshlar bilan toʻla tasalli yoki unutilmas falsafiy xulosa beruvchi, qayta-qayta tomosha qilishga undovchi buyuk yakun.
+
+2. DIALOG / DIKTOR MATNI (ENG MUHIM):
+   - HAR BIR SAHNADA KAMIDA 25-45 SOʻZDAN IBORAT (2-4 TA TOʻLIQ GAP) OʻTA EMOTSIONAL, CHUQUR VA DETALLI DIKTOR/QAHRAMON NUTQI BOʻLISHI SHART!
+   - Hech qachon 3-8 soʻzli qisqa jumlalar yozmang. Subtitrlar ekranda tinimsiz oʻqilishi kerak.
+   - Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
+
+3. VIZUAL FLUX PROMPT (video_prompt):
+   - Faqat 'video_prompt' maydoni ingliz tilida: "Vertical 9:16 cinematic photorealistic film still, 8k, dramatic lighting, detailed emotional facial expression..."
 
 Javobni qatʼiy ravishda valid JSON formatida qaytaring:
 {
   "scenes": [
     {
       "scene_number": 1,
-      "title": "Viral Hook Sarlavhasi",
-      "emotion": "Yuqori hayajon va shok",
+      "title": "Sahna 1: Kutilmagan Zarba va Sir",
+      "emotion": "Shok, kuchli hayajon va sir",
       "tension_level": 10,
       "duration": 5,
-      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
-      "caption": "Kadr ustidagi sarlavha",
-      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
+      "dialogue": "Oʻsha kuni uning koʻzlarida birinchi marta qoʻrquvni koʻrdim. Hech kim bu sir ochilishini kutmagandi, ammo haqiqat barcha orzularimizni bir lahzada ostin-ustun qilib yubordi.",
+      "caption": "Birinchi 2 soniyadagi shok",
+      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic side lighting, emotional tear in eye, high detail 8k film still"
+    },
+    {
+      "scene_number": 2,
+      "title": "Sahna 2: Jimjitlik va Ogʻir Sinov",
+      "emotion": "Qaygʻu, sogʻinch va azob",
+      "tension_level": 9,
+      "duration": 5,
+      "dialogue": "Xonadagi sukunat quloqlarni qomatga keltirardi. Yillar davomida toʻplangan mehr bir tomchi koʻz yoshi bilan birga erib borar, najot esa hech qayerdan koʻrinmasdi.",
+      "caption": "Ayriliq va sukunat",
+      "video_prompt": "Vertical 9:16 cinematic medium shot, cold blue shadows, melancholic atmosphere, photorealistic film still"
+    },
+    {
+      "scene_number": 3,
+      "title": "Sahna 3: Hissiyotlar Portlashi",
+      "emotion": "Keskin umidsizlik va faryod",
+      "tension_level": 10,
+      "duration": 5,
+      "dialogue": "Ketma, iltimos, mendan yuz oʻgirma! Hamma narsamni yoʻqotishim mumkin, ammo sening mehringdan ayrilish — bu butun dunyom barbod boʻlishi demakdir!",
+      "caption": "Yurakdagi faryod",
+      "video_prompt": "Vertical 9:16 intense cinematic extreme close-up, trembling hands, rain on window, dramatic rim lighting"
+    },
+    {
+      "scene_number": 4,
+      "title": "Sahna 4: Bir Chimdim Mehr Uchquni",
+      "emotion": "Iliqlik, tavba va qutqaruv",
+      "tension_level": 9,
+      "duration": 5,
+      "dialogue": "Qorongʻulik qanchalik quyuq boʻlmasin, bitta samimiy nigoh hammasini oʻzgartira oladi. U qoʻlimdan mahkam tutdi va barcha ogʻriqlar bir zumda chekindi.",
+      "caption": "Mehrning qaytishi",
+      "video_prompt": "Vertical 9:16 cinematic warm lighting, golden hour glow, touching hands, genuine smile, 8k"
+    },
+    {
+      "scene_number": 5,
+      "title": "Sahna 5: Abadiy Muhrlangan Baxt",
+      "emotion": "Katarsis, cheksiz mehr va xotirjamlik",
+      "tension_level": 10,
+      "duration": 5,
+      "dialogue": "Endi tushundim: eng qimmatli narsa bu boylik emas, har kuni ertalab seni mehr bilan kutib oladigan insonning borligidir. Bu tuygʻuni asrang, u hech qachon eskirmaydi.",
+      "caption": "Unutilmas buyuk xulosa",
+      "video_prompt": "Vertical 9:16 cinematic epic finale, warm sunset rays, peaceful harmony, emotional slow camera push-in"
     }
   ]
 }`;
+  }
+
+  private async generateDramaScenesWithCloudflareAI(
+    cleanPrompt: string,
+    productImageUrl?: string,
+    locale: string = 'uz',
+  ): Promise<DramaScene[]> {
+    const promptText = this.buildViralDramaPrompt(cleanPrompt, productImageUrl, locale);
 
     const content = await this.cloudflareWorkersAiService.generateText(
       promptText,
@@ -779,37 +839,7 @@ Javobni qatʼiy ravishda valid JSON formatida qaytaring:
     locale: string = 'uz',
   ): Promise<DramaScene[]> {
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
-
-    const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
-Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
-${
-  productImageUrl
-    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
-    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
-}
-VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
-1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
-2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
-3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
-4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
-5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
-
-Generate 5 to 7 scenes. Return strictly valid JSON:
-{
-  "scenes": [
-    {
-      "scene_number": 1,
-      "title": "Viral Hook Sarlavhasi",
-      "emotion": "Yuqori hayajon va shok",
-      "tension_level": 10,
-      "duration": 5,
-      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
-      "caption": "Kadr ustidagi sarlavha",
-      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
-    }
-  ]
-}`;
+    const promptText = this.buildViralDramaPrompt(cleanPrompt, productImageUrl, locale);
 
     const userContent: any[] = [{ type: 'text', text: promptText }];
 
@@ -831,7 +861,8 @@ Generate 5 to 7 scenes. Return strictly valid JSON:
       },
       body: JSON.stringify({
         model,
-        temperature: 0.8, 
+        temperature: 0.9,
+        seed: Math.floor(Math.random() * 2147483647),
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: AI_STORY_CINEMATIC_DIRECTOR_SYSTEM_PROMPT },
@@ -880,42 +911,12 @@ Generate 5 to 7 scenes. Return strictly valid JSON:
     productImageUrl?: string,
     locale: string = 'uz',
   ): Promise<DramaScene[]> {
-    const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
-
     this.logger.log(
       `Invoking Gemini LLM for Drama Framing Engine on "${cleanPrompt}" (Lang: ${locale}, Product Image: ${productImageUrl ? 'YES' : 'NO'})`,
     );
 
     try {
-      const promptText = `Siz Instagram Reels va TikTok platformalari uchun viral video ssenariylar ustasisiz.
-Mavzu boʻyicha yuqori emotsional video sahnalar loyihasini yarating: "${cleanPrompt}".
-${
-  productImageUrl
-    ? 'Foydalanuvchi mahsulot fotosuratini taqdim etgan. Mahsulot shakli, rangi va qadogʻini hikoyada organik saqlang va yakuniy sahnani yuqori darajadagi premium tijoriy reklama (Commercial Product Finale) bilan yakunlang.'
-    : 'Agar mavzu mahsulotga oid boʻlsa, oxirgi sahnani estetik tijoriy reklama studiyasi bilan yakunlang.'
-}
-VIRAL REELS VA TIKTOK RETENTION QOIDALARI:
-1. 1-SAHNA: VIRAL HOOK (Kuchlanish: 10/10). Tasodifiy skroll qilayotgan tomoshabinni birinchi 2 soniyadayoq ekran qarshisida qotirib qoʻyuvchi favqulodda hayajonli, shok yoki sirli ochilish boʻlishi SHART!
-2. HAR BIR SAHNADA KAMIDA 15-25 SOʻZDAN IBORAT TOʻLIQ OVOZLI DIALOG/DIKTOR MATNI BOʻLISHI SHART! Hech qachon 2-3 ta soʻz yoki sahna sarlavhasini qaytarmang. Subtitrlar ekranda doimiy harakatda oʻqilishi uchun toʻliq gaplar yozing.
-3. KUCHLANISH DARAJASI (tension_level): 1-sahna uchun 10/10, qolgan sahnalar uchun 8/10 dan 10/10 gacha boʻlsin.
-4. Barcha insoniy matnlar (title, dialogue, caption, emotion) 100% ${targetLang} tilida yozilsin.
-5. Faqat 'video_prompt' (vizual tasvir prompti) ingliz tilida boʻlsin ("Vertical 9:16 cinematic film still...").
-
-Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences:
-{
-  "scenes": [
-    {
-      "scene_number": 1,
-      "title": "Viral Hook Sarlavhasi",
-      "emotion": "Yuqori hayajon va shok",
-      "tension_level": 10,
-      "duration": 5,
-      "dialogue": "Kamida 15-25 soʻzdan iborat taʼsirchan, emotsional va qiziqarli ovozli dialog...",
-      "caption": "Kadr ustidagi sarlavha",
-      "video_prompt": "Vertical 9:16 cinematic close-up, dramatic lighting, 8k..."
-    }
-  ]
-}`;
+      const promptText = this.buildViralDramaPrompt(cleanPrompt, productImageUrl, locale);
 
       const parts: any[] = [
         {
@@ -943,7 +944,7 @@ Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences
           contents: parts,
           config: {
             responseMimeType: 'application/json',
-            temperature: 0.8,
+            temperature: 0.9,
           },
         });
       } catch (geminiModelErr: any) {
@@ -953,7 +954,7 @@ Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences
           contents: parts,
           config: {
             responseMimeType: 'application/json',
-            temperature: 0.8,
+            temperature: 0.9,
           },
         });
       }
@@ -987,8 +988,75 @@ Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences
       throw new Error('LLM javobidan kamida 2 ta sahna ajratib boʻlmadi');
     }
 
-    const validatedScenes: DramaScene[] = rawScenes.map((s: any, idx: number) => {
-      const rawDuration = Number(s.duration_seconds || s.durationSeconds) || 5;
+    const scenesToProcess = [...rawScenes];
+
+    if (scenesToProcess.length === 2) {
+      scenesToProcess.splice(1, 0, {
+        scene_number: 2,
+        title: 'Sahna 2: Keskin Hissiy Sinov',
+        emotion: 'Iztirob va kurash',
+        tension_level: 9,
+        duration: 5,
+        dialogue: `Har bir soniya keskin sinovga aylangandi. ${cleanPrompt.slice(0, 45)} qarshisida yurakdagi qoʻrquv va samimiy umid bir-biri bilan murosasiz toʻqnashar, taslim boʻlishga esa hech kimning haqqi yoʻq edi.`,
+        caption: 'Ogʻir sinov lahzasi',
+        video_prompt: 'Vertical 9:16 cinematic medium close-up, dramatic cold shadows, deep emotion in eyes, photorealistic 8k',
+      });
+      scenesToProcess.splice(2, 0, {
+        scene_number: 3,
+        title: 'Sahna 3: Hissiyotlar Kulminatsiyasi',
+        emotion: 'Koʻz yoshlar va faryod',
+        tension_level: 10,
+        duration: 5,
+        dialogue: `Koʻz yoshlarimni toʻxtatolmadim, chunki barcha umidlar soʻngan lahzada qalbimda birgina narsa qolgan edi — bu bizni bogʻlab turgan cheksiz mehr va sadoqat edi!`,
+        caption: 'Hissiyotlar portlashi',
+        video_prompt: 'Vertical 9:16 cinematic intense extreme close-up, tears glistening under atmospheric lighting, photorealistic 8k',
+      });
+      scenesToProcess.push({
+        scene_number: 5,
+        title: 'Sahna 5: Buyuk Mehr Tantanasi',
+        emotion: 'Katarsis va unutilmas xotira',
+        tension_level: 10,
+        duration: 5,
+        dialogue: `Endi bildim: eng qimmatli narsa bu vaqtinchalik narsalar emas, har tong seni mehr bilan kutib oluvchi aziz insoningdir. Bu tuygʻuni eʼzozlang, chunki haqiqiy mehr abadiydir.`,
+        caption: 'Unutilmas xulosa',
+        video_prompt: 'Vertical 9:16 cinematic golden hour finale, warm lens flare, peaceful smile, epic slow camera push-in',
+      });
+    } else if (scenesToProcess.length === 3) {
+      scenesToProcess.splice(2, 0, {
+        scene_number: 3,
+        title: 'Sahna 3: Hissiyotlar Kulminatsiyasi',
+        emotion: 'Hissiyotlar choʻqqisi va koʻz yoshlar',
+        tension_level: 10,
+        duration: 5,
+        dialogue: `Hammasi barbod boʻldi deganimda, yurakdagi sadoqat va mehr har qanday qorongʻulikdan ustun keldi. Bu lahza hayotimizning eng muhim burilish nuqtasi boʻldi!`,
+        caption: 'Burilish nuqtasi',
+        video_prompt: 'Vertical 9:16 intense cinematic extreme close-up, emotional facial expressions, dramatic rim lighting, 8k',
+      });
+      scenesToProcess.splice(3, 0, {
+        scene_number: 4,
+        title: 'Sahna 4: Qutqaruvchi Mehr Uchquni',
+        emotion: 'Iliqlik va najot',
+        tension_level: 9,
+        duration: 5,
+        dialogue: `Qorongʻulik chekindi, bitta samimiy tabassum barcha dardlarni yuvib ketdi. Mehr bor joyda har doim najot va yangi hayot boshlanadi.`,
+        caption: 'Iliqlik va najot',
+        video_prompt: 'Vertical 9:16 cinematic warm golden glow, touching hands, genuine relief, photorealistic film still',
+      });
+    } else if (scenesToProcess.length === 4) {
+      scenesToProcess.splice(2, 0, {
+        scene_number: 3,
+        title: 'Sahna 3: Zaif Nuqta va Hissiyotlar Choʻqqisi',
+        emotion: 'Kulminatsiya va kuchli hissiyot',
+        tension_level: 10,
+        duration: 5,
+        dialogue: `Hech narsa oʻz-oʻzidan boʻlmaydi. Yillar davomida asragan orzularimiz sinovdan oʻtayotgan oʻsha lahzada chinakam sadoqat har qanday qiyinchilikdan ustun chiqdi!`,
+        caption: 'Hissiyotlar choʻqqisi',
+        video_prompt: 'Vertical 9:16 cinematic dramatic close-up, intense eye contact, shallow depth of field, photorealistic 8k',
+      });
+    }
+
+    const validatedScenes: DramaScene[] = scenesToProcess.map((s: any, idx: number) => {
+      const rawDuration = Number(s.duration_seconds || s.durationSeconds || s.duration) || 5;
       const duration = Math.max(4, Math.min(rawDuration, 8));
 
       let dialogue = '';
@@ -1016,18 +1084,19 @@ Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences
       }
 
       const wordCount = dialogue.trim().split(/\s+/).filter(Boolean).length;
-      if (wordCount < 6 || dialogue.trim().toLowerCase() === (s.title || '').trim().toLowerCase()) {
-        const topicWords = cleanPrompt.split(/\s+/).filter(Boolean).slice(0, 4).join(' ');
+      if (wordCount < 18 || dialogue.trim().toLowerCase() === (s.title || '').trim().toLowerCase()) {
+        const topic = cleanPrompt.slice(0, 50);
+        const titleText = (s.title || s.actTitle || `Sahna ${idx + 1}`).replace(/^\d+[-_.:\s]*/, '');
         if (idx === 0) {
-          dialogue = `Bunga hech kim ishonmagan edi... Ammo aynan shu lahzada ${topicWords} butun hayotimizni oʻzgartirib yubordi!`;
+          dialogue = `Oʻsha kuni uning koʻzlarida avval hech qachon koʻrmagan kuchli hayajonni his qildim. ${topic} boʻyicha ochilgan bu kutilmagan haqiqat butun hayotimizni bir lahzada oʻzgartirib yuborishini hech kim kutmagan edi!`;
         } else if (idx === 1) {
-          dialogue = `Har bir soniya keskin sinov edi. Yurakdagi qoʻrquv va mehr bir-biri bilan tinimsiz kurashardi.`;
+          dialogue = `Xonadagi ogʻir sukunat va sovuq nafas yurakni larzaga solardi. ${titleText} qarshisida chorasiz qolganimizda, yillar davomida toʻplangan mehr va sabr oʻzining eng ogʻir sinoviga duch keldi.`;
         } else if (idx === 2) {
-          dialogue = `Hammasi tugadi deganimda, haqiqiy moʻjiza yuz berdi. Tanlov faqat oʻz qoʻlimizda edi!`;
-        } else if (idx === rawScenes.length - 1) {
-          dialogue = `Eng qimmatli xotiralar — eng samimiy mehrdan boshlanadi. ${topicWords} bilan yangi hayotga qadam qoʻying!`;
+          dialogue = `Ketma, iltimos, mendan yuz oʻgirma! Hamma narsamni yoʻqotishim mumkin, ammo sening mehringdan ayrilish — bu butun borligʻim barbod boʻlishi demakdir!`;
+        } else if (idx === scenesToProcess.length - 1) {
+          dialogue = `Endi bildim: eng qimmatli xazina boylik emas, har tong seni mehr bilan kutib oladigan samimiy insonning borligidir. ${topic} orqali qalbimizda qolgan bu iliqlik abadiy yashaydi.`;
         } else {
-          dialogue = `Har bir nigohda umid, har bir harakatda samimiyat bor edi. Bu lahzalarni hech qachon unutib boʻlmaydi.`;
+          dialogue = `Qorongʻulik qanchalik quyuq boʻlmasin, bitta samimiy nigoh va issiq qoʻl tafti barcha ogʻriqlarni yuvib ketdi. Mehr nuri har qanday toʻsiqni yengib oʻtishga qodir edi.`;
         }
       }
 
@@ -1037,7 +1106,7 @@ Generate 5 to 7 scenes. Respond strictly with valid JSON without markdown fences
         cinematicPrompt = `Vertical 9:16 cinematic scene. ${s.action || cleanPrompt}. ${cameraDetails} ${s.lighting || ''}`.trim();
       }
 
-      const caption = s.purpose || s.caption || s.action || dialogue;
+      const caption = s.purpose || s.caption || s.action || dialogue.slice(0, 45);
       const rawTension = Number(s.tensionLevel || s.tension_level);
       const tensionLevel = idx === 0
         ? 10

@@ -47,8 +47,17 @@ export class CloudflareWorkersAiService {
     }
     messages.push({ role: 'user', content: prompt });
 
+    const randomSeed = Math.floor(Math.random() * 2147483647);
+    const inputPayload = {
+      messages,
+      max_tokens: 3500,
+      temperature: 0.9,
+      top_p: 0.95,
+      seed: randomSeed,
+    };
+
     try {
-      const res: any = await this.run(preferredModel, { messages, max_tokens: 2000 });
+      const res: any = await this.run(preferredModel, inputPayload);
       if (res?.success !== false && !res?.errors?.length) {
         const text = res?.result?.response || res?.result?.choices?.[0]?.message?.content;
         if (text) return text;
@@ -58,7 +67,7 @@ export class CloudflareWorkersAiService {
       this.logger.warn(`Model ${preferredModel} failed: ${err.message}. Falling back to ${fallbackModel}`);
     }
 
-    const fallbackRes: any = await this.run(fallbackModel, { messages, max_tokens: 2000 });
+    const fallbackRes: any = await this.run(fallbackModel, inputPayload);
     const text = fallbackRes?.result?.response || fallbackRes?.result?.choices?.[0]?.message?.content;
     if (!text) {
       throw new Error(`Cloudflare AI text generation failed: ${JSON.stringify(fallbackRes?.errors || fallbackRes)}`);

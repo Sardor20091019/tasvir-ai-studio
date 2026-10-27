@@ -17,7 +17,32 @@ import {
 import { useEditor } from '../../context/EditorContext';
 import { TimelineClip } from '../../types';
 
-export function PreviewPlayer() {
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  return (
+    clean.endsWith('.png') ||
+    clean.endsWith('.jpg') ||
+    clean.endsWith('.jpeg') ||
+    clean.endsWith('.webp') ||
+    clean.endsWith('.gif') ||
+    clean.endsWith('.svg') ||
+    clean.endsWith('.avif') ||
+    url.includes('images.unsplash.com') ||
+    url.includes('cdn.midjourney.com')
+  );
+}
+
+function normalizeUrl(url: string): string {
+  try {
+    return new URL(url, window.location.href).href;
+  } catch {
+    return url;
+  }
+}
+
+export function PreviewPlayer(): React.ReactElement {
   const {
     tracks,
     currentTime,
@@ -90,19 +115,21 @@ export function PreviewPlayer() {
     return result;
   }, [tracks, currentTime]);
 
-  // Video element sync with playhead
+  const isImg = activeVideoClip ? isImageUrl(activeVideoClip.sourceUrl) : false;
+
   useEffect(() => {
     const vid = videoElementRef.current;
     if (!vid) return;
 
-    if (activeVideoClip && activeVideoClip.sourceUrl) {
-      if (vid.src !== activeVideoClip.sourceUrl) {
+    if (activeVideoClip && activeVideoClip.sourceUrl && !isImg) {
+      const normalized = normalizeUrl(activeVideoClip.sourceUrl);
+      if (vid.src !== normalized) {
         vid.src = activeVideoClip.sourceUrl;
       }
       const clipOffset =
         currentTime - activeVideoClip.startSec + (activeVideoClip.trimStartSec || 0);
       if (Math.abs(vid.currentTime - clipOffset) > 0.3) {
-        vid.currentTime = clipOffset;
+        vid.currentTime = Math.max(0, clipOffset);
       }
       vid.playbackRate = activeVideoClip.speed || 1.0;
       vid.volume = isMuted ? 0 : (activeVideoClip.volume ?? 1.0) * volume;
@@ -115,22 +142,22 @@ export function PreviewPlayer() {
     } else {
       if (!vid.paused) vid.pause();
     }
-  }, [activeVideoClip, currentTime, isPlaying, volume, isMuted]);
+  }, [activeVideoClip, currentTime, isPlaying, volume, isMuted, isImg]);
 
-  // Audio element sync for background audio / SFX
   useEffect(() => {
     const aud = audioElementRef.current;
     if (!aud) return;
 
     const bgmClip = activeAudioClips[0];
     if (bgmClip && bgmClip.sourceUrl) {
-      if (aud.src !== bgmClip.sourceUrl) {
+      const normalized = normalizeUrl(bgmClip.sourceUrl);
+      if (aud.src !== normalized) {
         aud.src = bgmClip.sourceUrl;
       }
       const offset =
         currentTime - bgmClip.startSec + (bgmClip.trimStartSec || 0);
       if (Math.abs(aud.currentTime - offset) > 0.3) {
-        aud.currentTime = offset;
+        aud.currentTime = Math.max(0, offset);
       }
       aud.volume = isMuted ? 0 : (bgmClip.volume ?? 1.0) * volume;
 
@@ -144,7 +171,6 @@ export function PreviewPlayer() {
     }
   }, [activeAudioClips, currentTime, isPlaying, volume, isMuted]);
 
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -154,8 +180,7 @@ export function PreviewPlayer() {
     }
   };
 
-  // Timecode formatting helper: MM:SS:FF
-  const formatTimecode = (sec: number) => {
+  const formatTimecode = (sec: number): string => {
     const s = Math.max(0, sec || 0);
     const m = Math.floor(s / 60);
     const remainingS = Math.floor(s % 60);
@@ -163,10 +188,9 @@ export function PreviewPlayer() {
     return `${String(m).padStart(2, '0')}:${String(remainingS).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
   };
 
-  // Aspect ratio class with dynamic viewport scaling on mobile
   const aspectClass =
     aspectRatio === '9:16'
-      ? 'aspect-[9/16] max-h-[35vh] sm:max-h-[44vh] lg:max-h-[520px]'
+      ? 'aspect-[9/16] max-h-[36vh] sm:max-h-[46vh] lg:max-h-[500px]'
       : aspectRatio === '16:9'
       ? 'aspect-video max-h-[30vh] sm:max-h-[38vh] lg:max-h-[440px]'
       : 'aspect-square max-h-[32vh] sm:max-h-[40vh] lg:max-h-[460px]';
@@ -174,52 +198,52 @@ export function PreviewPlayer() {
   return (
     <div
       ref={containerRef}
-      className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 bg-obsidian-card/40 relative select-none overflow-hidden min-h-0"
+      className="flex-1 flex flex-col items-center justify-center p-2 sm:p-3 bg-obsidian-card/40 relative select-none overflow-hidden min-h-0"
     >
-      {/* ── STAGE / CANVAS SCREEN ── */}
-      <div
-        className={`relative ${aspectClass} w-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group shrink-0`}
-      >
-        {/* Active Video Stream */}
-        {activeVideoClip ? (
-          activeVideoClip.sourceUrl.endsWith('.png') ||
-          activeVideoClip.sourceUrl.endsWith('.jpg') ||
-          activeVideoClip.sourceUrl.endsWith('.jpeg') ||
-          activeVideoClip.sourceUrl.includes('images.unsplash.com') ? (
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center p-1">
+        <div
+          className={`relative ${aspectClass} h-full max-h-full w-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-stroke/80 flex items-center justify-center group`}
+        >
+          <video
+            ref={videoElementRef}
+            className={`w-full h-full object-cover ${activeVideoClip && !isImg ? 'block' : 'hidden'}`}
+            style={{
+              filter: activeFilter.cssFilter,
+              opacity: activeVideoClip?.opacity ?? 1,
+            }}
+            playsInline
+            muted={isMuted}
+            onLoadedMetadata={(e) => {
+              if (activeVideoClip) {
+                const offset = currentTime - activeVideoClip.startSec + (activeVideoClip.trimStartSec || 0);
+                e.currentTarget.currentTime = Math.max(0, offset);
+              }
+            }}
+          />
+
+          {activeVideoClip && isImg && (
             <img
               src={activeVideoClip.sourceUrl}
-              alt="Preview"
-              className="w-full h-full object-cover"
+              alt={activeVideoClip.title || 'Preview'}
+              className="w-full h-full object-cover select-none"
               style={{
                 filter: activeFilter.cssFilter,
                 opacity: activeVideoClip.opacity ?? 1,
               }}
             />
-          ) : (
-            <video
-              ref={videoElementRef}
-              src={activeVideoClip.sourceUrl}
-              className="w-full h-full object-cover"
-              style={{
-                filter: activeFilter.cssFilter,
-                opacity: activeVideoClip.opacity ?? 1,
-              }}
-              playsInline
-              muted={isMuted}
-            />
-          )
-        ) : (
-          <div className="text-center p-6 text-ink-dim">
-            <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30 text-accent-warm" />
-            <p className="text-xs font-mono font-medium">Klip mavjud emas</p>
-            <p className="text-[10px] text-ink-muted mt-1">
-              Chap paneldan video yoki rasm qoʻshing
-            </p>
-          </div>
-        )}
+          )}
 
-        {/* Hidden Audio Element for BGM / SFX */}
-        <audio ref={audioElementRef} />
+          {!activeVideoClip && (
+            <div className="text-center p-6 text-ink-dim">
+              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30 text-accent-warm" />
+              <p className="text-xs font-mono font-medium">Klip mavjud emas</p>
+              <p className="text-[10px] text-ink-muted mt-1">
+                Chap paneldan video yoki rasm qoʻshing
+              </p>
+            </div>
+          )}
+
+          <audio ref={audioElementRef} />
 
         {/* Overlay Stickers / Effects */}
         {activeEffectClips.map((eff) => (
@@ -321,6 +345,7 @@ export function PreviewPlayer() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* ── TRANSPORT CONTROLS BAR ── */}

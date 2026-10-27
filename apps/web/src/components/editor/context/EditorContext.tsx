@@ -12,6 +12,23 @@ import {
 import { FILTER_PRESETS, TEXT_PRESETS } from '../constants/stockAssets';
 import { VideoEditorProject, SubtitleCue, LocaleType } from '../../../types';
 
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  return (
+    clean.endsWith('.png') ||
+    clean.endsWith('.jpg') ||
+    clean.endsWith('.jpeg') ||
+    clean.endsWith('.webp') ||
+    clean.endsWith('.gif') ||
+    clean.endsWith('.svg') ||
+    clean.endsWith('.avif') ||
+    url.includes('images.unsplash.com') ||
+    url.includes('cdn.midjourney.com')
+  );
+}
+
 interface EditorContextType {
   // State
   title: string;
@@ -181,9 +198,25 @@ export function EditorProvider({
     seek(currentTime + dt);
   }, [currentTime, seek]);
 
-  const play = useCallback(() => setIsPlaying(true), []);
-  const pause = useCallback(() => setIsPlaying(false), []);
-  const togglePlay = useCallback(() => setIsPlaying((p) => !p), []);
+  const play = useCallback((): void => {
+    if (currentTime >= duration - 0.05) {
+      setCurrentTime(0);
+    }
+    setIsPlaying(true);
+  }, [currentTime, duration]);
+
+  const pause = useCallback((): void => {
+    setIsPlaying(false);
+  }, []);
+
+  const togglePlay = useCallback((): void => {
+    setIsPlaying((p) => {
+      if (!p && currentTime >= duration - 0.05) {
+        setCurrentTime(0);
+      }
+      return !p;
+    });
+  }, [currentTime, duration]);
 
   // Frame ticking loop when playing
   useEffect(() => {
@@ -486,7 +519,7 @@ export function EditorProvider({
   }, [togglePlay, splitClipAtPlayhead, removeClip, selectedClipId, undo, redo, stepFrame]);
 
   // Load project from AI-generated video job / existing VideoEditorProject
-  const loadProjectFromGenerated = useCallback((proj: VideoEditorProject) => {
+  const loadProjectFromGenerated = useCallback((proj: VideoEditorProject): void => {
     if (!proj) return;
     setTitle(proj.title || 'AI Yaratgan Video');
 
@@ -496,6 +529,10 @@ export function EditorProvider({
     if (proj.scenes && proj.scenes.length > 0) {
       proj.scenes.forEach((scene, idx) => {
         const sceneDur = scene.durationSeconds || 5;
+        const isIndividual = Boolean(scene.clipVideoUrl);
+        const source = scene.clipVideoUrl || proj.videoUrl || scene.imageUrl || '';
+        const isMaster = !isIndividual && Boolean(proj.videoUrl);
+
         videoClips.push({
           id: `clip-scene-${idx}-${Date.now()}`,
           trackId: 'track-video',
@@ -503,10 +540,10 @@ export function EditorProvider({
           title: scene.actTitle || `Sahna ${idx + 1}`,
           startSec: currentClipStart,
           durationSec: sceneDur,
-          trimStartSec: 0,
-          trimEndSec: sceneDur,
-          sourceUrl: scene.clipVideoUrl || proj.videoUrl,
-          thumbnailUrl: undefined,
+          trimStartSec: isMaster ? currentClipStart : 0,
+          trimEndSec: isMaster ? currentClipStart + sceneDur : sceneDur,
+          sourceUrl: source,
+          thumbnailUrl: scene.imageUrl || (isImageUrl(source) ? source : undefined),
           speed: 1.0,
           volume: 1.0,
           colorFilter: 'none',
@@ -524,6 +561,7 @@ export function EditorProvider({
         trimStartSec: 0,
         trimEndSec: proj.duration || 15,
         sourceUrl: proj.videoUrl,
+        thumbnailUrl: isImageUrl(proj.videoUrl) ? proj.videoUrl : undefined,
         speed: 1.0,
         volume: 1.0,
         colorFilter: 'none',
@@ -603,7 +641,7 @@ export function EditorProvider({
 
   // Preload initialProject if provided
   useEffect(() => {
-    if (initialProject && initialProject.videoUrl) {
+    if (initialProject && (initialProject.videoUrl || (initialProject.scenes && initialProject.scenes.length > 0))) {
       loadProjectFromGenerated(initialProject);
     }
   }, [initialProject, loadProjectFromGenerated]);
