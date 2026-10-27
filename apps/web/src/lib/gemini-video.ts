@@ -27,7 +27,7 @@ export async function generateDramaScenesWithGemini(
   dramaLevel = 'high_tension',
   productImageUrl?: string,
 ): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
-  const cleanPrompt = (userPrompt || 'Mahsulot dramatik reklamasi')
+  const cleanPrompt = (userPrompt || 'Mahsulot  reklamasi')
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/[<>{}\\]/g, '')
     .trim()
@@ -143,16 +143,16 @@ Respond ONLY with valid JSON in this exact structure:
               return {
                 sceneIndex: idx + 1,
                 actTitle: s.actTitle || `${idx + 1}-Sahna`,
-                emotion: s.emotion || 'Dramatik keskinlik',
+                emotion: s.emotion || ' keskinlik',
                 tensionLevel: Math.max(1, Math.min(Number(s.tensionLevel) || 8, 10)),
                 durationSeconds: duration,
                 cinematicPrompt: s.cinematicPrompt || `Vertical 9:16 cinematic scene for ${cleanPrompt}`,
-                dialogueScript: s.dialogueScript || 'Dramatik sahna',
+                dialogueScript: s.dialogueScript || ' sahna',
                 caption: s.caption || s.dialogueScript || '',
                 karaokeSubtitles:
                   Array.isArray(s.karaokeSubtitles) && s.karaokeSubtitles.length > 0
                     ? s.karaokeSubtitles
-                    : generateFallbackKaraoke(s.dialogueScript || 'Dramatik sahna', duration),
+                    : generateFallbackKaraoke(s.dialogueScript || ' sahna', duration),
               };
             });
 
@@ -180,7 +180,7 @@ Respond ONLY with valid JSON in this exact structure:
       emotion: 'Koʻz yoshlar va keskin inkor',
       tensionLevel: 8,
       durationSeconds: 5,
-      cinematicPrompt: `Vertical 9:16 cinematic close-up, tears in eyes, intense dramatic lighting, emotional tension, focusing on ${topic}`,
+      cinematicPrompt: `Vertical 9:16 cinematic close-up, tears in eyes, intense lighting, emotional tension, focusing on ${topic}`,
       dialogueScript: `Bunga hech kim ishonmagan edi... Ammo ${topic} butun hayotimni oʻzgartirib yubordi!`,
       caption: `Bunga hech kim ishonmagan edi... Ammo ${topic} butun hayotimni oʻzgartirib yubordi!`,
       karaokeSubtitles: generateFallbackKaraoke(
@@ -194,7 +194,7 @@ Respond ONLY with valid JSON in this exact structure:
       emotion: 'Yurakni larzaga soluvchi sinov',
       tensionLevel: 10,
       durationSeconds: 6,
-      cinematicPrompt: `Vertical 9:16 ultra dramatic camera zoom, high tension, cinematic tears, movie masterpiece for ${topic}`,
+      cinematicPrompt: `Vertical 9:16 ultra  camera zoom, high tension, cinematic tears, movie masterpiece for ${topic}`,
       dialogueScript: 'Hammasi tugadi deganimda, haqiqiy moʻjiza yuz berdi. Tanlov faqat oʻz qoʻlimda edi!',
       caption: 'Hammasi tugadi deganimda, haqiqiy moʻjiza yuz berdi. Tanlov faqat oʻz qoʻlimda edi!',
       karaokeSubtitles: generateFallbackKaraoke(
@@ -285,7 +285,7 @@ export async function createDramaVideoJob(params: {
          ) VALUES (
            '0fe7c7a7-d80b-496c-93a5-5163395c944e',
            'b6166aff-d6e9-45b3-863f-6b37c4aa603f',
-           'dramatic',
+           'regular',
            $1,
            'processing',
            20,
@@ -303,7 +303,7 @@ export async function createDramaVideoJob(params: {
     jobId,
     status: 'queued',
     progress: 15,
-    message: 'Google Veo 3.1 dramatik video generatsiyasi boshlandi',
+    message: 'Google Veo 3.1 video generatsiyasi boshlandi',
     model: 'veo-3.1-lite-generate',
   };
 }
@@ -328,7 +328,7 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
       bgMusicTrack: job.bgMusicTrack,
       status: 'framing_drama_scenes',
       progress: 25,
-      currentStepMessage: 'Google Veo 3.1 va dramatik sahnalar loyihasi tayyorlanmoqda...',
+      currentStepMessage: 'Google Veo 3.1 va  sahnalar loyihasi tayyorlanmoqda...',
       scenes: job.scenes,
       totalDurationSeconds: job.totalDurationSeconds,
       karaokeTimeline: job.karaokeTimeline,
@@ -383,7 +383,7 @@ export async function getDramaVideoJob(jobId: string): Promise<DramaVideoJob | n
     bgMusicTrack: job.bgMusicTrack,
     status: 'completed',
     progress: 100,
-    currentStepMessage: 'Google Veo 3.1 dramatik video roligi muvaffaqiyatli tayyorlandi!',
+    currentStepMessage: 'Google Veo 3.1 video roligi muvaffaqiyatli tayyorlandi!',
     scenes: job.scenes,
     totalDurationSeconds: job.totalDurationSeconds,
     karaokeTimeline: job.karaokeTimeline,

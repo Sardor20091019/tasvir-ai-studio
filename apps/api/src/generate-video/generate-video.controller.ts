@@ -37,6 +37,7 @@ export class GenerateVideoController {
       productImageUrl?: string;
       imageUrl?: string;
       dramaLevel?: string;
+      locale?: string;
     },
   ) {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
@@ -60,6 +61,7 @@ export class GenerateVideoController {
       prompt,
       productImageUrl: body.productImageUrl || body.imageUrl,
       dramaLevel: body.dramaLevel,
+      locale: body.locale,
     });
   }
 
@@ -78,6 +80,7 @@ export class GenerateVideoController {
       resolution?: string;
       includeBackgroundMusic?: boolean;
       dramaLevel?: string;
+      locale?: string;
     },
   ) {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
@@ -98,6 +101,7 @@ export class GenerateVideoController {
     }
 
     return this.generateVideoService.startGeneration({
+      userId: currentUserId,
       prompt,
       productImageUrl: body.productImageUrl || body.imageUrl,
       scenes: body.scenes,
@@ -105,6 +109,7 @@ export class GenerateVideoController {
       resolution: body.resolution,
       includeBackgroundMusic: body.includeBackgroundMusic,
       dramaLevel: body.dramaLevel,
+      locale: body.locale,
     });
   }
 

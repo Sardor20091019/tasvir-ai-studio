@@ -52,7 +52,7 @@ export type ProductUpdate = Updateable<ProductsTable>;
 export interface VideoJobsTable {
   id: Generated<string>;
   user_id: string;
-  product_id: string;
+  product_id?: string | null;
   avatar_id?: string | null;
   platform_preset: Generated<string>;
   script_tone: Generated<string>;

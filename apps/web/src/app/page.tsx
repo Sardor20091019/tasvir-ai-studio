@@ -728,6 +728,10 @@ export default function HomePage() {
             }
             initialImage={selectedTemplate?.imageUrl}
             onRequireAuth={() => setIsAuthOpen(true)}
+            onOpenCheckout={() => setIsCheckoutOpen(true)}
+            onCreditsUpdated={(newBalance) => {
+              setUser((prev) => (prev ? { ...prev, credits_balance: newBalance } : prev));
+            }}
             onJobStarted={handleJobStarted}
             onEditInCapCut={(proj) => {
               setCurrentEditorProject(proj);

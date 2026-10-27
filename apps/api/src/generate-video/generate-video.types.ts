@@ -24,6 +24,8 @@ export interface DramaScene {
 
 export interface DramaVideoGenerationJob {
   jobId: string;
+  userId?: string;
+  dbJobId?: string;
   prompt: string;
   productImageUrl?: string;
   imageUrl?: string;
@@ -47,6 +49,7 @@ export interface DramaVideoGenerationJob {
   currentStepMessage: string;
   scenes: DramaScene[];
   totalDurationSeconds: number;
+  locale?: string;
   karaokeTimeline?: KaraokeWord[];
   videoUrl?: string;
   downloadUrl?: string;

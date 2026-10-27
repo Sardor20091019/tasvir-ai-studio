@@ -566,6 +566,7 @@ export const api = {
     productImageUrl?: string;
     imageUrl?: string;
     dramaLevel?: string;
+    locale?: string;
   }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const res = await fetch(`${API_BASE}/generate-video/plan-scenes`, {
       method: 'POST',
@@ -596,7 +597,8 @@ export const api = {
     resolution?: string;
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
-  }): Promise<{ jobId: string; status: string; progress: number; message: string; model?: string }> {
+    locale?: string;
+  }): Promise<{ jobId: string; status: string; progress: number; message: string; model?: string; remainingCredits?: number }> {
     const res = await fetch(`${API_BASE}/generate-video`, {
       method: 'POST',
       headers: {

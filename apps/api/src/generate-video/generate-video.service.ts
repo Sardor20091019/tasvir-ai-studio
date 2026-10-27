@@ -1,9 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
+import { sql } from 'kysely';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { KyselyService } from '../database/kysely.service';
 import { UploadThingService } from '../storage/uploadthing.service';
 import { FfmpegConcatService } from './ffmpeg-concat.service';
 import {
@@ -29,6 +31,7 @@ export class GenerateVideoService {
   constructor(
     @Inject(UploadThingService) private readonly uploadThingService: UploadThingService,
     @Inject(FfmpegConcatService) private readonly ffmpegConcatService: FfmpegConcatService,
+    @Inject(KyselyService) private readonly kyselyService: KyselyService,
   ) {}
 
   private getGeminiClient(): { client: GoogleGenAI; activeKey: string } {
@@ -56,6 +59,7 @@ export class GenerateVideoService {
     productImageUrl?: string;
     imageUrl?: string;
     dramaLevel?: string;
+    locale?: string;
   }): Promise<{ prompt: string; scenes: DramaScene[]; totalDurationSeconds: number }> {
     const { client, activeKey } = this.getGeminiClient();
     const openaiKey = this.getOpenAIKey();
@@ -67,7 +71,13 @@ export class GenerateVideoService {
     }
 
     const productImg = params.productImageUrl || params.imageUrl;
-    const scenes = await this.generateDramaScenesWithLLM(client, activeKey, params.prompt, productImg);
+    const scenes = await this.generateDramaScenesWithLLM(
+      client,
+      activeKey,
+      params.prompt,
+      productImg,
+      params.locale || 'uz',
+    );
     const totalDurationSeconds = scenes.reduce((acc, s) => acc + s.durationSeconds, 0);
 
     return {
@@ -78,6 +88,7 @@ export class GenerateVideoService {
   }
 
   async startGeneration(params: {
+    userId?: string;
     prompt: string;
     productImageUrl?: string;
     imageUrl?: string;
@@ -86,13 +97,83 @@ export class GenerateVideoService {
     resolution?: string;
     includeBackgroundMusic?: boolean;
     dramaLevel?: string;
-  }): Promise<{ jobId: string; status: string; progress: number; message: string; model: string }> {
+    locale?: string;
+  }): Promise<{
+    jobId: string;
+    status: string;
+    progress: number;
+    message: string;
+    model: string;
+    remainingCredits?: number;
+  }> {
     const jobId = `drama_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const aspectRatio: AspectRatioType = '9:16';
     const resolution = params.resolution || process.env.GEMINI_VIDEO_RESOLUTION || '360p';
     const modelTier = process.env.GEMINI_VIDEO_MODEL || 'gemini-omni-1.1-flash';
     const includeBackgroundMusic = params.includeBackgroundMusic === true;
     const productImageUrl = params.productImageUrl || params.imageUrl;
+
+    let userRemainingCredits: number | undefined;
+    let dbJobId: string | undefined;
+
+    if (params.userId) {
+      const dbResult = await this.kyselyService.db.transaction().execute(async (trx) => {
+        const dbUser = await trx
+          .selectFrom('users')
+          .select(['id', 'credits_balance'])
+          .where('id', '=', params.userId!)
+          .forUpdate()
+          .executeTakeFirst();
+
+        if (!dbUser) {
+          throw new NotFoundException('Foydalanuvchi hisobi topilmadi');
+        }
+
+        if (dbUser.credits_balance <= 0) {
+          const errMsg =
+            params.locale === 'en'
+              ? 'Insufficient video tokens. Please request credits from the administrator.'
+              : params.locale === 'ru'
+              ? 'Недостаточно токенов для создания видео. Пожалуйста, пополните баланс.'
+              : 'Video yaratish uchun hisobingizda tokenlar yetarli emas. Iltimos, administrator orqali token soʻrang.';
+          throw new BadRequestException(errMsg);
+        }
+
+        const newBalance = dbUser.credits_balance - 1;
+
+        await trx
+          .updateTable('users')
+          .set({
+            credits_balance: newBalance,
+            updated_at: sql`now()`,
+          })
+          .where('id', '=', params.userId!)
+          .execute();
+
+        const inserted = await trx
+          .insertInto('video_jobs')
+          .values({
+            user_id: params.userId!,
+            product_id: null,
+            platform_preset: 'uzum_9_16',
+            script_tone: 'gemini_omni',
+            script_text: params.prompt.trim().slice(0, 2000),
+            status: 'queued',
+            progress_percent: 5,
+            credits_charged: 1,
+            audio_preview_url: null,
+            output_video_url: null,
+          })
+          .returning(['id'])
+          .executeTakeFirst();
+
+        return { newBalance, dbJobId: inserted?.id };
+      });
+
+      userRemainingCredits = dbResult.newBalance;
+      dbJobId = dbResult.dbJobId;
+      this.logger.log(`Charged 1 credit from user ${params.userId}. Remaining tokens: ${userRemainingCredits}`);
+    }
 
     const initialScenes = Array.isArray(params.scenes) && params.scenes.length > 0 ? params.scenes : [];
     const totalDurationSeconds = initialScenes.length > 0
@@ -101,6 +182,8 @@ export class GenerateVideoService {
 
     const job: DramaVideoGenerationJob = {
       jobId,
+      userId: params.userId,
+      dbJobId,
       prompt: params.prompt,
       productImageUrl,
       aspectRatio,
@@ -113,6 +196,7 @@ export class GenerateVideoService {
       currentStepMessage: `${modelTier} (${resolution}) video generatsiyasi navbatga qoʻyildi...`,
       scenes: initialScenes,
       totalDurationSeconds,
+      locale: params.locale || 'uz',
       createdAt: new Date().toISOString(),
     };
 
@@ -121,12 +205,41 @@ export class GenerateVideoService {
       `Created video job ${jobId} (Model: ${modelTier}, Resolution: ${resolution}, 9:16, Music: ${includeBackgroundMusic ? 'ON' : 'OFF'}, Pre-confirmed scenes: ${initialScenes.length})`,
     );
 
-    this.processJobAsync(jobId).catch((err) => {
+    this.processJobAsync(jobId).catch(async (err) => {
       this.logger.error(`Error in drama generation job ${jobId}: ${err.message}`, err.stack);
       const current = this.jobs.get(jobId);
       if (current) {
         current.status = 'failed';
         current.error = err.message;
+      }
+      if (params.userId) {
+        try {
+          await this.kyselyService.db.transaction().execute(async (trx) => {
+            await trx
+              .updateTable('users')
+              .set({
+                credits_balance: sql`credits_balance + 1`,
+                updated_at: sql`now()`,
+              })
+              .where('id', '=', params.userId!)
+              .execute();
+
+            if (dbJobId) {
+              await trx
+                .updateTable('video_jobs')
+                .set({
+                  status: 'failed',
+                  error_message: err.message,
+                  completed_at: sql`now()`,
+                })
+                .where('id', '=', dbJobId)
+                .execute();
+            }
+          });
+          this.logger.log(`Refunded 1 credit to user ${params.userId} due to generation failure.`);
+        } catch (refundErr: any) {
+          this.logger.error(`Failed to refund credit: ${refundErr.message}`);
+        }
       }
     });
 
@@ -136,6 +249,7 @@ export class GenerateVideoService {
       progress: job.progress,
       message: `${modelTier} (${resolution}) video generatsiyasi boshlandi`,
       model: modelTier,
+      remainingCredits: userRemainingCredits,
     };
   }
 
@@ -158,13 +272,14 @@ export class GenerateVideoService {
     if (!scenes || scenes.length === 0) {
       job.status = 'framing_drama_scenes';
       job.progress = 20;
-      job.currentStepMessage = 'Dramatik LLM tizimi ssenariyni keskin emotsional sahnalarga ajratmoqda...';
+      job.currentStepMessage = ' LLM tizimi ssenariyni keskin emotsional sahnalarga ajratmoqda...';
 
       scenes = await this.generateDramaScenesWithLLM(
         client,
         activeKey,
         job.prompt,
         job.productImageUrl,
+        job.locale || 'uz',
       );
       job.scenes = scenes;
     }
@@ -263,7 +378,7 @@ export class GenerateVideoService {
     }
 
     if (generatedClipPaths.length === 0) {
-      throw new Error('Hech qanday dramatik sahna kadrlarini shakllantirib boʻlmadi');
+      throw new Error('Hech qanday sahna kadrlarini shakllantirib boʻlmadi');
     }
 
     // PHASE 3: Concatenate scenes and blend background music
@@ -322,6 +437,23 @@ export class GenerateVideoService {
     job.downloadUrl = finalCdnUrl;
     job.completedAt = new Date().toISOString();
 
+    if (job.dbJobId) {
+      try {
+        await this.kyselyService.db
+          .updateTable('video_jobs')
+          .set({
+            status: 'completed',
+            progress_percent: 100,
+            output_video_url: finalCdnUrl,
+            completed_at: sql`now()`,
+          })
+          .where('id', '=', job.dbJobId)
+          .execute();
+      } catch (dbErr: any) {
+        this.logger.warn(`Failed to update video_jobs table for completed job ${jobId}: ${dbErr.message}`);
+      }
+    }
+
     this.logger.log(`Job ${jobId} finished with ${scenes.length} scenes, total: ${job.totalDurationSeconds}s`);
   }
 
@@ -352,53 +484,114 @@ export class GenerateVideoService {
       }
     }
 
-    // 2. Try Pollinations AI (FLUX / Sana) with 12s timeout
-    const promptForImage = `${scene.cinematicPrompt}, vertical 9:16 aspect ratio, dramatic cinematic film still, movie scene, detailed lighting, 8k photographic quality`;
-    try {
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptForImage)}?width=720&height=1280&nologo=true&seed=${Math.floor(Math.random() * 999999)}`;
-      
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      try {
-        const res = await fetch(pollinationsUrl, { signal: controller.signal });
-        if (res.ok) {
-          const buffer = Buffer.from(await res.arrayBuffer());
-          if (buffer.length > 5000 && (buffer[0] === 0xff || buffer[0] === 0x89)) {
-            fs.writeFileSync(outputPath, buffer);
-            this.logger.log(`Generated Pollinations AI image for scene ${sceneIndex} (${buffer.length} bytes)`);
-            return;
-          }
-        }
-      } finally {
-        clearTimeout(timeout);
-      }
-    } catch (pollErr: any) {
-      this.logger.warn(`Pollinations image generation notice for scene ${sceneIndex}: ${pollErr.message}`);
-    }
+    // Build focused cinematic image prompt from scene.cinematicPrompt
+    const cleanPrompt = (scene.cinematicPrompt || scene.actTitle || 'cinematic film still')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/["'\\]/g, '')
+      .trim();
+    const visualPrompt = `${cleanPrompt}, 9:16 vertical orientation, cinematic film still, detailed dramatic lighting, photorealistic, 8k resolution`;
 
-    // 3. High-Quality Thematic Stock Vertical Photo (Picsum / Curated)
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+    // 2. Google Imagen 3 (via @google/genai)
+    const { client, activeKey } = this.getGeminiClient();
+    if (activeKey) {
       try {
-        const picsumUrl = `https://picsum.photos/720/1280?random=${Date.now()}_${sceneIndex}`;
-        const res = await fetch(picsumUrl, { signal: controller.signal, redirect: 'follow' });
-        if (res.ok) {
-          const buffer = Buffer.from(await res.arrayBuffer());
+        this.logger.log(`Invoking Google Imagen 3 for Scene ${sceneIndex}: "${cleanPrompt.slice(0, 60)}"...`);
+        const imagenRes = await client.models.generateImages({
+          model: 'imagen-3.0-generate-002',
+          prompt: visualPrompt.slice(0, 480),
+          config: {
+            numberOfImages: 1,
+            aspectRatio: '9:16',
+          },
+        });
+        const imageBytes = imagenRes?.generatedImages?.[0]?.image?.imageBytes;
+        if (imageBytes) {
+          const buffer = Buffer.from(imageBytes, 'base64');
           if (buffer.length > 5000) {
             fs.writeFileSync(outputPath, buffer);
-            this.logger.log(`Fetched atmospheric background for scene ${sceneIndex} (${buffer.length} bytes)`);
+            this.logger.log(`Generated Google Imagen 3 AI image for scene ${sceneIndex} (${buffer.length} bytes)`);
             return;
           }
         }
-      } finally {
-        clearTimeout(timeout);
+      } catch (imagenErr: any) {
+        this.logger.warn(`Google Imagen 3 notice for scene ${sceneIndex}: ${imagenErr.message}. Trying DALL-E / Pollinations.`);
       }
-    } catch (picsumErr: any) {
-      this.logger.warn(`Picsum photo fetch notice for scene ${sceneIndex}: ${picsumErr.message}`);
     }
 
-    // 4. Guaranteed Local Thematic Studio Graphic Canvas via FFmpeg
+    // 3. OpenAI DALL-E 3 (via OPENAI_API_KEY)
+    const openaiKey = this.getOpenAIKey();
+    if (openaiKey) {
+      try {
+        this.logger.log(`Invoking OpenAI DALL-E for Scene ${sceneIndex}: "${cleanPrompt.slice(0, 60)}"...`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 22000);
+        try {
+          const res = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${openaiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'dall-e-3',
+              prompt: visualPrompt.slice(0, 950),
+              n: 1,
+              size: '1024x1792',
+              response_format: 'b64_json',
+            }),
+            signal: controller.signal,
+          });
+
+          if (res.ok) {
+            const data: any = await res.json();
+            const b64 = data?.data?.[0]?.b64_json;
+            if (b64) {
+              const buffer = Buffer.from(b64, 'base64');
+              fs.writeFileSync(outputPath, buffer);
+              this.logger.log(`Generated OpenAI DALL-E 3 image for scene ${sceneIndex} (${buffer.length} bytes)`);
+              return;
+            }
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (dalleErr: any) {
+        this.logger.warn(`OpenAI DALL-E notice for scene ${sceneIndex}: ${dalleErr.message}. Trying Pollinations AI.`);
+      }
+    }
+
+    // 4. Pollinations AI (FLUX & Turbo vertical models)
+    const seed = Math.floor(Math.random() * 999999);
+    const encodedPrompt = encodeURIComponent(visualPrompt.slice(0, 350));
+    const pollinationsEndpoints = [
+      `https://image.pollinations.ai/prompt/${encodedPrompt}?width=720&height=1280&model=turbo&nologo=true&seed=${seed}`,
+      `https://image.pollinations.ai/prompt/${encodedPrompt}?width=720&height=1280&model=flux&nologo=true&seed=${seed}`,
+    ];
+
+    for (const pollUrl of pollinationsEndpoints) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 18000);
+        try {
+          const res = await fetch(pollUrl, { signal: controller.signal });
+          if (res.ok) {
+            const buffer = Buffer.from(await res.arrayBuffer());
+            if (buffer.length > 5000 && (buffer[0] === 0xff || buffer[0] === 0x89)) {
+              fs.writeFileSync(outputPath, buffer);
+              this.logger.log(`Generated Pollinations AI image for scene ${sceneIndex} (${buffer.length} bytes)`);
+              return;
+            }
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (pollErr: any) {
+        this.logger.warn(`Pollinations endpoint notice for scene ${sceneIndex}: ${pollErr.message}`);
+      }
+    }
+
+    // 5. Stylized Thematic Studio Canvas via FFmpeg (NEVER random stock photos)
+    this.logger.log(`Creating stylized studio canvas for scene ${sceneIndex} ("${scene.actTitle}")...`);
     await this.ffmpegConcatService.createThematicSceneImage({
       outputPath,
       sceneIndex,
@@ -455,6 +648,7 @@ export class GenerateVideoService {
     activeKey: string,
     userPrompt: string,
     productImageUrl?: string,
+    locale: string = 'uz',
   ): Promise<DramaScene[]> {
     const cleanPrompt = userPrompt
       .replace(/[\r\n\t]+/g, ' ')
@@ -467,9 +661,9 @@ export class GenerateVideoService {
     if (openaiKey) {
       try {
         this.logger.log(
-          `Invoking OpenAI (Story & Cinematic Director) to write story for: "${cleanPrompt.slice(0, 60)}" (Product Image: ${productImageUrl ? 'YES' : 'NO'})`,
+          `Invoking OpenAI (Story & Cinematic Director) to write story for: "${cleanPrompt.slice(0, 60)}" (Lang: ${locale}, Product Image: ${productImageUrl ? 'YES' : 'NO'})`,
         );
-        const scenes = await this.generateDramaScenesWithOpenAI(openaiKey, cleanPrompt, productImageUrl);
+        const scenes = await this.generateDramaScenesWithOpenAI(openaiKey, cleanPrompt, productImageUrl, locale);
         if (scenes && scenes.length >= 2) {
           this.logger.log(`OpenAI successfully authored ${scenes.length} viral drama scenes.`);
           return scenes;
@@ -480,7 +674,7 @@ export class GenerateVideoService {
     }
 
     if (activeKey) {
-      return this.generateDramaScenesWithGemini(client, activeKey, cleanPrompt, productImageUrl);
+      return this.generateDramaScenesWithGemini(client, activeKey, cleanPrompt, productImageUrl, locale);
     }
 
     throw new BadRequestException(
@@ -492,8 +686,10 @@ export class GenerateVideoService {
     openaiKey: string,
     cleanPrompt: string,
     productImageUrl?: string,
+    locale: string = 'uz',
   ): Promise<DramaScene[]> {
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
 
     const promptText = `Create the production-ready scenario and scene plan for AI video generation based on: "${cleanPrompt}".
 ${
@@ -501,6 +697,10 @@ ${
     ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending (Mode F).'
     : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
 }
+STRICT LANGUAGE REQUIREMENT:
+All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
+Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+
 Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale). Return strictly valid JSON following the schema in section 11.`;
 
     const userContent: any[] = [{ type: 'text', text: promptText }];
@@ -570,9 +770,12 @@ Generate as many coherent scenes as the story emotionally requires (typically 5 
     activeKey: string,
     cleanPrompt: string,
     productImageUrl?: string,
+    locale: string = 'uz',
   ): Promise<DramaScene[]> {
+    const targetLang = locale === 'ru' ? 'RUSSIAN (Русский язык)' : locale === 'en' ? 'ENGLISH' : 'UZBEK (Oʻzbek tili, Lotin yozuvida)';
+
     this.logger.log(
-      `Invoking Gemini LLM for Drama Framing Engine on "${cleanPrompt}" (Product Image: ${productImageUrl ? 'YES' : 'NO'})`,
+      `Invoking Gemini LLM for Drama Framing Engine on "${cleanPrompt}" (Lang: ${locale}, Product Image: ${productImageUrl ? 'YES' : 'NO'})`,
     );
 
     try {
@@ -586,6 +789,10 @@ ${
     ? 'A reference photo of the user\'s product is provided. Inspect the product image carefully: preserve its shape, packaging, label design, and colors. Craft a compelling, emotional story that organically features this product and culminates in a high-production Commercial Product Advertisement Ending (Mode F).'
     : 'If this prompt relates to a product, conclude with a high-production commercial studio advertisement ending.'
 }
+STRICT LANGUAGE REQUIREMENT:
+All visible text for humans — including act titles (title), dialogues (dialogue), captions (caption), and emotional descriptions (emotion) — MUST be strictly written in ${targetLang}.
+Do NOT mix other languages into dialogue, titles, or subtitles. Only the 'video_prompt' (the visual image generation prompt) should be written in descriptive English.
+
 Generate as many coherent scenes as the story emotionally requires (typically 5 to 8 scenes: narrative build-up, emotional turning point, and the commercial studio finale).
 Respond strictly with valid JSON following the schema provided in section 11. Do NOT wrap in markdown fences.`,
         },
@@ -697,7 +904,7 @@ Respond strictly with valid JSON following the schema provided in section 11. Do
       return {
         sceneIndex: Number(s.scene_number || s.sceneIndex) || idx + 1,
         actTitle: s.title || s.actTitle || `Sahna ${idx + 1}`,
-        emotion: s.emotion || 'Intense emotional stakes',
+        emotion: s.emotion || 'Yuqori emotsional hayajon',
         tensionLevel: Math.max(1, Math.min(Number(s.tensionLevel || s.tension_level) || (idx === 1 ? 10 : 8), 10)),
         durationSeconds: duration,
         cinematicPrompt,

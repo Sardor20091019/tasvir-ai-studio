@@ -179,7 +179,7 @@ export class FfmpegConcatService {
       proc.on('close', (code) => {
         this.cleanDir(tempDir);
         if (code === 0 && fs.existsSync(outputPath)) {
-          this.logger.log(`Successfully concatenated master dramatic video to ${outputPath}`);
+          this.logger.log(`Successfully concatenated master  video to ${outputPath}`);
           resolve(outputPath);
         } else {
           this.logger.error(`FFmpeg concat failed with exit code ${code}:\n${stderrOutput.slice(-800)}`);

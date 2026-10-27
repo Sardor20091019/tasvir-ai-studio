@@ -71,9 +71,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('user_id', 'uuid', (col) =>
       col.notNull().references('users.id').onDelete('cascade')
     )
-    .addColumn('product_id', 'uuid', (col) =>
-      col.notNull().references('products.id').onDelete('cascade')
-    )
+    .addColumn('product_id', 'varchar(255)')
     .addColumn('avatar_id', 'uuid', (col) =>
       col.notNull().references('ai_avatars.id').onDelete('restrict')
     )

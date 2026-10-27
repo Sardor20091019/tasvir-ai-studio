@@ -19,7 +19,7 @@ export const STOCK_VIDEOS: AssetItem[] = [
     url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=640&q=80',
     thumbnailUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=300&q=80',
     durationSec: 6,
-    tags: ['neon', 'shahar', 'dramatik'],
+    tags: ['neon', 'shahar', 'regualar'],
   },
   {
     id: 'stock-gold-3',
@@ -65,7 +65,7 @@ export const STOCK_AUDIO: AssetItem[] = [
   {
     id: 'sfx-cinematic-boom',
     type: 'audio',
-    title: 'Dramatik Cinematic Boom',
+    title: ' Cinematic Boom',
     category: 'SFX',
     url: 'https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3',
     durationSec: 3.5,
@@ -167,7 +167,7 @@ export const FILTER_PRESETS: FilterPreset[] = [
   {
     id: 'noir_bw',
     label: 'Noir B&W',
-    description: 'Chuqur dramatik oq-qora kontrast',
+    description: 'Chuqur oq-qora kontrast',
     cssFilter: 'grayscale(1) contrast(1.4) brightness(0.95)',
     previewColor: 'linear-gradient(135deg, #18181b, #71717a)',
   },

@@ -42,7 +42,7 @@ export class VideoJobsService {
 
   async createRenderJob(dto: {
     userId: string;
-    productId: string;
+    productId?: string | null;
     avatarId?: string;
     platformPreset: string;
     scriptTone: string;

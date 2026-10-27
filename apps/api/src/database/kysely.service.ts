@@ -134,6 +134,9 @@ export class KyselyService implements OnModuleInit, OnModuleDestroy {
       await sql`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'`.execute(this._db);
       await sql`ALTER TABLE video_jobs DROP CONSTRAINT IF EXISTS video_jobs_avatar_id_fkey`.execute(this._db);
       await sql`ALTER TABLE video_jobs ALTER COLUMN avatar_id DROP NOT NULL`.execute(this._db);
+      await sql`ALTER TABLE video_jobs DROP CONSTRAINT IF EXISTS video_jobs_product_id_fkey`.execute(this._db);
+      await sql`ALTER TABLE video_jobs ALTER COLUMN product_id TYPE varchar(255) USING product_id::varchar`.execute(this._db);
+      await sql`ALTER TABLE video_jobs ALTER COLUMN product_id DROP NOT NULL`.execute(this._db);
       await sql`DROP TABLE IF EXISTS ai_avatars CASCADE`.execute(this._db);
       await sql`
         CREATE TABLE IF NOT EXISTS token_requests (

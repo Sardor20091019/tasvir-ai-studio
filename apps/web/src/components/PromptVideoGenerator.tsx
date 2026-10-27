@@ -29,6 +29,7 @@ import {
   Upload,
   Image as ImageIcon,
   X,
+  Coins,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { downloadMediaFile } from '../lib/download';
@@ -43,6 +44,8 @@ interface PromptVideoGeneratorProps {
   onJobStarted?: (job: VideoJob) => void;
   onVideoCreated?: (videoUrl: string) => void;
   onEditInCapCut?: (project: VideoEditorProject) => void;
+  onCreditsUpdated?: (newBalance: number) => void;
+  onOpenCheckout?: () => void;
   initialPrompt?: string;
   initialImage?: string;
 }
@@ -100,7 +103,7 @@ const DRAMA_PROMPT_SUGGESTIONS = {
     {
       label: '🏃 The Orange Runner’s Final Step (Nike Pegasus Ad)',
       prompt:
-        "A cinematic stylized 3D fruit sports drama. A young orange runner loses an important race and sits alone on the stadium steps, holding his old medal and wondering whether to give up. Before sunrise the next morning, he returns to training. Day after day, he runs with greater determination and confidence. Finally, race day arrives. As he crosses the finish line, he realizes that his greatest victory is not coming first but believing in himself again. Transition into a premium Nike Pegasus product commercial: the shoes are displayed in a dark studio with dramatic side lighting, a slowly rotating camera, and detailed macro shots of the sole and fabric. Voiceover: 'Every step is a new opportunity.' Preserve the authentic shoe design, cinematic sports movement, emotional storytelling, and a polished commercial ending.",
+        "A cinematic stylized 3D fruit sports drama. A young orange runner loses an important race and sits alone on the stadium steps, holding his old medal and wondering whether to give up. Before sunrise the next morning, he returns to training. Day after day, he runs with greater determination and confidence. Finally, race day arrives. As he crosses the finish line, he realizes that his greatest victory is not coming first but believing in himself again. Transition into a premium Nike Pegasus product commercial: the shoes are displayed in a dark studio with  side lighting, a slowly rotating camera, and detailed macro shots of the sole and fabric. Voiceover: 'Every step is a new opportunity.' Preserve the authentic shoe design, cinematic sports movement, emotional storytelling, and a polished commercial ending.",
     },
   ],
 
@@ -140,6 +143,8 @@ export function PromptVideoGenerator({
   onJobStarted,
   onVideoCreated,
   onEditInCapCut,
+  onCreditsUpdated,
+  onOpenCheckout,
   initialPrompt,
   initialImage,
 }: PromptVideoGeneratorProps) {
@@ -149,10 +154,10 @@ export function PromptVideoGenerator({
       title: 'Kinematografik AI Video (Gemini Omni 1.1)',
       subtitle:
         'Google Gemini Omni 1.1 Flash orqali yuqori emotsional ziddiyat, mahsulot integratsiyasi va 9:16 vertikal master video yarating.',
-      promptLabel: 'Dramatik reklama gʻoyasi (Prompt)',
+      promptLabel: ' reklama gʻoyasi (Prompt)',
       promptPlaceholder:
         'Masalan: Xiyonat tufayli yigʻlayotgan qahramon va uning hayotini oʻzgartirgan kutilmagan sovgʻa...',
-      suggestionsLabel: '🎭 Dramatik ssenariy gʻoyalari:',
+      suggestionsLabel: '🎭  ssenariy gʻoyalari:',
       aspectRatioLabel: 'Video formati va Aniqligi:',
       ratioLockedNote: 'Gemini Omni 1.1 Flash vertikal 9:16 (360p).',
       durationBadge: '3–8 sahna • Har biri 4–8 soniya',
@@ -176,23 +181,23 @@ export function PromptVideoGenerator({
       karaokeTitle: 'Karaoke Subtitr Rejimi:',
       karaokeDomMode: 'Dinamik Reels Matni',
       karaokeCanvasMode: 'Canvas Qatlami',
-      actsTitle: 'Dramatik Sahnalar Ketma-ketligi (FFmpeg Concat):',
+      actsTitle: 'Sahnalar Ketma-ketligi (FFmpeg Concat):',
       errorOccurred: 'Video yaratishda xatolik yuz berdi. Iltimos, qayta urinib koʻring.',
       errorTitle: 'Xatolik yuz berdi',
       tryAgain: 'Qayta urinish',
       openVideo: 'Videoni ochish',
-      placeholderTitle: '9:16 Dramatik Master Video koʻrinishi',
-      placeholderSub: 'Dramatik prompt kiriting va avval AI ssenariyni shakllantiring.',
+      placeholderTitle: '9:16 Video korinishi',
+      placeholderSub: 'prompt kiriting va AI orqali ssenariy tuzing yoki ozingiz keyin tahrirlab chiqishingiz mmumkin.',
     },
     en: {
       badge: 'Gemini Omni 1.1 Flash & Vision Engine',
       title: 'Cinematic AI Video Ads (Gemini Omni 1.1 Flash)',
       subtitle:
         'Generate high-stakes 9:16 vertical video ads with Google Gemini Omni 1.1 Flash featuring emotional continuity, product finale, and resolution controls.',
-      promptLabel: 'Dramatic Ad Idea (Prompt)',
+      promptLabel: ' Ad Idea (Prompt)',
       promptPlaceholder:
         'E.g., A protagonist crying after finding out they were betrayed, but a surprise product turns everything into victory...',
-      suggestionsLabel: '🎭 Dramatic storyline concepts:',
+      suggestionsLabel: '🎭  storyline concepts:',
       aspectRatioLabel: 'Video Format:',
       ratioLockedNote: 'Gemini Omni 1.1 Flash vertical 9:16 (360p).',
       durationBadge: '3–8 scenes • 4–8 seconds each',
@@ -200,7 +205,7 @@ export function PromptVideoGenerator({
       planningScenarioBtn: 'Gemini is framing scenes...',
       scenarioReviewTitle: '🎬 AI Storyline Ready (Review & Confirm)',
       scenarioReviewSub:
-        'AI drafted the dramatic scenes and dialogue. You can tweak any script or caption before launching the video render.',
+        'AI drafted the  scenes and dialogue. You can tweak any script or caption before launching the video render.',
       confirmAndRenderBtn: '✅ Confirm Scenario & Render Video (Gemini Omni 1.1)',
       renderingBtn: 'Gemini Omni 1.1 rendering video...',
       regenerateScenarioBtn: '🔄 Regenerate Storyline',
@@ -212,17 +217,17 @@ export function PromptVideoGenerator({
       progressTitle: 'Creating Video with Google Gemini Omni 1.1 Flash',
       completedTitle: 'Cinematic Master Video Ready!',
       downloadBtn: 'Download Master MP4',
-      createAnother: 'Create another dramatic video',
+      createAnother: 'Create another  video',
       karaokeTitle: 'Karaoke Subtitle Mode:',
       karaokeDomMode: 'Dynamic Reels Text',
       karaokeCanvasMode: 'Canvas Layer',
-      actsTitle: 'Dramatic Scenes Breakdown (FFmpeg Concat):',
+      actsTitle: ' Scenes Breakdown (FFmpeg Concat):',
       errorOccurred: 'An error occurred while creating the video. Please try again.',
       errorTitle: 'Error occurred',
       tryAgain: 'Try again',
       openVideo: 'Open video',
-      placeholderTitle: '9:16 Dramatic Master Video Preview',
-      placeholderSub: 'Enter a dramatic prompt and generate the AI scenes first.',
+      placeholderTitle: '9:16  Master Video Preview',
+      placeholderSub: 'Enter a prompt and generate the AI scenes first.',
     },
     ru: {
       badge: 'Gemini Omni 1.1 Flash & Vision Engine',
@@ -265,10 +270,10 @@ export function PromptVideoGenerator({
       placeholderSub: 'Введите промпт и сначала сгенерируйте AI сценарий.',
     },
   }[locale] || {
-    badge: 'Gemini Omni 1.1 Flash & Vision Engine',
+    badge: 'gemini',
     title: 'Kinematografik AI Video (Gemini Omni 1.1)',
     subtitle: 'Google Gemini Omni 1.1 Flash orqali 9:16 vertikal video yarating.',
-    promptLabel: 'Dramatik reklama gʻoyasi (Prompt)',
+    promptLabel: ' reklama gʻoyasi (Prompt)',
     promptPlaceholder: 'Mahsulot haqida maʼlumot kiriting...',
     suggestionsLabel: '🎭 Tavsiya etilgan gʻoyalar:',
     aspectRatioLabel: 'Format: 9:16',
@@ -299,7 +304,7 @@ export function PromptVideoGenerator({
     tryAgain: 'Qayta urinish',
     openVideo: 'Videoni ochish',
     placeholderTitle: '9:16 Video koʻrinishi',
-    placeholderSub: 'Dramatik prompt kiriting.',
+    placeholderSub: ' prompt kiriting.',
   };
 
   const suggestions = DRAMA_PROMPT_SUGGESTIONS[locale] || DRAMA_PROMPT_SUGGESTIONS.uz;
@@ -429,6 +434,7 @@ export function PromptVideoGenerator({
         prompt: prompt.trim(),
         productImageUrl: productImage || undefined,
         dramaLevel: 'high_tension',
+        locale,
       });
 
       if (!res?.scenes || res.scenes.length === 0) {
@@ -469,12 +475,24 @@ export function PromptVideoGenerator({
   const handleConfirmAndRender = async () => {
     if (!plannedScenes || plannedScenes.length === 0) return;
 
+    if (user && user.credits_balance <= 0) {
+      const noCreditsMsg =
+        locale === 'en'
+          ? 'You have 0 video tokens. Please request credits from the administrator.'
+          : locale === 'ru'
+          ? 'У вас 0 токенов. Пожалуйста, пополните баланс для создания видео.'
+          : 'Video yaratish uchun hisobingizda tokenlar yetarli emas (0 ta). Iltimos, administrator orqali token soʻrang.';
+      setError(noCreditsMsg);
+      onOpenCheckout?.();
+      return;
+    }
+
     setIsRendering(true);
     setError(null);
     setProgress(10);
     setStatusMessage(
       locale === 'en'
-        ? `Launching Gemini Omni 1.1 Flash (${resolution}) & dramatic scene rendering...`
+        ? `Launching Gemini Omni 1.1 Flash (${resolution}) &  scene rendering...`
         : locale === 'ru'
         ? `Запуск Gemini Omni 1.1 Flash (${resolution}) и рендеринга сцен...`
         : `Gemini Omni 1.1 Flash (${resolution}) orqali video generatsiyasi boshlanmoqda...`,
@@ -490,10 +508,15 @@ export function PromptVideoGenerator({
         aspectRatio: '9:16',
         resolution,
         includeBackgroundMusic: false,
+        locale,
       });
 
       if (!res?.jobId) {
         throw new Error(t.errorOccurred);
+      }
+
+      if (typeof res.remainingCredits === 'number') {
+        onCreditsUpdated?.(res.remainingCredits);
       }
 
       setJobId(res.jobId);
@@ -547,8 +570,8 @@ export function PromptVideoGenerator({
         setStatusMessage(
           jobData.currentStepMessage ||
             (locale === 'en'
-              ? 'Processing Google Veo 3.1 dramatic video...'
-              : 'Google Veo 3.1 dramatik video qayta ishlanmoqda...'),
+              ? 'Processing Google Veo 3.1  video...'
+              : 'Google Veo 3.1 video qayta ishlanmoqda...'),
         );
 
         if (jobData.status === 'completed' && jobData.videoUrl) {
@@ -804,6 +827,21 @@ export function PromptVideoGenerator({
                       : '🔒 Video yaratish uchun avval tizimga kiring (Google)'}
                   </span>
                 </button>
+              ) : user.credits_balance <= 0 ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenCheckout?.()}
+                  className="w-full py-4 px-6 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Coins className="h-4 w-4" />
+                  <span>
+                    {locale === 'en'
+                      ? '🔒 Insufficient Credits (Request Tokens)'
+                      : locale === 'ru'
+                      ? '🔒 Недостаточно токенов (Запросить)'
+                      : '🔒 Tokenlar yetarli emas (Token soʻrash)'}
+                  </span>
+                </button>
               ) : (
                 <button
                   type="submit"
@@ -834,7 +872,7 @@ export function PromptVideoGenerator({
                 </div>
               </div>
 
-              {/* 3 Dramatic Scenes Cards */}
+              {/* 3  Scenes Cards */}
               <div className="space-y-4">
                 {plannedScenes.map((scene, idx) => (
                   <div
@@ -935,15 +973,32 @@ export function PromptVideoGenerator({
 
               {/* Action Buttons: Confirm & Render OR Regenerate */}
               <div className="space-y-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleConfirmAndRender}
-                  disabled={isRendering}
-                  className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
-                >
-                  <Sparkles className={`h-4 w-4 ${isRendering ? 'animate-spin' : ''}`} />
-                  <span>{isRendering ? t.renderingBtn : t.confirmAndRenderBtn}</span>
-                </button>
+                {user && user.credits_balance <= 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenCheckout?.()}
+                    className="w-full py-4 px-6 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Coins className="h-4 w-4" />
+                    <span>
+                      {locale === 'en'
+                        ? '🔒 Insufficient Credits (Request Tokens)'
+                        : locale === 'ru'
+                        ? '🔒 Недостаточно токенов (Запросить)'
+                        : '🔒 Tokenlar yetarli emas (Token soʻrash)'}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConfirmAndRender}
+                    disabled={isRendering}
+                    className="w-full py-4 px-6 rounded-2xl bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-heading font-extrabold text-sm shadow-md transition-all tactile-btn flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className={`h-4 w-4 ${isRendering ? 'animate-spin' : ''}`} />
+                    <span>{isRendering ? t.renderingBtn : t.confirmAndRenderBtn}</span>
+                  </button>
+                )}
 
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -1054,7 +1109,13 @@ export function PromptVideoGenerator({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-ink flex items-center gap-1.5">
                     <Zap className="h-3 w-3 text-coral" />
-                    <span>AI Image & Motion Pipeline:</span>
+                    <span>
+                      {locale === 'en'
+                        ? 'AI Image & Motion Pipeline:'
+                        : locale === 'ru'
+                        ? 'AI генерация кадров и видео:'
+                        : 'AI tasvir va video yaratish bosqichlari:'}
+                    </span>
                   </span>
                   <span className="font-mono text-[10px] bg-neutral-200 px-1.5 py-0.5 rounded">
                     9:16
@@ -1166,7 +1227,7 @@ export function PromptVideoGenerator({
                     onClick={() =>
                       downloadMediaFile(
                         resultVideo.downloadUrl || resultVideo.videoUrl,
-                        'tasvir-ai-dramatic-product-ad.mp4'
+                        'tasvir-ai-product-ad.mp4'
                       )
                     }
                     className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs shadow-sm transition-all tactile-btn flex items-center justify-center gap-1.5 cursor-pointer"

@@ -40,7 +40,7 @@ export interface Product {
 export interface VideoJob {
   id: string;
   user_id: string;
-  product_id: string;
+  product_id?: string | null;
   avatar_id?: string;
   platform_preset: string;
   script_tone: string;
