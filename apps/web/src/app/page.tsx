@@ -707,7 +707,7 @@ export default function HomePage() {
           {/* Bottom rule */}
           <div className="mt-12 pt-6 border-t border-stroke flex flex-col sm:flex-row items-center justify-between gap-3">
             <span className="text-[10px] font-mono text-ink-dim tracking-wider">
-              &copy; 2026 TASVIR TECHNOLOGIES
+              &copy; 2026 astro_spectrum
             </span>
             <span className="text-[10px] font-mono text-ink-dim tracking-wider">
               SARDOR SUNATULLAYEV &middot; TASHKENT
